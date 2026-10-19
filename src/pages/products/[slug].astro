@@ -1,0 +1,432 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import Icon from '../../components/Icon.astro';
+import Photo from '../../components/Photo.astro';
+import BrandGrid from '../../components/BrandGrid.astro';
+import CategoryCard from '../../components/CategoryCard.astro';
+import FaqList from '../../components/FaqList.astro';
+import CtaBand from '../../components/CtaBand.astro';
+
+import { categories, groups, getCategory, type Category } from '../../data/categories';
+import { getBrands } from '../../data/brands';
+import { getFaqs } from '../../data/faqs';
+import { locations, tel, prettyPhone } from '../../data/site';
+import { withBase } from '../../scripts/url';
+
+export const getStaticPaths = (() =>
+  categories.map((category) => ({ params: { slug: category.slug }, props: { category } }))) satisfies GetStaticPaths;
+
+interface Props {
+  category: Category;
+}
+
+const { category: c } = Astro.props;
+const group = groups.find((g) => g.id === c.group)!;
+const brands = getBrands(c.brands);
+const faqs = c.faqs ? getFaqs(c.faqs) : [];
+const related = c.related.map(getCategory);
+const heroImage = c.hero ?? c.card;
+const variant = c.hero ? 'pano' : 'split';
+---
+
+<BaseLayout
+  title={`${c.name} in Osage Beach & Nixa, MO`}
+  description={`${c.short} Shop ${c.name.toLowerCase()} at HMI Fireplace Shops — family-owned since 1975 with certified installation and service.`}
+>
+  <PageHero
+    title={c.name}
+    eyebrow={group.name}
+    lead={c.lead}
+    image={heroImage}
+    variant={variant}
+    crumbs={[{ label: 'Products', href: withBase('/products/') }, { label: group.name, href: withBase(`/products/#${group.id}`) }, { label: c.name }]}
+  >
+    <a href={withBase(`/contact/?interest=${c.slug}`)} class="btn btn--primary btn--lg">
+      Request a quote <Icon name="arrow-right" size={18} class="icon-arrow" />
+    </a>
+    <a href="#brands" class="btn btn--ghost-light btn--lg">Brands we carry</a>
+  </PageHero>
+
+  <!-- Overview -->
+  <section class="section">
+    <div class="container overview">
+      <div class="overview__text" data-reveal>
+        <p class="eyebrow">Overview</p>
+        <h2 class="overview__title">Why homeowners choose {c.name.toLowerCase()}</h2>
+        <div class="prose overview__prose">
+          {c.overview.map((p) => <p>{p}</p>)}
+        </div>
+        <div class="overview__options">
+          <p class="overview__label">Popular options</p>
+          <ul class="cluster" role="list">
+            {c.options.map((o) => <li class="chip">{o}</li>)}
+          </ul>
+        </div>
+      </div>
+
+      <ul class="highlights" role="list">
+        {
+          c.highlights.map((h, i) => (
+            <li class="highlight" data-reveal style={`--reveal-delay: ${i * 80}ms`}>
+              <span class="highlight__icon">
+                <Icon name="check" size={18} strokeWidth={2.2} />
+              </span>
+              <h3 class="highlight__title">{h.title}</h3>
+              <p class="highlight__text">{h.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Photo band for split heroes with a second photo opportunity -->
+  {
+    c.hero && (
+      <section class="photo-band" aria-hidden="true">
+        <div class="container">
+          <div class:list={['photo-band__frame', { 'is-cutout': c.card.cutout }]} data-reveal>
+            <Photo src={c.card.src} alt="" sizes="(min-width: 1240px) 620px, 100vw" position={c.card.position} />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Subtypes (e.g. wood / gas / pellet inserts) -->
+  {
+    c.subtypes && (
+      <section class="section section--linen">
+        <div class="container">
+          <SectionHeading
+            eyebrow="Choose your fuel"
+            title={`Three ways to <em>upgrade your fireplace.</em>`}
+            lead="Every insert option installs in your existing opening. Here’s how they compare."
+          />
+          <div class="grid grid--3">
+            {c.subtypes.map((s, i) => (
+              <article class="subtype" data-reveal style={`--reveal-delay: ${i * 90}ms`}>
+                <h3>{s.name}</h3>
+                <p class="muted">{s.text}</p>
+                <p class="subtype__label">Brands</p>
+                <ul class="cluster" role="list" style="--cluster-gap: 0.4rem">
+                  {getBrands(s.brands).map((b) => (
+                    <li class="chip">{b.name}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Brands -->
+  <section class:list={['section', { 'section--linen': !c.subtypes }]} id="brands">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Brands we carry"
+        title={`Trusted names in <em>${c.name.toLowerCase()}.</em>`}
+        lead="We carry brands we’re proud to install and service. Visit either showroom to compare models, finishes and options side by side."
+        align="split"
+      >
+        <a href={withBase('/products/#brands')} class="link-arrow">See every brand we carry <Icon name="arrow-right" size={16} /></a>
+      </SectionHeading>
+      <div data-reveal>
+        <BrandGrid brands={brands} />
+      </div>
+    </div>
+  </section>
+
+  <!-- Good to know -->
+  <section class="section section--tight">
+    <div class="container">
+      <div class="grid grid--3 tips">
+        {
+          (c.tips ?? []).map((t) => (
+            <aside class="tip" data-reveal>
+              <span class="icon-tile">
+                <Icon name="info" size={22} />
+              </span>
+              <div class="tip__body">
+                <h2 class="tip__title">{t.title}</h2>
+                <p>{t.text}</p>
+                {t.link && (
+                  <a href={t.link.href} class="link-arrow">
+                    {t.link.label} <Icon name="arrow-right" size={16} />
+                  </a>
+                )}
+              </div>
+            </aside>
+          ))
+        }
+        <aside class="tip tip--dark on-dark" data-reveal>
+          <span class="icon-tile">
+            <Icon name="pin" size={22} />
+          </span>
+          <div class="tip__body">
+            <h2 class="tip__title">See it in person</h2>
+            <p>Talk with our team and compare options at either showroom.</p>
+            <ul role="list" class="tip__stores">
+              {
+                locations.map((l) => (
+                  <li>
+                    <a href={withBase(`/locations/${l.slug}/`)}>{l.shortName}</a>
+                    <a href={tel(l.phone)} class="tabular">
+                      {prettyPhone(l.phone)}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  {
+    faqs.length > 0 && (
+      <section class="section section--paper">
+        <div class="container--narrow">
+          <SectionHeading eyebrow="Questions" title="Good to know before <em>you buy.</em>" align="center" />
+          <div data-reveal>
+            <FaqList faqs={faqs} />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Related -->
+  <section class="section">
+    <div class="container">
+      <SectionHeading eyebrow="Keep exploring" title="You might also like" align="split">
+        <a href={withBase('/products/')} class="link-arrow">All products <Icon name="arrow-right" size={16} /></a>
+      </SectionHeading>
+      <div class="grid grid--cats related">
+        {
+          related.map((r, i) => (
+            <div data-reveal style={`--reveal-delay: ${i * 70}ms`}>
+              <CategoryCard category={r} compact />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <CtaBand
+    title={`Ready to talk about <em>${c.name.toLowerCase()}?</em>`}
+    text="Tell us about your room and how you want to use your fire, and we’ll recommend options that fit — with a clear quote and certified installation."
+  />
+</BaseLayout>
+
+<style>
+  .overview {
+    display: grid;
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  @media (min-width: 980px) {
+    .overview {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+  }
+
+  .overview__text {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .overview__title {
+    font-size: var(--fs-2xl);
+  }
+
+  .overview__prose {
+    font-size: var(--fs-md);
+    color: var(--c-text-muted);
+  }
+
+  .overview__label,
+  .subtype__label {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+
+  .overview__options ul {
+    padding: 0;
+    list-style: none;
+    --cluster-gap: 0.5rem;
+  }
+
+  .highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .highlight {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .highlight__icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-bottom: var(--space-2);
+    border-radius: 50%;
+    background: var(--c-ember);
+    color: #fff;
+  }
+
+  .highlight__title {
+    font-size: var(--fs-md);
+  }
+
+  .highlight__text {
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  .photo-band {
+    padding-bottom: var(--section-y);
+    margin-top: calc(var(--section-y) * -0.4);
+  }
+
+  .photo-band__frame {
+    max-width: 620px;
+    margin-inline: auto;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .photo-band__frame :global(picture),
+  .photo-band__frame :global(img) {
+    width: 100%;
+  }
+
+  .photo-band__frame.is-cutout {
+    padding: var(--space-6);
+    background:
+      radial-gradient(circle at 50% 60%, rgb(240 160 75 / 0.3), transparent 62%),
+      linear-gradient(160deg, #f6efe4, #e8dccb);
+  }
+
+  .photo-band__frame.is-cutout :global(img) {
+    max-width: 360px;
+    margin-inline: auto;
+  }
+
+  .subtype {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    border-top: 3px solid var(--c-ember);
+  }
+
+  .subtype h3 {
+    font-size: var(--fs-xl);
+  }
+
+  .subtype ul {
+    padding: 0;
+    list-style: none;
+  }
+
+  .tips {
+    align-items: stretch;
+  }
+
+  .tip {
+    display: flex;
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .tip--dark {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+  }
+
+  .tip__body {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+  }
+
+  .tip__title {
+    font-size: var(--fs-lg);
+  }
+
+  .tip__body > p {
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  .tip--dark .tip__body > p {
+    color: var(--c-text-invert-muted);
+  }
+
+  .tip__body .link-arrow {
+    margin-top: var(--space-2);
+  }
+
+  .tip__stores {
+    display: grid;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .tip__stores li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--c-ink-line);
+    font-size: var(--fs-sm);
+  }
+
+  .tip__stores a {
+    color: var(--c-text-invert);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .tip__stores a:hover {
+    color: var(--c-flame);
+  }
+
+  .related > div {
+    display: grid;
+  }
+</style>

@@ -1,0 +1,99 @@
+---
+import Icon from './Icon.astro';
+import type { Brand } from '../data/brands';
+
+interface Props {
+  brands: Brand[];
+  /** Show the category labels on each brand */
+  showCategories?: boolean;
+  headingLevel?: 'h3' | 'h4';
+}
+
+const { brands, showCategories = false, headingLevel: H = 'h3' } = Astro.props;
+---
+
+<ul class="brand-grid" role="list">
+  {
+    brands.map((b) => (
+      <li class="brand" data-brand-categories={b.categories.join('|')} data-brand-name={b.name.toLowerCase()}>
+        <H class="brand__name">{b.name}</H>
+        <p class="brand__blurb">{b.blurb}</p>
+        {showCategories && <p class="brand__cats">{b.categories.join(' · ')}</p>}
+        {b.url && (
+          <a href={b.url} class="brand__link" target="_blank" rel="noopener">
+            Visit site <Icon name="arrow-up-right" size={14} />
+            <span class="visually-hidden">for {b.name} (opens in a new tab)</span>
+          </a>
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .brand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .brand {
+    display: grid;
+    align-content: start;
+    gap: 0.35rem;
+    padding: var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+
+  .brand:hover {
+    border-color: var(--c-stone-2);
+    box-shadow: var(--shadow);
+  }
+
+  .brand[hidden] {
+    display: none;
+  }
+
+  .brand__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .brand__blurb {
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+    line-height: 1.5;
+  }
+
+  .brand__cats {
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-brass-text);
+  }
+
+  .brand__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    margin-top: var(--space-2);
+    width: fit-content;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-ember);
+    text-decoration: none;
+  }
+
+  .brand__link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>

@@ -1,0 +1,282 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import Photo from '../../components/Photo.astro';
+import Icon from '../../components/Icon.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { owners, teamAt } from '../../data/team';
+import { locations, tel, prettyPhone } from '../../data/site';
+import { withBase } from '../../scripts/url';
+
+const slugify = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
+---
+
+<BaseLayout
+  title="Meet the Team"
+  description="Meet the HMI Fireplace Shops team in Osage Beach and Nixa, MO — NFI-certified installers, service technicians and showroom staff."
+>
+  <PageHero
+    title="Meet the team"
+    titleHtml="The people <em>behind the fire.</em>"
+    eyebrow="Our team"
+    lead="Certified specialists, longtime locals and genuinely nice people. When you call HMI, these are the folks who pick up."
+    crumbs={[{ label: 'About', href: withBase('/about/') }, { label: 'Meet the team' }]}
+  />
+
+  <section class="section section--tight owners-band">
+    <div class="container owners-card" data-reveal>
+      <div class="owners-card__mark" aria-hidden="true">
+        <span>C</span><span>&amp;</span><span>C</span>
+      </div>
+      <div>
+        <p class="eyebrow">{owners.role}</p>
+        <h2>{owners.names}</h2>
+        <p class="muted">{owners.bio[0]}</p>
+        <p class="muted">{owners.bio[1]}</p>
+        <a href={withBase('/about/')} class="link-arrow">Read the HMI story <Icon name="arrow-right" size={16} /></a>
+      </div>
+    </div>
+  </section>
+
+  {
+    locations.map((l, idx) => (
+      <section class:list={['section', { 'section--linen': idx % 2 === 0 }]} id={l.slug}>
+        <div class="container">
+          <SectionHeading eyebrow={`${l.region}`} title={`The ${l.shortName} <em>team.</em>`} align="split">
+            <p class="team-contact">
+              <a href={withBase(`/locations/${l.slug}/`)} class="link-arrow">
+                Visit {l.shortName} <Icon name="arrow-right" size={16} />
+              </a>
+              <a href={tel(l.phone)} class="team-contact__phone tabular">
+                <Icon name="phone" size={16} /> {prettyPhone(l.phone)}
+              </a>
+            </p>
+          </SectionHeading>
+          <ul class="people" role="list">
+            {teamAt(l.slug as 'osage-beach' | 'nixa').map((m, i) => (
+              <li class="person" id={slugify(m.name)} data-reveal style={`--reveal-delay: ${i * 90}ms`}>
+                <div class="person__photo">
+                  <Photo src={m.photo} alt={`${m.name}, ${m.role}`} sizes="(min-width: 960px) 360px, 100vw" widths={[350]} position={m.focus} />
+                  <span class="person__since">Since {m.since}</span>
+                </div>
+                <div class="person__body">
+                  <h3 class="person__name">{m.name}</h3>
+                  <p class="person__role">
+                    {m.role} · {l.shortName}
+                  </p>
+                  {m.credentials && (
+                    <ul class="person__creds" role="list">
+                      {m.credentials.map((c) => (
+                        <li class="chip chip--ember">
+                          <Icon name="award" size={13} /> {c}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p class="person__bio">{m.bio}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    ))
+  }
+
+  <section class="section section--tight">
+    <div class="container join" data-reveal>
+      <div>
+        <p class="eyebrow">Careers</p>
+        <h2>Like what you see? <em>Join us.</em></h2>
+        <p class="muted">We invest in training and certification for every member of our team.</p>
+      </div>
+      <a href={withBase('/careers/')} class="btn btn--primary btn--lg">See careers <Icon name="arrow-right" size={18} class="icon-arrow" /></a>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .owners-band {
+    padding-top: var(--section-y);
+  }
+
+  .owners-card {
+    display: grid;
+    gap: var(--space-6);
+    align-items: center;
+    padding: clamp(1.5rem, 1rem + 2vw, 3rem);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  @media (min-width: 860px) {
+    .owners-card {
+      grid-template-columns: 220px 1fr;
+      gap: var(--space-8);
+    }
+  }
+
+  .owners-card > div:last-child {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+  }
+
+  .owners-card__mark {
+    display: grid;
+    place-content: center;
+    grid-auto-flow: column;
+    gap: 0.15em;
+    aspect-ratio: 1;
+    width: min(220px, 60%);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 70%, rgb(185 71 27 / 0.35), transparent 65%),
+      var(--c-ink);
+    color: var(--c-text-invert);
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+    font-weight: 400;
+    outline: 1px solid var(--c-brass);
+    outline-offset: -10px;
+  }
+
+  .owners-card__mark span:nth-child(2) {
+    font-style: italic;
+    color: var(--c-flame);
+  }
+
+  .team-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-6);
+    align-items: center;
+  }
+
+  .team-contact__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 650;
+    color: var(--c-text);
+    text-decoration: none;
+  }
+
+  .people {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: var(--space-5);
+    padding: 0;
+    list-style: none;
+  }
+
+  .person {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    scroll-margin-top: calc(var(--header-h) + 1.5rem);
+  }
+
+  .person:target {
+    box-shadow: 0 0 0 3px var(--c-ember);
+  }
+
+  .person__photo {
+    position: relative;
+    aspect-ratio: 5 / 4;
+    background: var(--c-linen);
+  }
+
+  .person__photo :global(picture),
+  .person__photo :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .person__photo :global(img) {
+    object-fit: cover;
+  }
+
+  .person__since {
+    position: absolute;
+    left: var(--space-4);
+    bottom: var(--space-4);
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-pill);
+    background: rgb(20 17 15 / 0.75);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .person__body {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-5) var(--space-6);
+  }
+
+  .person__name {
+    font-size: var(--fs-xl);
+  }
+
+  .person__role {
+    margin-top: calc(var(--space-2) * -1);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-ember);
+  }
+
+  .person__creds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .person__creds .chip {
+    font-size: var(--fs-2xs);
+  }
+
+  .person__bio {
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  .join {
+    display: grid;
+    gap: var(--space-5);
+    align-items: center;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--c-stone);
+    background: var(--c-paper);
+  }
+
+  @media (min-width: 760px) {
+    .join {
+      grid-template-columns: 1fr auto;
+    }
+  }
+
+  .join > div {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .join h2 {
+    font-size: var(--fs-xl);
+  }
+</style>

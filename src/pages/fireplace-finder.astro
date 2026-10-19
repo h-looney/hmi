@@ -1,0 +1,293 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import FireplaceFinder from '../components/FireplaceFinder.astro';
+import FuelCostCalculator from '../components/FuelCostCalculator.astro';
+import Icon, { type IconName } from '../components/Icon.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { fuelProfiles } from '../data/fuels';
+import { site } from '../data/site';
+import { withBase } from '../scripts/url';
+
+const fuelIcon: Record<string, IconName> = { wood: 'tree', gas: 'flame', electric: 'bolt', pellet: 'pellet' };
+
+const details: Record<string, { install: string; upkeep: string }> = {
+  wood: { install: 'Needs a chimney system — plan it early in new builds', upkeep: 'Ash removal, wood storage, yearly inspection & sweep' },
+  gas: { install: 'Gas line plus a direct vent through a wall or roof', upkeep: 'Annual service and occasional glass cleaning' },
+  electric: { install: 'Plug in or hardwire — almost anywhere', upkeep: 'Occasional dusting; little else' },
+  pellet: { install: 'Vents through a wall; needs a nearby outlet', upkeep: 'Hopper refills, regular ash cleanout, yearly service' },
+};
+
+const ratingRows = fuelProfiles[0].ratings.map((r) => r.label);
+---
+
+<BaseLayout
+  title="Fireplace Finder & Fuel Cost Calculator"
+  description="Answer four quick questions to find the right fireplace, insert or stove for your home, compare wood, gas, electric and pellet side by side, and estimate monthly fuel costs."
+>
+  <PageHero
+    title="Fireplace Finder"
+    titleHtml="Find the fire that fits <em>the way you live.</em>"
+    eyebrow="Fireplace Finder"
+    lead="Four quick questions, a side-by-side fuel comparison and a cost calculator — everything you need before you visit. Prefer to talk it through? Our team has been helping Missouri families choose since 1975."
+    crumbs={[{ label: 'Fireplace Finder' }]}
+  >
+    <a href="#finder" class="btn btn--primary btn--lg">
+      Start the quiz <Icon name="arrow-right" size={18} class="icon-arrow" />
+    </a>
+    <a href="#calculator" class="btn btn--ghost-light btn--lg">
+      <Icon name="dollar" size={18} /> Compare fuel costs
+    </a>
+  </PageHero>
+
+  <!-- Quiz -->
+  <section class="section" id="finder">
+    <div class="container finder-layout">
+      <div class="finder-layout__intro">
+        <SectionHeading
+          eyebrow="Step 1 · The quiz"
+          title="Answer four questions, <em>get three matches.</em>"
+          lead="There are no wrong answers. We’ll suggest the product categories that fit best — then our team can fine-tune the details with you."
+        />
+        <ul class="perks" role="list" data-reveal>
+          <li><Icon name="clock" size={18} /> Takes about a minute</li>
+          <li><Icon name="shield" size={18} /> No email required</li>
+          <li><Icon name="arrow-up-right" size={18} /> Share or send your results</li>
+        </ul>
+      </div>
+      <FireplaceFinder />
+    </div>
+  </section>
+
+  <!-- Compare -->
+  <section class="section section--linen" id="compare">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Step 2 · Compare"
+        title="Wood, gas, electric &amp; pellet <em>side by side.</em>"
+        lead="A quick, honest look at how each fuel performs. Ratings run from one (least) to five (best) and reflect typical products — individual models vary."
+        align="split"
+      />
+      <div class="compare" data-reveal>
+        <table class="compare__table">
+          <caption class="visually-hidden">Fuel comparison</caption>
+          <thead>
+            <tr>
+              <td></td>
+              {
+                fuelProfiles.map((f) => (
+                  <th scope="col">
+                    <span class="compare__fuel">
+                      <span class="icon-tile">
+                        <Icon name={fuelIcon[f.id]} size={22} />
+                      </span>
+                      <span>
+                        <span class="compare__name">{f.name}</span>
+                        <span class="compare__tag">{f.tagline}</span>
+                      </span>
+                    </span>
+                  </th>
+                ))
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Best for</th>
+              {fuelProfiles.map((f) => <td>{f.bestFor}</td>)}
+            </tr>
+            {
+              ratingRows.map((label, i) => (
+                <tr>
+                  <th scope="row">{label}</th>
+                  {fuelProfiles.map((f) => (
+                    <td>
+                      <span class="dots" aria-hidden="true">
+                        {Array.from({ length: 5 }, (_, n) => (
+                          <span class:list={['dot', { 'is-on': n < f.ratings[i].value }]} />
+                        ))}
+                      </span>
+                      <span class="visually-hidden">{f.ratings[i].value} out of 5</span>
+                    </td>
+                  ))}
+                </tr>
+              ))
+            }
+            <tr>
+              <th scope="row">Installation</th>
+              {fuelProfiles.map((f) => <td>{details[f.id].install}</td>)}
+            </tr>
+            <tr>
+              <th scope="row">Upkeep</th>
+              {fuelProfiles.map((f) => <td>{details[f.id].upkeep}</td>)}
+            </tr>
+            <tr class="compare__shop">
+              <th scope="row">Shop</th>
+              {
+                fuelProfiles.map((f) => (
+                  <td>
+                    <a href={withBase(`/products/?fuel=${f.id}`)} class="link-arrow">
+                      {f.name} products <Icon name="arrow-right" size={16} />
+                    </a>
+                  </td>
+                ))
+              }
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Calculator -->
+  <section class="section" id="calculator">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Step 3 · Run the numbers"
+        title="What will it cost <em>to keep warm?</em>"
+        lead="Compare the cost of delivering the same amount of heat with each fuel. Plug in your own prices and how much you plan to run your fire."
+        align="split"
+      />
+      <FuelCostCalculator />
+    </div>
+  </section>
+
+  <CtaBand
+    title="Have your matches? <em>Come see them lit.</em>"
+    text={`Bring your Fireplace Finder results to either showroom — Monday through Friday 8–5 and Saturday 9–1 — and we’ll walk you through the options in person. Family-owned since ${site.founded}.`}
+  />
+</BaseLayout>
+
+<style>
+  .finder-layout {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  @media (min-width: 1100px) {
+    .finder-layout {
+      grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.5fr);
+      align-items: start;
+    }
+
+    .finder-layout__intro {
+      position: sticky;
+      top: calc(var(--header-h) + 2rem);
+    }
+  }
+
+  .perks {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .perks li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .perks :global(svg) {
+    color: var(--c-ember);
+  }
+
+  .compare {
+    overflow-x: auto;
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .compare__table {
+    width: 100%;
+    min-width: 860px;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+
+  .compare__table th,
+  .compare__table td {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--c-stone);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .compare__table tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+
+  .compare__table thead th {
+    width: 21%;
+    padding-block: var(--space-5);
+    background: var(--c-paper);
+  }
+
+  .compare__table tbody th {
+    width: 16%;
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+
+  .compare__table tbody td {
+    color: var(--c-text);
+    line-height: 1.5;
+  }
+
+  .compare__fuel {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .compare__fuel > span:last-child {
+    display: grid;
+  }
+
+  .compare__fuel .icon-tile {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+
+  .compare__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 500;
+  }
+
+  .compare__tag {
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--c-text-muted);
+  }
+
+  .dots {
+    display: inline-flex;
+    gap: 4px;
+  }
+
+  .dot {
+    width: 18px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--c-stone);
+  }
+
+  .dot.is-on {
+    background: linear-gradient(90deg, var(--c-ember), var(--c-flame));
+  }
+
+  .compare__shop td {
+    background: var(--c-cream);
+  }
+</style>

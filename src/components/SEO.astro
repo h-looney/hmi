@@ -1,0 +1,93 @@
+---
+import { locations, site } from '../data/site';
+import { withBase } from '../scripts/url';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Absolute or root-relative image URL for social previews */
+  image?: string;
+  noindex?: boolean;
+  /** Extra JSON-LD objects for this page (FAQPage, BreadcrumbList, …) */
+  schema?: Record<string, unknown>[];
+}
+
+const { title, description = site.description, image = withBase('/og-image.jpg'), noindex = false, schema = [] } = Astro.props;
+
+const fullTitle = title.includes('HMI') ? title : `${title} | ${site.name}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const imageUrl = new URL(image, Astro.site);
+
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const organization = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${site.url}/#organization`,
+      name: site.name,
+      url: site.url,
+      logo: new URL(withBase('/favicon.svg'), Astro.site).toString(),
+      foundingDate: String(site.founded),
+      sameAs: Object.values(site.social),
+    },
+    ...locations.map((l) => ({
+      '@type': 'HomeGoodsStore',
+      '@id': `${site.url}/locations/${l.slug}/#store`,
+      name: l.name,
+      parentOrganization: { '@id': `${site.url}/#organization` },
+      url: `${site.url}/locations/${l.slug}/`,
+      telephone: `+1-${l.phone}`,
+      faxNumber: `+1-${l.fax}`,
+      image: imageUrl.toString(),
+      priceRange: '$$',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: l.street,
+        addressLocality: l.city,
+        addressRegion: l.state,
+        postalCode: l.zip,
+        addressCountry: 'US',
+      },
+      geo: { '@type': 'GeoCoordinates', latitude: l.geo.lat, longitude: l.geo.lng },
+      openingHoursSpecification: l.hours.flatMap((h, i) =>
+        h ? [{ '@type': 'OpeningHoursSpecification', dayOfWeek: dayNames[i], opens: h.open, closes: h.close }] : [],
+      ),
+    })),
+  ],
+};
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex" />}
+{
+  !noindex && (
+    <script is:inline define:vars={{ liveHost: new URL(site.url).hostname.replace(/^www\./, '') }}>
+      // Preview copies (Netlify, GitHub Pages, localhost…) stay out of search results — only the live domain is indexed.
+      if (location.hostname.replace(/^www\./, '') !== liveHost) {
+        const robots = document.createElement('meta');
+        robots.name = 'robots';
+        robots.content = 'noindex';
+        document.head.append(robots);
+      }
+    </script>
+  )
+}
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={site.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:locale" content="en_US" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+
+<script type="application/ld+json" set:html={JSON.stringify(organization)} />
+{schema.map((s) => <script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', ...s })} />)}

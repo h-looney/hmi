@@ -1,0 +1,372 @@
+---
+/**
+ * Cinematic 15:4 crossfading showcase. Panoramic images are shown at (or
+ * below) their native resolution so they stay crisp. Auto-advances unless the
+ * visitor prefers reduced motion, and pauses on hover, focus or via the button.
+ */
+import type { ImageMetadata } from 'astro';
+import Photo from './Photo.astro';
+import Icon from './Icon.astro';
+
+export interface Slide {
+  src: ImageMetadata;
+  alt: string;
+  label: string;
+  href: string;
+  position?: string;
+}
+
+interface Props {
+  slides: Slide[];
+  interval?: number;
+}
+
+const { slides, interval = 6500 } = Astro.props;
+---
+
+<div
+  class="showcase"
+  role="region"
+  aria-roledescription="carousel"
+  aria-label="Featured fireplaces"
+  data-showcase
+  data-interval={interval}
+>
+  <div class="showcase__track" aria-live="off">
+    {
+      slides.map((s, i) => (
+        <div
+          class:list={['showcase__slide', { 'is-active': i === 0 }]}
+          role="group"
+          aria-roledescription="slide"
+          aria-label={`${i + 1} of ${slides.length}: ${s.label}`}
+          aria-hidden={i === 0 ? undefined : 'true'}
+          data-slide
+        >
+          <Photo
+            src={s.src}
+            alt={s.alt}
+            sizes="(min-width: 1240px) 1240px, 100vw"
+            widths={[720, 1080, 1500]}
+            position={s.position}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : undefined}
+          />
+          <div class="showcase__cap">
+            <a href={s.href} class="showcase__caption" tabindex={i === 0 ? undefined : '-1'}>
+              <span class="showcase__label">{s.label}</span>
+              <Icon name="arrow-right" size={16} />
+            </a>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="showcase__controls">
+    <button type="button" class="showcase__btn" data-prev>
+      <Icon name="chevron-left" size={18} />
+      <span class="visually-hidden">Previous slide</span>
+    </button>
+    <div class="showcase__dots" role="group" aria-label="Choose a slide">
+      {
+        slides.map((s, i) => (
+          <button
+            type="button"
+            class="showcase__dot"
+            aria-label={`Show slide ${i + 1}: ${s.label}`}
+            aria-current={i === 0 ? 'true' : undefined}
+            data-dot={i}
+          />
+        ))
+      }
+    </div>
+    <button type="button" class="showcase__btn" data-next>
+      <Icon name="chevron-right" size={18} />
+      <span class="visually-hidden">Next slide</span>
+    </button>
+    <button type="button" class="showcase__btn showcase__pause" data-pause aria-pressed="false">
+      <span class="showcase__pause-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Pause slideshow</span>
+    </button>
+  </div>
+  <div class="showcase__progress" aria-hidden="true"><span data-progress></span></div>
+</div>
+
+<style>
+  .showcase {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--c-ink-2);
+    box-shadow:
+      0 40px 80px -30px rgb(0 0 0 / 0.7),
+      0 0 0 1px rgb(255 255 255 / 0.04);
+  }
+
+  .showcase__track {
+    position: relative;
+    aspect-ratio: 15 / 4;
+  }
+
+  @media (max-width: 760px) {
+    .showcase__track {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  .showcase__slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 1100ms var(--ease),
+      visibility 0s linear 1100ms;
+  }
+
+  .showcase__slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 1100ms var(--ease),
+      visibility 0s;
+  }
+
+  .showcase__slide :global(picture),
+  .showcase__slide :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .showcase__slide :global(img) {
+    object-fit: cover;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .showcase__slide :global(img) {
+      transform: scale(1.04);
+      transition: transform 9s linear;
+    }
+
+    .showcase__slide.is-active :global(img) {
+      transform: scale(1);
+    }
+  }
+
+  .showcase__slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgb(20 17 15 / 0.55), transparent 45%);
+    pointer-events: none;
+  }
+
+  .showcase__cap {
+    position: absolute;
+    left: var(--space-5);
+    bottom: var(--space-5);
+    z-index: 1;
+  }
+
+  .showcase__caption {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.95rem;
+    border-radius: var(--radius-pill);
+    background: rgb(20 17 15 / 0.62);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgb(255 255 255 / 0.14);
+    color: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color var(--dur) var(--ease);
+  }
+
+  .showcase__caption:hover {
+    background: var(--c-ember);
+  }
+
+  .showcase__controls {
+    position: absolute;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.3rem;
+    border-radius: var(--radius-pill);
+    background: rgb(20 17 15 / 0.62);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgb(255 255 255 / 0.14);
+  }
+
+  .showcase__btn {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    color: #fff;
+  }
+
+  .showcase__btn:hover {
+    background: rgb(255 255 255 / 0.14);
+  }
+
+  .showcase__dots {
+    display: flex;
+    gap: 0.15rem;
+  }
+
+  .showcase__dot {
+    position: relative;
+    width: 22px;
+    height: 34px;
+  }
+
+  .showcase__dot::before {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.45);
+    translate: -50% -50%;
+    transition: background-color var(--dur) var(--ease), width var(--dur) var(--ease);
+  }
+
+  .showcase__dot[aria-current='true']::before {
+    width: 16px;
+    border-radius: 4px;
+    background: var(--c-flame);
+  }
+
+  .showcase__pause-icon {
+    position: relative;
+    width: 10px;
+    height: 12px;
+    border-inline: 3px solid currentColor;
+  }
+
+  .showcase__pause[aria-pressed='true'] .showcase__pause-icon {
+    width: 0;
+    height: 0;
+    border-inline: 0;
+    border-block: 6px solid transparent;
+    border-left: 10px solid currentColor;
+    translate: 2px 0;
+  }
+
+  .showcase__progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: rgb(255 255 255 / 0.1);
+  }
+
+  .showcase__progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--c-flame);
+  }
+
+  @media (max-width: 560px) {
+    .showcase__controls {
+      left: var(--space-3);
+      right: var(--space-3);
+      bottom: var(--space-3);
+      justify-content: space-between;
+    }
+
+    .showcase__cap {
+      top: var(--space-3);
+      bottom: auto;
+      left: var(--space-3);
+    }
+  }
+</style>
+
+<script>
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('[data-showcase]').forEach((root) => {
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
+    const pauseBtn = root.querySelector<HTMLButtonElement>('[data-pause]')!;
+    const progress = root.querySelector<HTMLElement>('[data-progress]')!;
+    const interval = Number(root.dataset.interval ?? 6500);
+
+    let index = 0;
+    let userPaused = reduceMotion;
+    let hoverPaused = false;
+    let elapsed = 0;
+    let last = performance.now();
+    let raf = 0;
+
+    const show = (next: number) => {
+      index = (next + slides.length) % slides.length;
+      slides.forEach((s, i) => {
+        const active = i === index;
+        s.classList.toggle('is-active', active);
+        s.toggleAttribute('aria-hidden', !active);
+        s.querySelector('a')?.setAttribute('tabindex', active ? '0' : '-1');
+      });
+      dots.forEach((d, i) => d.setAttribute('aria-current', String(i === index)));
+      elapsed = 0;
+    };
+
+    const tick = (now: number) => {
+      const dt = now - last;
+      last = now;
+      if (!userPaused && !hoverPaused && !document.hidden) {
+        elapsed += dt;
+        if (elapsed >= interval) show(index + 1);
+      }
+      progress.style.width = `${Math.min(elapsed / interval, 1) * 100}%`;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const setPaused = (paused: boolean) => {
+      userPaused = paused;
+      pauseBtn.setAttribute('aria-pressed', String(paused));
+      const label = pauseBtn.querySelector('.visually-hidden');
+      if (label) label.textContent = paused ? 'Play slideshow' : 'Pause slideshow';
+    };
+
+    root.querySelector('[data-prev]')?.addEventListener('click', () => show(index - 1));
+    root.querySelector('[data-next]')?.addEventListener('click', () => show(index + 1));
+    dots.forEach((d) => d.addEventListener('click', () => show(Number(d.dataset.dot))));
+    pauseBtn.addEventListener('click', () => setPaused(!userPaused));
+
+    root.addEventListener('mouseenter', () => (hoverPaused = true));
+    root.addEventListener('mouseleave', () => (hoverPaused = false));
+    root.addEventListener('focusin', () => (hoverPaused = true));
+    root.addEventListener('focusout', (e) => {
+      if (!root.contains((e as FocusEvent).relatedTarget as Node)) hoverPaused = false;
+    });
+
+    // Swipe on touch devices
+    let startX = 0;
+    root.addEventListener('touchstart', (e) => (startX = e.touches[0].clientX), { passive: true });
+    root.addEventListener(
+      'touchend',
+      (e) => {
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) show(index + (dx < 0 ? 1 : -1));
+      },
+      { passive: true },
+    );
+
+    setPaused(userPaused);
+    raf = requestAnimationFrame(tick);
+    window.addEventListener('pagehide', () => cancelAnimationFrame(raf));
+  });
+</script>

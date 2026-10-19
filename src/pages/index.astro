@@ -1,0 +1,943 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Embers from '../components/Embers.astro';
+import PanoShowcase, { type Slide } from '../components/PanoShowcase.astro';
+import OpenStatus from '../components/OpenStatus.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import FuelTabs from '../components/FuelTabs.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import LiteVideo from '../components/LiteVideo.astro';
+import Steps from '../components/Steps.astro';
+import Photo from '../components/Photo.astro';
+import LocationCard from '../components/LocationCard.astro';
+import FaqList from '../components/FaqList.astro';
+import CtaBand from '../components/CtaBand.astro';
+
+import { locations, site, tel, prettyPhone, yearsInBusiness } from '../data/site';
+import { getCategory } from '../data/categories';
+import { brands, featuredBrandIds } from '../data/brands';
+import { getFaqs } from '../data/faqs';
+import { videos } from '../data/videos';
+
+import panoInsert from '../assets/photos/pano-insert-stone-wall.jpg';
+import panoLiving from '../assets/photos/pano-gas-living-room.jpg';
+import panoWoodStoves from '../assets/photos/pano-wood-stoves.jpg';
+import panoOutdoor from '../assets/photos/pano-outdoor-stone.jpg';
+import panoWhite from '../assets/photos/pano-white-modern.jpg';
+import panoWood from '../assets/photos/pano-wood-fireplace.jpg';
+import panoLounge from '../assets/photos/pano-gas-lounge.jpg';
+import storefront from '../assets/photos/storefront-sign.jpg';
+import forgeFlame from '../assets/brand/forge-and-flame.jpg';
+import stoveWood from '../assets/photos/stove-wood-cast-iron.png';
+import stoveGas from '../assets/photos/stove-gas-cast-iron.png';
+import { withBase } from '../scripts/url';
+
+const slides: Slide[] = [
+  { src: panoInsert, alt: 'Fireplace insert glowing in a slate stone wall beneath a wood mantel', label: 'Fireplace inserts', href: withBase('/products/fireplace-inserts/') },
+  { src: panoLiving, alt: 'Gas fireplace in a cozy living room with a sofa', label: 'Gas fireplaces', href: withBase('/products/gas-fireplaces/') },
+  { src: panoWoodStoves, alt: 'Two contemporary wood stoves on stone hearths', label: 'Wood stoves', href: withBase('/products/wood-stoves/'), position: '50% 60%' },
+  { src: panoOutdoor, alt: 'Outdoor fireplace in a long stacked-stone wall', label: 'Outdoor fireplaces', href: withBase('/products/outdoor-fireplaces/') },
+  { src: panoWhite, alt: 'Clean-face modern fireplace in a bright white room', label: 'Modern fireplaces', href: withBase('/products/gas-fireplaces/') },
+  { src: panoWood, alt: 'Wood fireplace in a gray stone wall', label: 'Wood-burning fireplaces', href: withBase('/products/wood-fireplaces/') },
+  { src: panoLounge, alt: 'Gas fireplace between two seating areas in an elegant room', label: 'See-through fireplaces', href: withBase('/products/gas-fireplaces/') },
+];
+
+const featuredCategories = [
+  'gas-fireplaces',
+  'wood-fireplaces',
+  'fireplace-inserts',
+  'wood-stoves',
+  'electric-fireplaces',
+  'outdoor-fireplaces',
+  'gas-logs',
+  'mantels-surrounds',
+].map(getCategory);
+
+const stats = [
+  { value: String(site.founded), label: 'Family-owned since', note: `${yearsInBusiness()} years warming Missouri homes` },
+  { value: '2', label: 'Showrooms', note: 'Osage Beach & Nixa' },
+  { value: 'NFI', label: 'Certified specialists', note: 'Wood & gas certifications' },
+  { value: '25+', label: 'Trusted brands', note: 'From Heat & Glo to Vermont Castings' },
+];
+
+const services = [
+  {
+    icon: 'ruler',
+    title: 'Showroom & design help',
+    text: 'Compare models, finishes and fuels in person, and get honest advice about what fits your room, your home and your budget.',
+    href: withBase('/services/#design'),
+  },
+  {
+    icon: 'hardhat',
+    title: 'Certified installation',
+    text: 'Our own trained crews handle the venting, gas and finish work — following manufacturer specifications and local codes.',
+    href: withBase('/services/#installation'),
+  },
+  {
+    icon: 'wrench',
+    title: 'Service & repair',
+    text: 'Our service department is second to none, with routine service, repairs, parts and warranty support for the products we sell.',
+    href: withBase('/services/#service'),
+  },
+  {
+    icon: 'home',
+    title: 'Builders & contractors',
+    text: 'From spec homes to custom lake houses, HMI has been a dependable hearth partner for Ozarks builders since 1975.',
+    href: withBase('/services/#builders'),
+  },
+] as const;
+
+const steps = [
+  { title: 'Visit or call', text: 'Stop by a showroom or tell us about your space. We’ll ask how you want to use your fire.' },
+  { title: 'Plan & quote', text: 'We recommend the right fuel, size and finish, then put together a clear quote.' },
+  { title: 'Certified install', text: 'Our own crew installs it safely and walks you through operation and care.' },
+  { title: 'Ongoing service', text: 'We’re a phone call away for routine service, repairs and parts for years to come.' },
+];
+
+const marqueeBrands = featuredBrandIds.map((id) => brands.find((b) => b.id === id)!.name);
+const homeFaqs = getFaqs(['which-fuel', 'install', 'insert-fit', 'power-outage', 'visit']);
+---
+
+<BaseLayout
+  title="HMI Fireplace Shops | Fireplaces, Inserts & Stoves in Osage Beach & Nixa, MO"
+  description="Family-owned since 1975. Shop wood, gas, electric and pellet fireplaces, inserts and stoves at HMI Fireplace Shops in Osage Beach (Lake of the Ozarks) and Nixa, MO — with certified installation and service."
+>
+  <!-- ================= HERO ================= -->
+  <section class="hero on-dark">
+    <Embers class="hero__embers" />
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <p class="eyebrow">Family-owned in the Missouri Ozarks since {site.founded}</p>
+        <h1 class="display">No one warms you <em>like HMI.</em></h1>
+        <p class="lead hero__lead">
+          Fireplaces, inserts and stoves — chosen with care, installed by certified pros and serviced for years to come
+          from our showrooms in Osage Beach and Nixa.
+        </p>
+        <div class="hero__actions">
+          <a href={withBase('/products/')} class="btn btn--primary btn--lg">
+            Explore products <Icon name="arrow-right" size={18} class="icon-arrow" />
+          </a>
+          <a href={withBase('/fireplace-finder/')} class="btn btn--ghost-light btn--lg">
+            <Icon name="compass" size={18} /> Find your fireplace
+          </a>
+        </div>
+      </div>
+
+      <aside class="hero__visit" aria-label="Visit a showroom">
+        <p class="hero__visit-title">Visit a showroom</p>
+        <ul role="list">
+          {
+            locations.map((l) => (
+              <li class="hero__store">
+                <div>
+                  <a href={withBase(`/locations/${l.slug}/`)} class="hero__store-name">
+                    {l.shortName}
+                  </a>
+                  <p class="hero__store-region">{l.region}</p>
+                  <OpenStatus location={l} />
+                </div>
+                <a href={tel(l.phone)} class="hero__store-call" aria-label={`Call ${l.shortName}: ${prettyPhone(l.phone)}`}>
+                  <Icon name="phone" size={18} />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <a href={withBase('/contact/#visit')} class="link-arrow">
+          Book an evening or Sunday visit <Icon name="arrow-right" size={16} />
+        </a>
+      </aside>
+    </div>
+
+    <div class="container hero__showcase">
+      <PanoShowcase slides={slides} />
+    </div>
+  </section>
+
+  <!-- ================= TRUST STATS ================= -->
+  <section class="stats" aria-label="HMI at a glance">
+    <div class="container">
+      <ul class="stats__list" role="list">
+        {
+          stats.map((s, i) => (
+            <li class="stat" data-reveal style={`--reveal-delay: ${i * 80}ms`}>
+              <span class="stat__value">{s.value}</span>
+              <span class="stat__label">{s.label}</span>
+              <span class="stat__note">{s.note}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= FUEL COMPARISON ================= -->
+  <section class="section" id="compare">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Start with the fire you want"
+        title="Wood, gas, electric or pellet? <em>Let’s compare.</em>"
+        lead="Every fuel has its strengths. Here’s the quick version — then take our 60-second Fireplace Finder for a personal recommendation."
+        align="split"
+      >
+        <a href={withBase('/fireplace-finder/')} class="link-arrow">
+          Take the Fireplace Finder <Icon name="arrow-right" size={16} />
+        </a>
+      </SectionHeading>
+      <div data-reveal>
+        <FuelTabs idPrefix="home-fuel" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CATEGORIES ================= -->
+  <section class="section section--linen">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Shop by category"
+        title="Everything for the hearth, <em>under two roofs.</em>"
+        lead="From built-in fireplaces and inserts to stoves, gas logs, mantels and stone, our showrooms carry the brands and know-how to bring your project together."
+        align="split"
+      >
+        <a href={withBase('/products/')} class="link-arrow">
+          View all products <Icon name="arrow-right" size={16} />
+        </a>
+      </SectionHeading>
+      <div class="grid grid--cats home-cats">
+        {
+          featuredCategories.map((c, i) => (
+            <div data-reveal style={`--reveal-delay: ${(i % 4) * 70}ms`}>
+              <CategoryCard category={c} compact />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FEATURED: VERMONT CASTINGS ================= -->
+  <section class="section featured on-dark" id="featured">
+    <div class="container featured__inner">
+      <div class="featured__copy" data-reveal>
+        <p class="eyebrow">Featured this fall</p>
+        <h2>American craftsmanship, <em>built to gather around.</em></h2>
+        <p class="lead">
+          Classic cast-iron stoves with heirloom detailing. This season both HMI showrooms are featuring Vermont Castings wood
+          and gas stoves by Forge &amp; Flame — stop in to see the craftsmanship up close and find the right size for your
+          home.
+        </p>
+        <div class="featured__duo">
+          <a href={withBase('/products/wood-stoves/')} class="featured__product">
+            <span class="featured__product-media">
+              <Image src={stoveWood} alt="" width={180} densities={[1, 2]} />
+            </span>
+            <span class="featured__product-name">Wood stoves</span>
+            <span class="featured__product-link">Explore <Icon name="arrow-right" size={14} /></span>
+          </a>
+          <a href={withBase('/products/gas-stoves/')} class="featured__product">
+            <span class="featured__product-media">
+              <Image src={stoveGas} alt="" width={180} densities={[1, 2]} />
+            </span>
+            <span class="featured__product-name">Gas stoves</span>
+            <span class="featured__product-link">Explore <Icon name="arrow-right" size={14} /></span>
+          </a>
+        </div>
+      </div>
+      <div class="featured__media" data-reveal style="--reveal-delay: 120ms">
+        <LiteVideo video={videos.vermontCastings} poster={panoWoodStoves} posterPosition="50% 60%" />
+        <div class="featured__brand">
+          <Image src={forgeFlame} alt="Forge & Flame — quality heating" width={150} densities={[1, 2]} class="featured__logo" />
+          <p>
+            Vermont Castings stoves are now part of the Forge &amp; Flame family of hearth brands — on display at{' '}
+            <a href={withBase('/locations/osage-beach/')} class="text-link">Osage Beach</a>{' '}and{' '}
+            <a href={withBase('/locations/nixa/')} class="text-link">Nixa</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SERVICES ================= -->
+  <section class="section">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Sales · Installation · Service"
+        title="One team, from first visit <em>to the hundredth fire.</em>"
+        lead="We want every experience with HMI to feel like calling a friend who happens to be a trusted professional. That means honest advice, safe installations and certified service on everything we sell."
+        align="center"
+      />
+      <div class="grid grid--4 services">
+        {
+          services.map((s, i) => (
+            <a href={s.href} class="service" data-reveal style={`--reveal-delay: ${i * 80}ms`}>
+              <span class="icon-tile">
+                <Icon name={s.icon} size={24} />
+              </span>
+              <h3 class="service__title">{s.title}</h3>
+              <p class="service__text">{s.text}</p>
+              <span class="link-arrow">
+                Learn more <Icon name="arrow-right" size={16} />
+              </span>
+            </a>
+          ))
+        }
+      </div>
+
+      <div class="process">
+        <div class="ornament" aria-hidden="true"><Icon name="flame" size={18} /></div>
+        <h3 class="process__title" data-reveal>How it works</h3>
+        <Steps steps={steps} />
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STORY ================= -->
+  <section class="section section--paper story">
+    <div class="container story__inner">
+      <div class="story__media" data-reveal>
+        <div class="media-frame story__frame">
+          <Photo src={storefront} alt="The HMI Fireplace Shop storefront with its flame-dotted sign" sizes="(min-width: 960px) 560px, 100vw" />
+        </div>
+        <div class="story__badge" aria-hidden="true">
+          <span class="story__badge-text">Since</span>
+          <span class="story__badge-year">{site.founded}</span>
+        </div>
+      </div>
+      <div class="story__copy" data-reveal style="--reveal-delay: 120ms">
+        <p class="eyebrow">Our story</p>
+        <h2>The hearth is <em>the heart of the home.</em></h2>
+        <p class="story__text">
+          In 1975, Norm Buechting opened a small fireplace store at the Lake of the Ozarks, serving builders and homeowners
+          with fireplaces and stone veneer. Today his daughter Cheryl and her husband Charlie lead HMI with the same belief:
+          a fireplace isn’t just an appliance — it’s where families gather, celebrate and make memories.
+        </p>
+        <blockquote class="story__quote">
+          <Icon name="quote" size={28} />
+          <p>Developing relationships and educating our customers is our goal.</p>
+          <footer>— The HMI family</footer>
+        </blockquote>
+        <div class="cluster">
+          <a href={withBase('/about/')} class="btn btn--outline">Read our story</a>
+          <a href={withBase('/about/team/')} class="link-arrow">Meet the team <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BRANDS MARQUEE ================= -->
+  <section class="brands-band" aria-labelledby="brands-heading">
+    <div class="container brands-band__head">
+      <p class="eyebrow eyebrow--plain" id="brands-heading">Brands we carry</p>
+      <a href={withBase('/products/#brands')} class="link-arrow">See all brands <Icon name="arrow-right" size={16} /></a>
+    </div>
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        {
+          [...marqueeBrands, ...marqueeBrands].map((name, i) => (
+            <span class:list={['marquee__item', { 'marquee__item--dup': i >= marqueeBrands.length }]}>
+              {name}
+              <Icon name="flame" size={14} />
+            </span>
+          ))
+        }
+      </div>
+    </div>
+    <p class="visually-hidden">{marqueeBrands.join(', ')}</p>
+  </section>
+
+  <!-- ================= LOCATIONS ================= -->
+  <section class="section section--linen" id="locations">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Two Missouri showrooms"
+        title="Come see us — <em>the coffee’s on.</em>"
+        lead="Walk-ins are always welcome during showroom hours. Evenings and Sundays are available by appointment."
+        align="split"
+      >
+        <a href={withBase('/contact/')} class="link-arrow">Contact &amp; directions <Icon name="arrow-right" size={16} /></a>
+      </SectionHeading>
+      <div class="grid grid--2">
+        {locations.map((l) => <LocationCard location={l} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="section">
+    <div class="container faq-layout">
+      <SectionHeading
+        eyebrow="Good questions"
+        title="Answers from <em>people who know fire.</em>"
+        lead="Don’t see your question? Call either showroom — we’re happy to help, whether or not you bought from us."
+      >
+        <a href={withBase('/resources/#faq')} class="link-arrow">More FAQs &amp; owner resources <Icon name="arrow-right" size={16} /></a>
+      </SectionHeading>
+      <div data-reveal>
+        <FaqList faqs={homeFaqs} openFirst />
+      </div>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero {
+    --overlap: clamp(70px, 9vw, 130px);
+    position: relative;
+    isolation: isolate;
+    padding-top: clamp(3rem, 2rem + 4vw, 6rem);
+    background:
+      linear-gradient(to bottom, transparent calc(100% - var(--overlap)), var(--c-cream) calc(100% - var(--overlap))),
+      radial-gradient(ellipse 60% 70% at 85% 30%, rgb(185 71 27 / 0.22), transparent 65%),
+      radial-gradient(ellipse 40% 50% at 10% 10%, rgb(240 160 75 / 0.07), transparent 60%),
+      var(--c-ink);
+  }
+
+  .hero :global(.hero__embers) {
+    inset: 0 0 var(--overlap) 0;
+    height: auto;
+  }
+
+  .hero__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--space-7);
+    align-items: end;
+    padding-bottom: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  }
+
+  @media (min-width: 1000px) {
+    .hero__inner {
+      grid-template-columns: minmax(0, 1fr) 340px;
+    }
+  }
+
+  .hero__copy {
+    display: grid;
+    gap: var(--space-5);
+    max-width: 760px;
+  }
+
+  .hero__lead {
+    font-size: clamp(1.1rem, 1rem + 0.4vw, 1.3rem);
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+
+  .hero__visit {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    border: 1px solid var(--c-ink-line);
+    border-radius: var(--radius-lg);
+    background: rgb(36 31 27 / 0.7);
+    backdrop-filter: blur(6px);
+  }
+
+  .hero__visit-title {
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--c-brass-light);
+  }
+
+  .hero__visit ul {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero__store {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--c-ink-line);
+  }
+
+  .hero__store-name {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    color: var(--c-text-invert);
+    text-decoration: none;
+  }
+
+  .hero__store-name:hover {
+    color: var(--c-flame);
+  }
+
+  .hero__store-region {
+    font-size: var(--fs-xs);
+    color: var(--c-text-invert-muted);
+    margin-bottom: 0.3rem;
+  }
+
+  .hero__store :global(.status) {
+    color: var(--c-text-invert-muted);
+  }
+
+  .hero__store-call {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--c-ember);
+    color: #fff;
+    flex: none;
+    transition: background-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+
+  .hero__store-call:hover {
+    background: var(--c-ember-600);
+    transform: scale(1.05);
+  }
+
+  @media (max-width: 999px) {
+    .hero__visit {
+      display: none;
+    }
+  }
+
+  .hero__showcase {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---------- Stats ---------- */
+  .stats {
+    padding-block: clamp(2.5rem, 2rem + 2vw, 3.5rem) 0;
+  }
+
+  .stats__list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 0;
+    list-style: none;
+  }
+
+  .stat {
+    display: grid;
+    gap: 0.2rem;
+    padding: var(--space-2) var(--space-5);
+    border-left: 1px solid var(--c-stone-2);
+  }
+
+  .stat:first-child {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .stat__value {
+    font-family: var(--font-display);
+    font-size: var(--fs-2xl);
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--c-ember);
+  }
+
+  .stat__label {
+    font-weight: 650;
+    font-size: var(--fs-sm);
+  }
+
+  .stat__note {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  @media (max-width: 860px) {
+    .stats__list {
+      grid-template-columns: repeat(2, 1fr);
+      row-gap: var(--space-5);
+    }
+
+    .stat:nth-child(3) {
+      border-left: 0;
+      padding-left: 0;
+    }
+  }
+
+  /* ---------- Featured ---------- */
+  .featured {
+    background:
+      radial-gradient(ellipse 50% 70% at 15% 80%, rgb(185 71 27 / 0.2), transparent 65%),
+      var(--c-ink);
+  }
+
+  .featured__inner {
+    display: grid;
+    gap: var(--space-7);
+    align-items: center;
+  }
+
+  @media (min-width: 1000px) {
+    .featured__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: var(--space-8);
+    }
+  }
+
+  .featured__copy {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .featured__duo {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+
+  .featured__product {
+    display: grid;
+    justify-items: start;
+    gap: 0.25rem;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--c-ink-line);
+    background: var(--c-ink-2);
+    color: var(--c-text-invert);
+    text-decoration: none;
+    transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+  }
+
+  .featured__product:hover {
+    border-color: rgb(240 160 75 / 0.5);
+    background: var(--c-ink-3);
+  }
+
+  .featured__product-media {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    margin-bottom: var(--space-2);
+    border-radius: var(--radius);
+    background:
+      radial-gradient(circle at 50% 65%, rgb(240 160 75 / 0.35), transparent 62%),
+      linear-gradient(160deg, #f6efe4, #e3d5c1);
+  }
+
+  .featured__product-media :global(img) {
+    width: 72%;
+    height: auto;
+    filter: drop-shadow(0 12px 14px rgb(27 23 20 / 0.35));
+    transition: transform 500ms var(--ease-out);
+  }
+
+  .featured__product:hover .featured__product-media :global(img) {
+    transform: translateY(-4px) scale(1.03);
+  }
+
+  .featured__product-name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+  }
+
+  .featured__product-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-flame);
+  }
+
+  .featured__media {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .featured__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid var(--c-ink-line);
+    border-radius: var(--radius-lg);
+    font-size: var(--fs-sm);
+    color: var(--c-text-invert-muted);
+  }
+
+  .featured__brand :global(.featured__logo) {
+    width: 110px;
+    height: auto;
+    border-radius: var(--radius-sm);
+    flex: none;
+  }
+
+  .home-cats > div {
+    display: grid;
+  }
+
+  /* ---------- Services ---------- */
+  .service {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-6) var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    color: var(--c-text);
+    text-decoration: none;
+    transition:
+      transform 300ms var(--ease-out),
+      box-shadow 300ms var(--ease-out),
+      border-color 300ms var(--ease-out);
+  }
+
+  .service:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--c-stone-2);
+  }
+
+  .service .icon-tile {
+    margin-bottom: var(--space-2);
+  }
+
+  .service__title {
+    font-size: var(--fs-lg);
+  }
+
+  .service__text {
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .service .link-arrow {
+    margin-top: var(--space-2);
+  }
+
+  .process {
+    margin-top: clamp(3.5rem, 2.5rem + 4vw, 6rem);
+  }
+
+  .process .ornament {
+    max-width: 520px;
+    margin: 0 auto var(--space-4);
+  }
+
+  .process__title {
+    margin-bottom: var(--space-6);
+    font-size: var(--fs-xl);
+    text-align: center;
+  }
+
+  /* ---------- Story ---------- */
+  .story__inner {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  @media (min-width: 960px) {
+    .story__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .story__media {
+    position: relative;
+  }
+
+  .story__frame {
+    aspect-ratio: 800 / 475;
+  }
+
+  .story__badge {
+    position: absolute;
+    right: clamp(-0.5rem, -2vw, -1.5rem);
+    bottom: -1.75rem;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    background: var(--c-ink);
+    color: var(--c-text-invert);
+    box-shadow: var(--shadow-lg);
+    outline: 1px solid var(--c-brass);
+    outline-offset: -8px;
+  }
+
+  @media (max-width: 640px) {
+    .story__badge {
+      right: var(--space-3);
+      width: 104px;
+      height: 104px;
+    }
+  }
+
+  .story__badge-year {
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    line-height: 1;
+    color: var(--c-flame);
+  }
+
+  .story__badge-text {
+    margin-bottom: 0.25rem;
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--c-text-invert-muted);
+  }
+
+  .story__copy {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .story__text {
+    color: var(--c-text-muted);
+    font-size: var(--fs-md);
+  }
+
+  .story__quote {
+    position: relative;
+    padding: var(--space-5) var(--space-5) var(--space-5) var(--space-6);
+    border-left: 2px solid var(--c-ember);
+    background: var(--c-linen);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .story__quote :global(svg) {
+    color: var(--c-brass);
+    margin-bottom: var(--space-2);
+  }
+
+  .story__quote p {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  .story__quote footer {
+    margin-top: var(--space-2);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-text-muted);
+  }
+
+  /* ---------- Brands marquee ---------- */
+  .brands-band {
+    padding-block: var(--space-7);
+    border-block: 1px solid var(--c-stone);
+    background: var(--c-cream);
+    overflow: hidden;
+  }
+
+  .brands-band__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  .marquee {
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    gap: var(--space-7);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .marquee__track {
+      animation: marquee 60s linear infinite;
+    }
+
+    .brands-band:hover .marquee__track {
+      animation-play-state: paused;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      mask-image: none;
+    }
+
+    .marquee__track {
+      flex-wrap: wrap;
+      width: auto;
+      justify-content: center;
+      gap: var(--space-3) var(--space-6);
+      max-width: var(--container);
+      margin-inline: auto;
+      padding-inline: var(--gutter);
+    }
+
+    .marquee .marquee__item {
+      gap: var(--space-6);
+      font-size: var(--fs-lg);
+    }
+
+    .marquee .marquee__item--dup {
+      display: none;
+    }
+  }
+
+  @keyframes marquee {
+    to {
+      translate: -50% 0;
+    }
+  }
+
+  .marquee__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-7);
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2.1rem);
+    font-weight: 400;
+    color: var(--c-text);
+    white-space: nowrap;
+  }
+
+  .marquee__item :global(svg) {
+    color: var(--c-ember);
+    opacity: 0.6;
+  }
+
+  /* ---------- FAQ ---------- */
+  .faq-layout {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 960px) {
+    .faq-layout {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: var(--space-9);
+      align-items: start;
+    }
+
+    .faq-layout :global(.section-head) {
+      position: sticky;
+      top: calc(var(--header-h) + 2rem);
+    }
+  }
+</style>

@@ -1,0 +1,412 @@
+---
+import Icon, { type IconName } from './Icon.astro';
+import { fuelProfiles } from '../data/fuels';
+import { getCategory, categoryHref } from '../data/categories';
+
+interface Props {
+  idPrefix?: string;
+}
+
+const { idPrefix = 'fuel' } = Astro.props;
+
+const fuelIcon: Record<string, IconName> = {
+  wood: 'tree',
+  gas: 'flame',
+  electric: 'bolt',
+  pellet: 'pellet',
+};
+---
+
+<div class="fuel-tabs" data-tabs>
+  <div class="fuel-tabs__list" role="tablist" aria-label="Compare fuel types">
+    {
+      fuelProfiles.map((f, i) => (
+        <button
+          type="button"
+          role="tab"
+          class="fuel-tab"
+          id={`${idPrefix}-tab-${f.id}`}
+          aria-controls={`${idPrefix}-panel-${f.id}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          tabindex={i === 0 ? 0 : -1}
+          data-tab
+        >
+          <span class="fuel-tab__icon">
+            <Icon name={fuelIcon[f.id]} size={22} />
+          </span>
+          <span class="fuel-tab__text">
+            <span class="fuel-tab__name">{f.name}</span>
+            <span class="fuel-tab__tag">{f.tagline}</span>
+          </span>
+        </button>
+      ))
+    }
+  </div>
+
+  {
+    fuelProfiles.map((f, i) => (
+      <div
+        role="tabpanel"
+        class="fuel-panel"
+        id={`${idPrefix}-panel-${f.id}`}
+        aria-labelledby={`${idPrefix}-tab-${f.id}`}
+        hidden={i !== 0}
+        tabindex="0"
+        data-panel
+      >
+        <div class="fuel-panel__main">
+          <h3 class="fuel-panel__title">
+            {f.name}: <em>{f.tagline.toLowerCase()}</em>
+          </h3>
+          <p class="fuel-panel__best">
+            <strong>Best for:</strong> {f.bestFor}
+          </p>
+          <div class="fuel-panel__lists">
+            <div>
+              <p class="fuel-panel__label">What you’ll love</p>
+              <ul class="checklist" role="list">
+                {f.pros.map((p) => (
+                  <li>
+                    <Icon name="check" size={18} />
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p class="fuel-panel__label">Keep in mind</p>
+              <ul class="fuel-panel__cons" role="list">
+                {f.cons.map((c) => (
+                  <li>
+                    <Icon name="info" size={18} />
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <aside class="fuel-panel__side">
+          <dl class="ratings">
+            {f.ratings.map((r) => (
+              <div class="rating">
+                <dt>{r.label}</dt>
+                <dd>
+                  <span class="rating__dots" aria-hidden="true">
+                    {Array.from({ length: 5 }, (_, n) => (
+                      <span class:list={['rating__dot', { 'is-on': n < r.value }]} />
+                    ))}
+                  </span>
+                  <span class="visually-hidden">
+                    {r.value} out of 5
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <div class="fuel-panel__shop">
+            <p class="fuel-panel__label">Shop {f.name.toLowerCase()}</p>
+            <ul role="list">
+              {f.categories.map((slug) => (
+                <li>
+                  <a href={categoryHref(slug)} class="chip">
+                    {getCategory(slug).name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .fuel-tabs {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .fuel-tabs__list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-3);
+  }
+
+  @media (max-width: 760px) {
+    .fuel-tabs__list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .fuel-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    background: var(--c-paper);
+    text-align: left;
+    transition:
+      border-color var(--dur) var(--ease),
+      background-color var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+
+  .fuel-tab:hover {
+    border-color: var(--c-stone-2);
+  }
+
+  .fuel-tab[aria-selected='true'] {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-text-invert);
+    box-shadow: var(--shadow);
+  }
+
+  .fuel-tab__icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--c-ember-50);
+    color: var(--c-ember);
+    flex: none;
+    transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+
+  .fuel-tab[aria-selected='true'] .fuel-tab__icon {
+    background: rgb(240 160 75 / 0.14);
+    color: var(--c-flame);
+  }
+
+  .fuel-tab__text {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .fuel-tab__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .fuel-tab__tag {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+    line-height: 1.3;
+  }
+
+  .fuel-tab[aria-selected='true'] .fuel-tab__tag {
+    color: var(--c-text-invert-muted);
+  }
+
+  @media (max-width: 480px) {
+    .fuel-tab__tag {
+      display: none;
+    }
+  }
+
+  .fuel-panel {
+    display: grid;
+    gap: var(--space-6);
+    padding: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .fuel-panel[hidden] {
+    display: none;
+  }
+
+  @media (min-width: 900px) {
+    .fuel-panel {
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+      gap: var(--space-8);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .fuel-panel:not([hidden]) {
+      animation: panel-in 380ms var(--ease-out);
+    }
+  }
+
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      translate: 0 8px;
+    }
+  }
+
+  .fuel-panel__main {
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+  }
+
+  .fuel-panel__title {
+    font-size: var(--fs-xl);
+  }
+
+  .fuel-panel__title em {
+    color: var(--c-ember);
+    font-weight: 400;
+  }
+
+  .fuel-panel__best {
+    color: var(--c-text-muted);
+  }
+
+  .fuel-panel__best strong {
+    color: var(--c-text);
+  }
+
+  .fuel-panel__lists {
+    display: grid;
+    gap: var(--space-5);
+    margin-top: var(--space-2);
+  }
+
+  @media (min-width: 640px) {
+    .fuel-panel__lists {
+      grid-template-columns: 1.3fr 1fr;
+    }
+  }
+
+  .fuel-panel__label {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+
+  .fuel-panel__cons {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .fuel-panel__cons li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: var(--space-3);
+    color: var(--c-text-muted);
+  }
+
+  .fuel-panel__cons :global(svg) {
+    margin-top: 0.22em;
+    color: var(--c-brass-text);
+  }
+
+  .fuel-panel__side {
+    display: grid;
+    gap: var(--space-6);
+    align-content: start;
+    padding-top: var(--space-2);
+  }
+
+  @media (min-width: 900px) {
+    .fuel-panel__side {
+      padding-left: var(--space-7);
+      border-left: 1px solid var(--c-stone);
+    }
+  }
+
+  .ratings {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .rating {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .rating dt {
+    font-size: var(--fs-sm);
+    font-weight: 550;
+  }
+
+  .rating__dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .rating__dot {
+    width: 22px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--c-stone);
+  }
+
+  .rating__dot.is-on {
+    background: linear-gradient(90deg, var(--c-ember), var(--c-flame));
+  }
+
+  .fuel-panel__shop ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .fuel-panel__shop .chip {
+    text-decoration: none;
+    transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+
+  .fuel-panel__shop .chip:hover {
+    border-color: var(--c-ember);
+    color: var(--c-ember);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+
+    const select = (i: number, focus = false) => {
+      tabs.forEach((t, n) => {
+        const on = n === i;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        panels[n].hidden = !on;
+      });
+      if (focus) tabs[i].focus();
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => select(i));
+      tab.addEventListener('keydown', (e) => {
+        const keys: Record<string, number> = {
+          ArrowRight: (i + 1) % tabs.length,
+          ArrowDown: (i + 1) % tabs.length,
+          ArrowLeft: (i - 1 + tabs.length) % tabs.length,
+          ArrowUp: (i - 1 + tabs.length) % tabs.length,
+          Home: 0,
+          End: tabs.length - 1,
+        };
+        if (e.key in keys) {
+          e.preventDefault();
+          select(keys[e.key], true);
+        }
+      });
+    });
+  });
+</script>

@@ -1,0 +1,639 @@
+---
+/**
+ * Four-question quiz that recommends product categories. Scoring happens in
+ * the browser; result cards are pre-rendered (hidden) and re-ordered by score.
+ * Answers sync to the URL so results can be shared or bookmarked.
+ */
+import Icon, { type IconName } from './Icon.astro';
+import Photo from './Photo.astro';
+import { getCategory, categoryHref } from '../data/categories';
+import { withBase } from '../scripts/url';
+
+interface Option {
+  value: string;
+  label: string;
+  sub: string;
+  icon: IconName;
+}
+
+interface Question {
+  id: string;
+  title: string;
+  hint: string;
+  options: Option[];
+}
+
+const questions: Question[] = [
+  {
+    id: 'place',
+    title: 'Where will your fire go?',
+    hint: 'This tells us what kind of installation you need.',
+    options: [
+      { value: 'existing', label: 'In my existing fireplace', sub: 'Upgrade a masonry or factory-built fireplace', icon: 'home' },
+      { value: 'new', label: 'A new spot inside', sub: 'New build, addition or remodel', icon: 'ruler' },
+      { value: 'nochimney', label: 'A room with no chimney', sub: 'Basement, bedroom, condo or office', icon: 'layers' },
+      { value: 'outdoor', label: 'Outdoors', sub: 'Patio, porch, deck or dock', icon: 'sun' },
+    ],
+  },
+  {
+    id: 'priority',
+    title: 'What matters most to you?',
+    hint: 'Pick the one that would make you happiest.',
+    options: [
+      { value: 'ambiance', label: 'The real-fire experience', sub: 'Crackle, aroma and the ritual of a wood fire', icon: 'tree' },
+      { value: 'convenience', label: 'Push-button convenience', sub: 'Instant flame, nothing to haul or clean', icon: 'flame' },
+      { value: 'heat', label: 'Serious, efficient heat', sub: 'A warmer house and lower heating bills', icon: 'sparkle' },
+      { value: 'budget', label: 'Simple & budget-friendly', sub: 'The fewest changes to my home', icon: 'dollar' },
+    ],
+  },
+  {
+    id: 'fuel',
+    title: 'Which fuel can you get?',
+    hint: 'Lake homes often run on propane — that counts as gas.',
+    options: [
+      { value: 'gas', label: 'Natural gas or propane', sub: 'A gas line or a propane tank', icon: 'flame' },
+      { value: 'wood', label: 'Firewood', sub: 'I cut, buy or have access to wood', icon: 'tree' },
+      { value: 'electric', label: 'Electricity only', sub: 'No gas and no interest in wood', icon: 'bolt' },
+      { value: 'unsure', label: 'Not sure yet', sub: 'Show me everything that fits', icon: 'info' },
+    ],
+  },
+  {
+    id: 'outage',
+    title: 'Do you want heat during a power outage?',
+    hint: 'Ice storms happen. Some fires keep going without electricity.',
+    options: [
+      { value: 'must', label: 'Yes — it’s a must', sub: 'Backup heat is a priority', icon: 'battery' },
+      { value: 'nice', label: 'Nice to have', sub: 'A bonus, not a deal-breaker', icon: 'check' },
+      { value: 'no', label: 'Not a concern', sub: 'We rarely lose power', icon: 'home' },
+    ],
+  },
+];
+
+const candidates = [
+  'fireplace-inserts',
+  'gas-fireplaces',
+  'wood-fireplaces',
+  'wood-stoves',
+  'gas-stoves',
+  'pellet-stoves',
+  'gas-logs',
+  'vent-free-gas',
+  'electric-fireplaces',
+  'outdoor-fireplaces',
+].map(getCategory);
+---
+
+<div class="finder" data-finder>
+  <div class="finder__progress" aria-hidden="true">
+    <span class="finder__bar" data-progress-bar></span>
+  </div>
+
+  <form class="finder__form" data-finder-form novalidate>
+    {
+      questions.map((q, i) => (
+        <fieldset class="finder__step" data-step={i} hidden={i !== 0}>
+          <p class="finder__count">
+            Question {i + 1} of {questions.length}
+          </p>
+          <legend class="finder__question">{q.title}</legend>
+          <p class="finder__hint">{q.hint}</p>
+          <div class="option-grid finder__options">
+            {q.options.map((o) => (
+              <label class="option finder__option">
+                <input type="radio" name={q.id} value={o.value} required />
+                <span class="option__mark">
+                  <Icon name="check" size={13} strokeWidth={3} />
+                </span>
+                <span class="option__icon">
+                  <Icon name={o.icon} size={22} />
+                </span>
+                <span class="option__text">
+                  <span>{o.label}</span>
+                  <span class="option__sub">{o.sub}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div class="finder__nav">
+            {i > 0 && (
+              <button type="button" class="btn btn--outline" data-back>
+                <Icon name="arrow-left" size={18} /> Back
+              </button>
+            )}
+            <p class="finder__error" role="alert" data-error hidden>
+              Please choose an option to continue.
+            </p>
+            <button type="button" class="btn btn--primary finder__next" data-next>
+              {i === questions.length - 1 ? 'See my matches' : 'Next'}
+              <Icon name="arrow-right" size={18} class="icon-arrow" />
+            </button>
+          </div>
+        </fieldset>
+      ))
+    }
+  </form>
+
+  <section class="finder__results" data-results hidden aria-labelledby="finder-results-title" tabindex="-1">
+    <div class="finder__results-head">
+      <p class="eyebrow">Your matches</p>
+      <h3 id="finder-results-title" class="finder__results-title">Here’s where we’d start.</h3>
+      <p class="muted" data-summary></p>
+    </div>
+
+    <div class="finder__cards" data-cards>
+      {
+        candidates.map((c) => (
+          <article class="match card" data-result={c.slug} hidden>
+            <div class:list={['card__media', { 'is-cutout': c.card.cutout }]}>
+              <Photo src={c.card.src} alt={c.card.alt} sizes="(min-width: 1000px) 380px, 100vw" position={c.card.position} />
+              <span class="match__badge" data-badge />
+            </div>
+            <div class="card__body">
+              <h4 class="match__title">
+                <a href={categoryHref(c.slug)} class="card__link">
+                  {c.name}
+                </a>
+              </h4>
+              <p class="match__variant" data-variant hidden />
+              <ul class="checklist match__reasons" role="list" data-reasons />
+              <span class="link-arrow match__more" aria-hidden="true">
+                Explore {c.name.toLowerCase()} <Icon name="arrow-right" size={16} />
+              </span>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="finder__actions">
+      <a href={withBase('/contact/')} class="btn btn--primary btn--lg" data-send>
+        Send my results to HMI <Icon name="arrow-right" size={18} class="icon-arrow" />
+      </a>
+      <button type="button" class="btn btn--outline btn--lg" data-copy>
+        <Icon name="arrow-up-right" size={18} /> <span data-copy-label>Copy link to results</span>
+      </button>
+      <button type="button" class="btn btn--outline btn--lg" data-restart>Start over</button>
+    </div>
+  </section>
+
+  <template data-check-icon>
+    <Icon name="check" size={18} />
+  </template>
+</div>
+
+<style>
+  .finder {
+    position: relative;
+    padding: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .finder__progress {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--c-linen);
+  }
+
+  .finder__bar {
+    display: block;
+    height: 100%;
+    width: 25%;
+    background: linear-gradient(90deg, var(--c-ember), var(--c-flame));
+    transition: width 400ms var(--ease-out);
+  }
+
+  .finder__step {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .finder__step[hidden],
+  .finder__results[hidden] {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .finder__step:not([hidden]),
+    .finder__results:not([hidden]) {
+      animation: step-in 420ms var(--ease-out);
+    }
+  }
+
+  @keyframes step-in {
+    from {
+      opacity: 0;
+      translate: 16px 0;
+    }
+  }
+
+  .finder__count {
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-ember);
+  }
+
+  .finder__question {
+    display: block;
+    margin-top: var(--space-2);
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .finder__hint {
+    margin-top: var(--space-2);
+    color: var(--c-text-muted);
+  }
+
+  .finder__options {
+    margin-top: var(--space-5);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  }
+
+  .finder__option {
+    min-height: 76px;
+  }
+
+  .finder__nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+
+  .finder__next {
+    margin-left: auto;
+  }
+
+  .finder__error {
+    font-size: var(--fs-sm);
+    font-weight: 550;
+    color: var(--c-danger);
+  }
+
+  .finder__results-head {
+    display: grid;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+  }
+
+  .finder__results-title {
+    font-size: var(--fs-2xl);
+  }
+
+  .finder__results:focus {
+    outline: none;
+  }
+
+  .finder__cards {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+
+  .match .card__media {
+    --ratio: 16 / 10;
+  }
+
+  .match .card__media.is-cutout {
+    display: grid;
+    place-items: center;
+    padding: var(--space-4);
+    background:
+      radial-gradient(circle at 50% 62%, rgb(240 160 75 / 0.3), transparent 62%),
+      linear-gradient(160deg, #f6efe4, #e8dccb);
+  }
+
+  .match .card__media.is-cutout :global(img) {
+    object-fit: contain;
+  }
+
+  .match__badge {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-ink);
+    color: var(--c-text-invert);
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .match__badge:empty {
+    display: none;
+  }
+
+  .match:first-child .match__badge {
+    background: var(--c-ember);
+    color: #fff;
+  }
+
+  .match__title {
+    font-size: var(--fs-lg);
+  }
+
+  .match__title a {
+    color: inherit;
+  }
+
+  .match__variant {
+    margin-top: calc(var(--space-2) * -1);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-ember);
+  }
+
+  .match__reasons {
+    gap: var(--space-2);
+    font-size: var(--fs-sm);
+  }
+
+  .match__more {
+    margin-top: auto;
+    padding-top: var(--space-2);
+  }
+
+  .finder__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--c-stone);
+  }
+</style>
+
+<script>
+  import { withBase } from '../scripts/url';
+
+  type Answers = Record<string, string>;
+  type Scores = Record<string, number>;
+
+  /* Points each answer adds to each category. */
+  const WEIGHTS: Record<string, Record<string, Scores>> = {
+    place: {
+      existing: { 'fireplace-inserts': 7, 'gas-logs': 5, 'vent-free-gas': 2, 'electric-fireplaces': 2 },
+      new: { 'gas-fireplaces': 5, 'wood-fireplaces': 5, 'wood-stoves': 3, 'gas-stoves': 3, 'pellet-stoves': 2, 'electric-fireplaces': 2 },
+      nochimney: { 'electric-fireplaces': 6, 'gas-stoves': 4, 'vent-free-gas': 4, 'gas-fireplaces': 3, 'pellet-stoves': 3 },
+      outdoor: { 'outdoor-fireplaces': 14 },
+    },
+    priority: {
+      ambiance: { 'wood-fireplaces': 5, 'wood-stoves': 4, 'fireplace-inserts': 2, 'outdoor-fireplaces': 1 },
+      convenience: { 'gas-fireplaces': 4, 'gas-stoves': 3, 'gas-logs': 3, 'electric-fireplaces': 3, 'fireplace-inserts': 2, 'vent-free-gas': 2 },
+      heat: { 'wood-stoves': 4, 'pellet-stoves': 4, 'fireplace-inserts': 4, 'gas-stoves': 3, 'vent-free-gas': 2, 'gas-fireplaces': 1 },
+      budget: { 'electric-fireplaces': 5, 'gas-logs': 4, 'vent-free-gas': 3 },
+    },
+    fuel: {
+      gas: { 'gas-fireplaces': 4, 'gas-stoves': 4, 'gas-logs': 4, 'vent-free-gas': 3, 'fireplace-inserts': 2, 'outdoor-fireplaces': 1 },
+      wood: { 'wood-fireplaces': 4, 'wood-stoves': 4, 'fireplace-inserts': 2, 'outdoor-fireplaces': 1 },
+      electric: { 'electric-fireplaces': 6, 'pellet-stoves': 2, 'gas-fireplaces': -2, 'gas-stoves': -2, 'gas-logs': -3, 'vent-free-gas': -3 },
+      unsure: {},
+    },
+    outage: {
+      must: { 'wood-stoves': 4, 'wood-fireplaces': 3, 'fireplace-inserts': 2, 'gas-stoves': 2, 'vent-free-gas': 2, 'gas-fireplaces': 1, 'gas-logs': 1, 'electric-fireplaces': -6, 'pellet-stoves': -3 },
+      nice: { 'wood-stoves': 1, 'wood-fireplaces': 1, 'gas-stoves': 1, 'electric-fireplaces': -1 },
+      no: { 'electric-fireplaces': 1, 'pellet-stoves': 1 },
+    },
+  };
+
+  /* Why a category fits, keyed by "question:answer". */
+  const REASONS: Record<string, Record<string, string>> = {
+    'fireplace-inserts': {
+      'place:existing': 'Installs right inside the fireplace you already have',
+      'priority:heat': 'Turns a drafty opening into an efficient heater',
+      'priority:convenience': 'Gas and pellet inserts offer thermostat or remote control',
+      'outage:must': 'Wood and many gas inserts keep heating without power',
+    },
+    'gas-fireplaces': {
+      'priority:convenience': 'Instant flame by remote or wall switch',
+      'fuel:gas': 'Runs on natural gas or propane',
+      'place:new': 'Dozens of styles for new builds and remodels',
+      'place:nochimney': 'Direct-vent models vent through a wall — no chimney',
+    },
+    'wood-fireplaces': {
+      'priority:ambiance': 'The authentic crackle, aroma and glow',
+      'fuel:wood': 'Puts your firewood to work',
+      'outage:must': 'Works without electricity',
+      'place:new': 'Can be framed into a new build or addition',
+    },
+    'wood-stoves': {
+      'priority:heat': 'Heats roughly 800 to 3,500 sq. ft., depending on model',
+      'outage:must': 'Dependable heat through outages and ice storms',
+      'fuel:wood': 'Gets the most heat from every armload of wood',
+      'priority:ambiance': 'A real wood fire you can see and hear',
+    },
+    'gas-stoves': {
+      'place:nochimney': 'Vents through a wall or roof — no masonry chimney',
+      'fuel:gas': 'Runs on natural gas or propane',
+      'priority:heat': 'Steady, thermostat-controlled heat',
+      'outage:must': 'Many models can run during an outage',
+    },
+    'pellet-stoves': {
+      'priority:heat': 'Automated, efficient heat from a hopper',
+      'priority:convenience': 'Set the thermostat and let it run',
+      'place:nochimney': 'Can vent through a wall in many homes',
+      'fuel:electric': 'No gas line needed — just pellets and a plug',
+    },
+    'gas-logs': {
+      'place:existing': 'Converts your existing wood fireplace in a day or two',
+      'priority:budget': 'One of the most affordable upgrades',
+      'priority:convenience': 'Remote or wall-switch flame, no ashes',
+      'fuel:gas': 'Available for natural gas or propane',
+    },
+    'vent-free-gas': {
+      'place:nochimney': 'No chimney or vent pipe required',
+      'priority:heat': 'Nearly all of the heat stays in the room',
+      'priority:budget': 'Fewer construction changes than vented options',
+      'outage:must': 'Many models run without household power',
+    },
+    'electric-fireplaces': {
+      'place:nochimney': 'Installs almost anywhere — no venting at all',
+      'priority:budget': 'The lowest upfront and installation cost',
+      'fuel:electric': 'Plug-in and hardwired models available',
+      'priority:convenience': 'Flame with or without heat, year-round',
+    },
+    'outdoor-fireplaces': {
+      'place:outdoor': 'Built for patios, porches and lakeside living',
+      'fuel:wood': 'Wood-burning outdoor models available',
+      'fuel:gas': 'Gas outdoor fireplaces and fire features available',
+      'priority:ambiance': 'A gathering place under the stars',
+    },
+  };
+
+  const FALLBACK_REASON = 'A strong fit for the way you described your space';
+  const BADGES = ['Best match', 'Great fit', 'Also consider'];
+
+  const root = document.querySelector<HTMLElement>('[data-finder]');
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-finder-form]')!;
+    const steps = Array.from(root.querySelectorAll<HTMLFieldSetElement>('[data-step]'));
+    const bar = root.querySelector<HTMLElement>('[data-progress-bar]')!;
+    const results = root.querySelector<HTMLElement>('[data-results]')!;
+    const cardsWrap = root.querySelector<HTMLElement>('[data-cards]')!;
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('[data-result]'));
+    const summary = root.querySelector<HTMLElement>('[data-summary]')!;
+    const sendLink = root.querySelector<HTMLAnchorElement>('[data-send]')!;
+    const checkTpl = root.querySelector<HTMLTemplateElement>('[data-check-icon]')!;
+    const names = steps.map((s) => s.querySelector<HTMLInputElement>('input')!.name);
+    let current = 0;
+
+    const answers = (): Answers => {
+      const data = new FormData(form);
+      return Object.fromEntries(names.map((n) => [n, String(data.get(n) ?? '')]));
+    };
+
+    const showStep = (i: number, focus = true) => {
+      current = i;
+      steps.forEach((s, n) => (s.hidden = n !== i));
+      results.hidden = true;
+      form.hidden = false;
+      bar.style.width = `${((i + 1) / (steps.length + 1)) * 100}%`;
+      if (focus) steps[i].querySelector<HTMLInputElement>('input:checked, input')?.focus();
+    };
+
+    const insertVariant = (a: Answers) => {
+      if (a.fuel === 'gas') return 'Suggested: a gas insert';
+      if (a.fuel === 'wood' || a.priority === 'ambiance') return 'Suggested: a wood insert';
+      if (a.fuel === 'electric') return 'Suggested: a pellet or electric insert';
+      return 'Wood, gas or pellet — we’ll help you choose';
+    };
+
+    const label = (name: string, value: string) =>
+      form.querySelector<HTMLInputElement>(`input[name="${name}"][value="${value}"]`)
+        ?.closest('label')
+        ?.querySelector('.option__text > span')?.textContent ?? value;
+
+    const showResults = (a: Answers, updateUrl = true) => {
+      const scores: Scores = {};
+      for (const [q, value] of Object.entries(a)) {
+        const table = WEIGHTS[q]?.[value] ?? {};
+        for (const [slug, pts] of Object.entries(table)) scores[slug] = (scores[slug] ?? 0) + pts;
+      }
+
+      const ranked = cards
+        .map((card) => ({ card, slug: card.dataset.result!, score: scores[card.dataset.result!] ?? 0 }))
+        .filter((r) => a.place === 'outdoor' || r.slug !== 'outdoor-fireplaces')
+        .sort((x, y) => y.score - x.score)
+        .slice(0, 3);
+
+      cards.forEach((c) => (c.hidden = true));
+      // Move the winners to the front of the DOM in rank order.
+      cardsWrap.prepend(...ranked.map((r) => r.card));
+      ranked.forEach(({ card, slug }, i) => {
+        card.hidden = false;
+        card.querySelector('[data-badge]')!.textContent = BADGES[i];
+
+        const variant = card.querySelector<HTMLElement>('[data-variant]')!;
+        variant.hidden = slug !== 'fireplace-inserts';
+        if (slug === 'fireplace-inserts') variant.textContent = insertVariant(a);
+
+        const list = card.querySelector<HTMLElement>('[data-reasons]')!;
+        list.replaceChildren();
+        const reasons = Object.entries(a)
+          .map(([q, v]) => REASONS[slug]?.[`${q}:${v}`])
+          .filter(Boolean)
+          .slice(0, 3) as string[];
+        (reasons.length ? reasons : [FALLBACK_REASON]).forEach((text) => {
+          const li = document.createElement('li');
+          li.append(checkTpl.content.cloneNode(true));
+          const span = document.createElement('span');
+          span.textContent = text;
+          li.append(span);
+          list.append(li);
+        });
+      });
+
+      summary.textContent = `Based on your answers — ${label('place', a.place).toLowerCase()}, ${label('priority', a.priority).toLowerCase()}, ${label('fuel', a.fuel).toLowerCase()} — these are the categories we’d explore first. Every home is different, so our team will confirm fit, venting and sizing with you.`;
+
+      const interests = ranked.map((r) => r.slug).join(',');
+      sendLink.href = withBase(`/contact/?interest=${encodeURIComponent(interests)}&source=finder`);
+
+      form.hidden = true;
+      results.hidden = false;
+      bar.style.width = '100%';
+      results.focus({ preventScroll: true });
+      root.scrollIntoView({ block: 'start' });
+
+      if (updateUrl) {
+        const params = new URLSearchParams(a);
+        history.replaceState(null, '', `${location.pathname}?${params}#finder`);
+      }
+    };
+
+    root.querySelectorAll<HTMLButtonElement>('[data-next]').forEach((btn, i) =>
+      btn.addEventListener('click', () => {
+        const step = steps[i];
+        const error = step.querySelector<HTMLElement>('[data-error]')!;
+        if (!step.querySelector('input:checked')) {
+          error.hidden = false;
+          step.querySelector<HTMLInputElement>('input')?.focus();
+          return;
+        }
+        error.hidden = true;
+        i < steps.length - 1 ? showStep(i + 1) : showResults(answers());
+      }),
+    );
+
+    root.querySelectorAll<HTMLButtonElement>('[data-back]').forEach((btn) =>
+      btn.addEventListener('click', () => showStep(Math.max(0, current - 1))),
+    );
+
+    // Choosing an option hides any error and advances after a short beat.
+    form.addEventListener('change', (e) => {
+      const input = e.target as HTMLInputElement;
+      const step = input.closest<HTMLElement>('[data-step]');
+      if (!step) return;
+      step.querySelector<HTMLElement>('[data-error]')!.hidden = true;
+    });
+
+    root.querySelector('[data-restart]')?.addEventListener('click', () => {
+      form.reset();
+      history.replaceState(null, '', `${location.pathname}#finder`);
+      showStep(0);
+    });
+
+    const copyBtn = root.querySelector<HTMLButtonElement>('[data-copy]');
+    copyBtn?.addEventListener('click', async () => {
+      const labelEl = copyBtn.querySelector('[data-copy-label]')!;
+      try {
+        await navigator.clipboard.writeText(location.href);
+        labelEl.textContent = 'Link copied!';
+      } catch {
+        labelEl.textContent = 'Copy the URL from your address bar';
+      }
+      setTimeout(() => (labelEl.textContent = 'Copy link to results'), 2500);
+    });
+
+    // Restore results from a shared link: ?place=…&priority=…&fuel=…&outage=…
+    const params = new URLSearchParams(location.search);
+    if (names.every((n) => params.get(n))) {
+      const restored: Answers = {};
+      names.forEach((n) => {
+        const v = params.get(n)!;
+        const input = form.querySelector<HTMLInputElement>(`input[name="${n}"][value="${CSS.escape(v)}"]`);
+        if (input) {
+          input.checked = true;
+          restored[n] = v;
+        }
+      });
+      if (Object.keys(restored).length === names.length) showResults(restored, false);
+    } else {
+      showStep(0, false);
+    }
+  }
+</script>

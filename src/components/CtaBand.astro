@@ -1,0 +1,159 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import stove from '../assets/photos/stove-gas-cast-iron.png';
+import { locations, tel, prettyPhone } from '../data/site';
+import { withBase } from '../scripts/url';
+
+interface Props {
+  title?: string;
+  text?: string;
+}
+
+const {
+  title = 'Let’s find the <em>perfect fire</em> for your home.',
+  text = 'Stop by either showroom, give us a call, or tell us about your project online. A member of our team will be glad to help — no pressure, just good advice.',
+} = Astro.props;
+---
+
+<section class="cta-band on-dark">
+  <div class="container cta-band__inner" data-reveal>
+    <div class="cta-band__text">
+      <p class="eyebrow">Get started</p>
+      <h2 set:html={title} />
+      <p class="lead">{text}</p>
+      <div class="cta-band__actions">
+        <a href={withBase('/contact/')} class="btn btn--primary btn--lg">
+          Request a quote <Icon name="arrow-right" size={18} class="icon-arrow" />
+        </a>
+        <a href={withBase('/service-request/')} class="btn btn--ghost-light btn--lg">
+          <Icon name="wrench" size={18} /> Schedule service
+        </a>
+      </div>
+      <ul class="cta-band__phones" role="list">
+        {
+          locations.map((l) => (
+            <li>
+              <span>{l.shortName}</span>
+              <a href={tel(l.phone)} class="tabular">
+                {prettyPhone(l.phone)}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <div class="cta-band__art" aria-hidden="true">
+      <div class="cta-band__glow"></div>
+      <Image src={stove} alt="" width={340} densities={[1, 2]} class="cta-band__stove" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta-band {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 50% 80% at 80% 60%, rgb(185 71 27 / 0.28), transparent 70%),
+      var(--c-ink-2);
+    border-top: 1px solid var(--c-ink-line);
+  }
+
+  .cta-band__inner {
+    display: grid;
+    align-items: center;
+    gap: var(--space-7);
+    padding-block: clamp(3.5rem, 2rem + 5vw, 6.5rem);
+  }
+
+  @media (min-width: 900px) {
+    .cta-band__inner {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    }
+  }
+
+  .cta-band__text {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .cta-band__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  .cta-band__phones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+    margin-top: var(--space-3);
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-sm);
+    color: var(--c-text-invert-muted);
+  }
+
+  .cta-band__phones li {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .cta-band__phones a {
+    color: var(--c-text-invert);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .cta-band__phones a:hover {
+    color: var(--c-flame);
+  }
+
+  .cta-band__art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 280px;
+  }
+
+  .cta-band__glow {
+    position: absolute;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(240 160 75 / 0.55), rgb(185 71 27 / 0.2) 45%, transparent 70%);
+    filter: blur(10px);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cta-band__glow {
+      animation: glow 5s ease-in-out infinite alternate;
+    }
+  }
+
+  @keyframes glow {
+    from {
+      opacity: 0.75;
+      scale: 0.96;
+    }
+    to {
+      opacity: 1;
+      scale: 1.04;
+    }
+  }
+
+  .cta-band__art :global(.cta-band__stove) {
+    position: relative;
+    width: min(320px, 80%);
+    height: auto;
+    filter: drop-shadow(0 30px 30px rgb(0 0 0 / 0.55));
+  }
+
+  @media (max-width: 899px) {
+    .cta-band__art {
+      display: none;
+    }
+  }
+</style>

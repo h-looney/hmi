@@ -1,0 +1,358 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Icon from '../components/Icon.astro';
+import Photo from '../components/Photo.astro';
+import Steps from '../components/Steps.astro';
+import LiteVideo from '../components/LiteVideo.astro';
+import FaqList from '../components/FaqList.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { videos } from '../data/videos';
+import { getFaqs } from '../data/faqs';
+import { site } from '../data/site';
+
+import panoLounge from '../assets/photos/pano-gas-lounge.jpg';
+import seeThrough from '../assets/photos/gas-see-through.jpg';
+import gasInsert from '../assets/photos/gas-insert.jpg';
+import panoStone from '../assets/photos/pano-cultured-stone-home.jpg';
+import panoMinimal from '../assets/photos/pano-gas-minimal.jpg';
+import { withBase } from '../scripts/url';
+
+const installSteps = [
+  { title: 'Site visit & measure', text: 'We confirm dimensions, clearances, venting route and fuel supply before anything is ordered.' },
+  { title: 'Plan & schedule', text: 'You get a clear quote and an install date that works around your schedule — or your builder’s.' },
+  { title: 'Install day', text: 'Our own crew handles the appliance, venting and connections, and respects your home along the way.' },
+  { title: 'Walkthrough', text: 'We light it with you, explain controls and care, and make sure you’re comfortable using it.' },
+];
+
+const serviceItems = [
+  { icon: 'calendar', title: 'Routine service', text: 'Cleaning, inspection and adjustment to keep your appliance safe, efficient and looking its best.' },
+  { icon: 'flame', title: 'Troubleshooting & repair', text: 'Won’t light, won’t stay lit, odd flame or noisy blower — we’ll track it down.' },
+  { icon: 'layers', title: 'Parts & warranty', text: 'We coordinate genuine parts and manufacturer warranty claims for the products we sell.' },
+  { icon: 'battery', title: 'Battery backups & controls', text: 'Remotes, wall switches, thermostats and battery-backup ignition help.' },
+] as const;
+
+const builderPerks = [
+  'Product selection and spec sheets for every plan',
+  'Framing, clearance and venting guidance before drywall',
+  'Installation scheduled around your build',
+  'Fireplaces, stone veneer, mantels and doors from one source',
+  'A local team you can reach directly at either store',
+];
+---
+
+<BaseLayout
+  title="Fireplace Installation, Service & Repair"
+  description="Professional fireplace, insert and stove installation, service and repair from HMI Fireplace Shops — NFI-certified specialists serving the Lake of the Ozarks and Southwest Missouri since 1975."
+>
+  <PageHero
+    title="Services"
+    titleHtml="Sales, installation &amp; service — <em>under one roof.</em>"
+    eyebrow="Services"
+    lead="We don’t hand you a box and a business card. HMI designs, installs and services what we sell with our own trained team — so there’s always someone accountable, and always someone to call."
+    image={{ src: panoLounge, alt: '' }}
+    crumbs={[{ label: 'Services' }]}
+  >
+    <a href={withBase('/service-request/')} class="btn btn--primary btn--lg">
+      <Icon name="wrench" size={18} /> Request service
+    </a>
+    <a href={withBase('/contact/')} class="btn btn--ghost-light btn--lg">Request a quote</a>
+  </PageHero>
+
+  <nav class="subnav" aria-label="On this page">
+    <div class="container subnav__inner">
+      <a href="#design">Design help</a>
+      <a href="#installation">Installation</a>
+      <a href="#service">Service &amp; repair</a>
+      <a href="#builders">Builders</a>
+      <a href="#battery-backup">Battery backup help</a>
+    </div>
+  </nav>
+
+  <!-- Design -->
+  <section class="section" id="design">
+    <div class="container split">
+      <div class="split__media" data-reveal>
+        <div class="media-frame split__frame">
+          <Photo src={seeThrough} alt="See-through gas fireplace with a realistic log set" sizes="(min-width: 960px) 560px, 100vw" />
+        </div>
+      </div>
+      <div class="split__copy" data-reveal style="--reveal-delay: 100ms">
+        <p class="eyebrow">Showroom & design help</p>
+        <h2>Advice from people <em>who live with fire.</em></h2>
+        <p class="lead">
+          Choosing a fireplace is part engineering, part interior design. Our showroom team helps you weigh fuel, heat output,
+          venting, style and budget — and gives you an honest recommendation, even when it’s the simpler option.
+        </p>
+        <ul class="checklist" role="list">
+          <li><Icon name="check" size={18} /><span>Compare models, finishes and media side by side in two showrooms</span></li>
+          <li><Icon name="check" size={18} /><span>Get sizing help so your fire heats the room without overheating it</span></li>
+          <li><Icon name="check" size={18} /><span>Pull the look together with stone, mantels and doors</span></li>
+          <li><Icon name="check" size={18} /><span>Receive a clear, itemized quote — no surprises</span></li>
+        </ul>
+        <a href={withBase('/fireplace-finder/')} class="link-arrow">Start with the Fireplace Finder <Icon name="arrow-right" size={16} /></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section class="section section--linen" id="installation">
+    <div class="container">
+      <div class="split split--reverse">
+        <div class="split__media" data-reveal>
+          <div class="media-frame split__frame">
+            <Photo src={gasInsert} alt="Gas insert installed in a brick fireplace with wood pilasters" sizes="(min-width: 960px) 560px, 100vw" />
+          </div>
+          <ul class="badges" role="list">
+            <li><Icon name="award" size={18} /> NFI-certified wood &amp; gas specialists</li>
+            <li><Icon name="shield" size={18} /> Manufacturer-trained installers</li>
+          </ul>
+        </div>
+        <div class="split__copy" data-reveal style="--reveal-delay: 100ms">
+          <p class="eyebrow">Professional installation</p>
+          <h2>Installed right, <em>the first time.</em></h2>
+          <p class="lead">
+            A fireplace is only as good as its installation. Our own crews — led by National Fireplace Institute certified
+            specialists — handle venting, connections and finish details to the manufacturer’s specifications and local codes.
+          </p>
+          <p class="muted">
+            We’ve installed hearth products in new construction, remodels, lake homes and older homes since{' '}
+            {site.founded}. That experience shows in the details you’ll never see — and the ones you will.
+          </p>
+        </div>
+      </div>
+      <div class="install-steps">
+        <h3 class="install-steps__title" data-reveal>What to expect</h3>
+        <Steps steps={installSteps} />
+      </div>
+    </div>
+  </section>
+
+  <!-- Service -->
+  <section class="section" id="service">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Service & repair"
+        title="A service department that’s <em>second to none.</em>"
+        lead="Fireplaces and stoves need a little care to stay safe and efficient. Our service coordinator schedules routine visits and repairs from both locations, and our technicians carry the training to do the job right."
+        align="split"
+      >
+        <a href={withBase('/service-request/')} class="btn btn--primary">
+          Request service <Icon name="arrow-right" size={18} class="icon-arrow" />
+        </a>
+      </SectionHeading>
+      <div class="grid grid--4">
+        {
+          serviceItems.map((s, i) => (
+            <div class="svc" data-reveal style={`--reveal-delay: ${i * 80}ms`}>
+              <span class="icon-tile">
+                <Icon name={s.icon} size={24} />
+              </span>
+              <h3>{s.title}</h3>
+              <p class="muted small">{s.text}</p>
+            </div>
+          ))
+        }
+      </div>
+      <aside class="nfpa" data-reveal>
+        <Icon name="info" size={22} />
+        <p>
+          <strong>Good to know:</strong> the National Fire Protection Association recommends that chimneys, fireplaces and
+          vents be inspected at least once a year. Fall is the most popular time — schedule early to beat the rush.
+        </p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Builders -->
+  <section class="section section--dark builders" id="builders">
+    <div class="container split">
+      <div class="split__copy" data-reveal>
+        <p class="eyebrow">Builders & contractors</p>
+        <h2>Your hearth partner <em>since day one.</em></h2>
+        <p class="lead">
+          HMI’s very first store served builders as well as homeowners, and that partnership has never stopped. From spec
+          homes in Nixa to custom builds around the Lake, we help you deliver the fireplace your clients will show off.
+        </p>
+        <ul class="checklist" role="list">
+          {builderPerks.map((p) => <li><Icon name="check" size={18} /><span>{p}</span></li>)}
+        </ul>
+        <div class="cluster">
+          <a href={withBase('/contact/?interest=not-sure&source=builder')} class="btn btn--primary">Talk to our builder team</a>
+          <a href={withBase('/products/cultured-stone/')} class="link-arrow">Stone veneer <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </div>
+      <div class="split__media" data-reveal style="--reveal-delay: 100ms">
+        <div class="media-frame split__frame builders__frame">
+          <Photo src={panoStone} alt="Two-story home with stone veneer accents" sizes="(min-width: 960px) 600px, 100vw" position="50% 45%" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Battery backup -->
+  <section class="section" id="battery-backup">
+    <div class="container split">
+      <div class="split__copy" data-reveal>
+        <p class="eyebrow">Battery backup help</p>
+        <h2>Keep the fire going <em>when the power goes out.</em></h2>
+        <p class="lead">
+          Many gas fireplaces and stoves can still light during an outage with a battery backup. This short video walks
+          through the basics — and if you have questions about your model, give us a call.
+        </p>
+        <ul class="checklist" role="list">
+          <li><Icon name="check" size={18} /><span>Keep fresh batteries in your backup and remote before storm season</span></li>
+          <li><Icon name="check" size={18} /><span>Blowers and fans won’t run without power — that’s normal</span></li>
+          <li><Icon name="check" size={18} /><span>Not sure what your unit has? Find the model number and ask us</span></li>
+        </ul>
+      </div>
+      <div class="split__media" data-reveal style="--reveal-delay: 100ms">
+        <LiteVideo video={videos.batteryBackup} poster={panoMinimal} posterPosition="70% 50%" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="container--narrow">
+      <SectionHeading eyebrow="FAQ" title="Service &amp; installation <em>questions.</em>" align="center" />
+      <FaqList faqs={getFaqs(['install', 'certified', 'annual-service', 'power-outage', 'builders'])} />
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .subnav {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 50;
+    background: var(--c-paper);
+    border-bottom: 1px solid var(--c-stone);
+  }
+
+  .subnav__inner {
+    display: flex;
+    gap: var(--space-6);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-block: var(--space-4);
+  }
+
+  .subnav a {
+    flex: none;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .subnav a:hover {
+    color: var(--c-ember);
+  }
+
+  .split {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  @media (min-width: 960px) {
+    .split {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .split--reverse .split__media {
+      order: 2;
+    }
+  }
+
+  .split__copy {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .split__frame {
+    aspect-ratio: 4 / 3;
+  }
+
+  .builders__frame {
+    aspect-ratio: 16 / 10;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .badges li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+  }
+
+  .badges :global(svg) {
+    color: var(--c-ember);
+  }
+
+  .install-steps {
+    margin-top: clamp(3.5rem, 2.5rem + 4vw, 6rem);
+  }
+
+  .install-steps__title {
+    margin-bottom: var(--space-6);
+    font-size: var(--fs-xl);
+  }
+
+  .svc {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-6) var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .svc h3 {
+    margin-top: var(--space-2);
+    font-size: var(--fs-lg);
+  }
+
+  .nfpa {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    border-left: 3px solid var(--c-ember);
+    background: var(--c-ember-50);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .nfpa :global(svg) {
+    flex: none;
+    color: var(--c-ember);
+  }
+
+  .builders .checklist {
+    color: var(--c-text-invert);
+  }
+
+  .builders .checklist :global(svg) {
+    color: var(--c-flame);
+  }
+</style>

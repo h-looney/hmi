@@ -1,0 +1,387 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Icon, { type IconName } from '../components/Icon.astro';
+import LiteVideo from '../components/LiteVideo.astro';
+import FaqList from '../components/FaqList.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { videos } from '../data/videos';
+import { faqs } from '../data/faqs';
+import { brands } from '../data/brands';
+import { site } from '../data/site';
+import panoMinimal from '../assets/photos/pano-gas-minimal.jpg';
+import panoLounge from '../assets/photos/pano-gas-lounge.jpg';
+import { withBase } from '../scripts/url';
+
+const quickLinks: { href: string; icon: IconName; label: string; text: string }[] = [
+  { href: '#battery-backup', icon: 'battery', label: 'Battery backup help', text: 'Light your gas fireplace in an outage' },
+  { href: '#manufacturers', icon: 'book', label: 'Manuals & support', text: 'Manufacturer owner resources' },
+  { href: '#safety', icon: 'shield', label: 'Safety tips', text: 'Simple habits for a safe hearth' },
+  { href: '#tools', icon: 'compass', label: 'Planning tools', text: 'Finder, calculator & FireBuilder' },
+  { href: '#videos', icon: 'play', label: 'Videos', text: 'Product videos and more' },
+  { href: '#faq', icon: 'chat', label: 'FAQ', text: 'Answers to common questions' },
+];
+
+const supportBrands = brands
+  .filter(
+    (b) =>
+      b.url &&
+      !b.categories.includes('Accessories') &&
+      b.categories.some((c) => ['Fireplaces', 'Inserts', 'Stoves', 'Gas logs', 'Electric', 'Outdoor'].includes(c)),
+  )
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const safety = [
+  { title: 'Inspect every year', text: 'Have chimneys, fireplaces and vents inspected at least once a year — before the first cold snap is ideal.' },
+  { title: 'Test your alarms', text: 'Keep working smoke and carbon monoxide alarms on every level and near bedrooms, and test them monthly.' },
+  { title: 'Burn only dry wood', text: 'Use seasoned hardwood. Never burn trash, cardboard, painted or treated lumber.' },
+  { title: 'Keep a safe zone', text: 'Keep furniture, décor, kids and pets a safe distance away, and use a screen or barrier.' },
+  { title: 'Respect hot glass', text: 'Glass fronts get very hot. Ask us about safety screens if you have little ones.' },
+  { title: 'Handle ashes carefully', text: 'Store ashes in a metal container with a tight lid, outside and away from the house.' },
+];
+
+const topics = ['Buying', 'Installation', 'Service & safety', 'Visiting'] as const;
+---
+
+<BaseLayout
+  title="Owner Resources, Videos & FAQ"
+  description="Owner resources from HMI Fireplace Shops: battery backup help, manufacturer manuals and support, fireplace safety tips, planning tools, videos and frequently asked questions."
+>
+  <PageHero
+    title="Owner resources"
+    titleHtml="Owner <em>resources.</em>"
+    eyebrow="Resources"
+    lead="Help for after the install — and for anyone still deciding. Can’t find what you need? Our team is a phone call away."
+    image={{ src: panoLounge, alt: '' }}
+    crumbs={[{ label: 'Owner resources' }]}
+  />
+
+  <section class="section section--tight">
+    <div class="container">
+      <ul class="quick" role="list">
+        {
+          quickLinks.map((q, i) => (
+            <li data-reveal style={`--reveal-delay: ${i * 50}ms`}>
+              <a href={q.href} class="quick__link">
+                <span class="icon-tile">
+                  <Icon name={q.icon} size={22} />
+                </span>
+                <span>
+                  <span class="quick__label">{q.label}</span>
+                  <span class="quick__text">{q.text}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Battery backup -->
+  <section class="section section--linen" id="battery-backup">
+    <div class="container split">
+      <div class="split__copy" data-reveal>
+        <p class="eyebrow">Battery backup help</p>
+        <h2>Power out? <em>Your fire may still light.</em></h2>
+        <p class="lead">
+          Many gas fireplaces and stoves have a battery backup that lets the burner light without household power. Watch
+          this quick walkthrough, then keep fresh batteries on hand before storm season.
+        </p>
+        <ul class="checklist" role="list">
+          <li><Icon name="check" size={18} /><span>Replace backup and remote batteries every fall</span></li>
+          <li><Icon name="check" size={18} /><span>Expect the blower to stay off without power</span></li>
+          <li><Icon name="check" size={18} /><span>Still won’t light? <a href={withBase('/service-request/')} class="text-link">Request service</a></span></li>
+        </ul>
+      </div>
+      <div data-reveal style="--reveal-delay: 100ms">
+        <LiteVideo video={videos.batteryBackup} poster={panoMinimal} posterPosition="70% 50%" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Manufacturers -->
+  <section class="section" id="manufacturers">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Manuals & support"
+        title="Manufacturer <em>owner resources.</em>"
+        lead="Owner’s manuals, use-and-care videos and troubleshooting guides are available on each manufacturer’s website. Have your model number handy."
+        align="split"
+      />
+      <ul class="mfr" role="list">
+        {
+          supportBrands.map((b) => (
+            <li>
+              <a href={b.url} target="_blank" rel="noopener" class="mfr__link">
+                <span class="mfr__name">{b.name}</span>
+                <span class="mfr__cta">
+                  Manuals &amp; support <Icon name="arrow-up-right" size={14} />
+                </span>
+                <span class="visually-hidden">(opens in a new tab)</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Safety -->
+  <section class="section section--dark" id="safety">
+    <div class="container">
+      <SectionHeading eyebrow="Safety first" title="Six habits for <em>a safe hearth.</em>" align="split" lead="Safety is the first of our guiding principles. These simple habits go a long way." />
+      <ol class="safety" role="list">
+        {
+          safety.map((s, i) => (
+            <li class="safety__item" data-reveal style={`--reveal-delay: ${(i % 3) * 80}ms`}>
+              <span class="safety__num">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- Tools -->
+  <section class="section" id="tools">
+    <div class="container">
+      <SectionHeading eyebrow="Planning tools" title="Plan with <em>confidence.</em>" align="center" />
+      <div class="grid grid--3">
+        <a href={withBase('/fireplace-finder/')} class="tool" data-reveal>
+          <span class="icon-tile"><Icon name="compass" size={24} /></span>
+          <h3>Fireplace Finder</h3>
+          <p class="muted small">Four questions, three personalized product matches.</p>
+          <span class="link-arrow">Take the quiz <Icon name="arrow-right" size={16} /></span>
+        </a>
+        <a href={withBase('/fireplace-finder/#calculator')} class="tool" data-reveal style="--reveal-delay: 80ms">
+          <span class="icon-tile"><Icon name="dollar" size={24} /></span>
+          <h3>Fuel cost calculator</h3>
+          <p class="muted small">Compare the cost of heat from gas, propane, wood, pellets and electricity.</p>
+          <span class="link-arrow">Run the numbers <Icon name="arrow-right" size={16} /></span>
+        </a>
+        <a href={site.links.fireBuilder} class="tool" target="_blank" rel="noopener" data-reveal style="--reveal-delay: 160ms">
+          <span class="icon-tile"><Icon name="layers" size={24} /></span>
+          <h3>FireBuilder</h3>
+          <p class="muted small">Design a Lopi, Fireplace Xtrordinair or DaVinci fireplace with Travis Industries’ online builder.</p>
+          <span class="link-arrow">Open FireBuilder <Icon name="arrow-up-right" size={16} /></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Videos -->
+  <section class="section section--linen" id="videos">
+    <div class="container">
+      <SectionHeading eyebrow="Watch" title="Videos from <em>HMI.</em>" align="split">
+        <a href={site.social.youtube} class="link-arrow" target="_blank" rel="noopener">
+          HMI on YouTube <Icon name="arrow-up-right" size={16} />
+        </a>
+      </SectionHeading>
+      <div class="grid grid--3">
+        <div data-reveal><LiteVideo video={videos.feature} /></div>
+        <div data-reveal style="--reveal-delay: 80ms"><LiteVideo video={videos.mezzo} /></div>
+        <div data-reveal style="--reveal-delay: 160ms"><LiteVideo video={videos.jingle} /></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <div class="container">
+      <SectionHeading eyebrow="FAQ" title="Frequently asked <em>questions.</em>" align="center" />
+      <div class="faq-topics">
+        {
+          topics.map((t, i) => (
+            <div class="faq-topic" data-reveal>
+              <h3 class="faq-topic__title">{t}</h3>
+              <FaqList faqs={faqs.filter((f) => f.topic === t)} schema={i === 0} />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .quick {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .quick__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    height: 100%;
+    padding: var(--space-4) var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    color: var(--c-text);
+    text-decoration: none;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+
+  .quick__link:hover {
+    border-color: var(--c-stone-2);
+    box-shadow: var(--shadow);
+  }
+
+  .quick__link > span:last-child {
+    display: grid;
+  }
+
+  .quick__label {
+    font-weight: 650;
+  }
+
+  .quick__text {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .split {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  @media (min-width: 960px) {
+    .split {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .split__copy {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .mfr {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .mfr__link {
+    display: grid;
+    gap: 0.2rem;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius);
+    background: var(--c-paper);
+    color: var(--c-text);
+    text-decoration: none;
+    transition: border-color var(--dur) var(--ease);
+  }
+
+  .mfr__link:hover {
+    border-color: var(--c-ember);
+  }
+
+  .mfr__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+  }
+
+  .mfr__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-ember);
+  }
+
+  .safety {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .safety__item {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-6) var(--space-5);
+    border: 1px solid var(--c-ink-line);
+    border-radius: var(--radius-lg);
+    background: var(--c-ink-2);
+  }
+
+  .safety__num {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    font-style: italic;
+    font-weight: 300;
+    color: var(--c-flame);
+  }
+
+  .safety__item h3 {
+    font-size: var(--fs-lg);
+  }
+
+  .safety__item p {
+    font-size: var(--fs-sm);
+    color: var(--c-text-invert-muted);
+  }
+
+  .tool {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    color: var(--c-text);
+    text-decoration: none;
+    transition:
+      transform 300ms var(--ease-out),
+      box-shadow 300ms var(--ease-out);
+  }
+
+  .tool:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .tool h3 {
+    margin-top: var(--space-2);
+    font-size: var(--fs-lg);
+  }
+
+  .faq-topics {
+    display: grid;
+    gap: var(--space-7) var(--space-8);
+  }
+
+  @media (min-width: 960px) {
+    .faq-topics {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .faq-topic__title {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-2xs);
+    font-family: var(--font-body);
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-ember);
+  }
+</style>

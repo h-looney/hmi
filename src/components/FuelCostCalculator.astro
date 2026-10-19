@@ -1,0 +1,567 @@
+---
+/**
+ * Compares the cost of delivering the same amount of heat with each fuel.
+ * cost per million BTU delivered = price ÷ (BTU per unit × efficiency ÷ 1,000,000)
+ *
+ * Chart: single-series horizontal bars (one color — fuels are identified by
+ * their row labels), value at each bar tip, per-row hover/focus tooltip, and
+ * a table-view twin with every number.
+ */
+import Icon from './Icon.astro';
+
+interface FuelInput {
+  id: string;
+  name: string;
+  unit: string;
+  price: number;
+  btu: number;
+  efficiency: number;
+  appliance: string;
+  step: number;
+}
+
+// Sample rates only — visitors replace them with their own.
+const fuels: FuelInput[] = [
+  { id: 'natural-gas', name: 'Natural gas', unit: 'therm', price: 1.5, btu: 100_000, efficiency: 75, appliance: 'Direct-vent fireplace or insert', step: 0.01 },
+  { id: 'propane', name: 'Propane', unit: 'gallon', price: 2.5, btu: 91_500, efficiency: 75, appliance: 'Direct-vent fireplace or insert', step: 0.01 },
+  { id: 'wood', name: 'Firewood', unit: 'cord', price: 250, btu: 22_000_000, efficiency: 70, appliance: 'EPA-certified stove or insert', step: 5 },
+  { id: 'pellets', name: 'Wood pellets', unit: 'ton', price: 300, btu: 16_500_000, efficiency: 75, appliance: 'Pellet stove or insert', step: 5 },
+  { id: 'electric', name: 'Electricity', unit: 'kWh', price: 0.14, btu: 3_412, efficiency: 100, appliance: 'Electric fireplace heater', step: 0.01 },
+];
+---
+
+<div class="calc" data-calc>
+  <form class="calc__inputs" data-calc-form onsubmit="return false">
+    <fieldset class="calc__group">
+      <legend class="calc__legend">1. Your heat</legend>
+      <div class="calc__usage">
+        <label class="field">
+          <span class="field__label">Heat output</span>
+          <span class="calc__unit-input">
+            <input class="input tabular" type="number" name="btuh" value="20000" min="1000" max="120000" step="1000" inputmode="numeric" />
+            <span class="calc__suffix">BTU/hr</span>
+          </span>
+        </label>
+        <label class="field">
+          <span class="field__label">Hours per day</span>
+          <span class="calc__unit-input">
+            <input class="input tabular" type="number" name="hours" value="6" min="1" max="24" step="1" inputmode="numeric" />
+            <span class="calc__suffix">hrs</span>
+          </span>
+        </label>
+      </div>
+      <p class="field__hint">A typical fireplace insert or stove delivers 15,000–40,000 BTU/hr. We estimate a 30-day month.</p>
+    </fieldset>
+
+    <fieldset class="calc__group">
+      <legend class="calc__legend">2. Your local prices</legend>
+      <p class="field__hint calc__hint">Sample prices are filled in. Replace them with your utility or supplier rates.</p>
+      <div class="calc__prices">
+        {
+          fuels.map((f) => (
+            <label class="field calc__price" data-fuel-row={f.id}>
+              <span class="field__label">{f.name}</span>
+              <span class="calc__unit-input">
+                <span class="calc__prefix">$</span>
+                <input
+                  class="input tabular"
+                  type="number"
+                  name={`price-${f.id}`}
+                  value={f.step < 1 ? f.price.toFixed(2) : f.price}
+                  min="0"
+                  step={f.step}
+                  inputmode="decimal"
+                  data-price={f.id}
+                  data-btu={f.btu}
+                  data-name={f.name}
+                  data-unit={f.unit}
+                />
+                <span class="calc__suffix">/ {f.unit}</span>
+              </span>
+            </label>
+          ))
+        }
+      </div>
+      <details class="calc__advanced">
+        <summary>Adjust appliance efficiency</summary>
+        <div class="calc__prices">
+          {
+            fuels.map((f) => (
+              <label class="field">
+                <span class="field__label">{f.name}</span>
+                <span class="calc__unit-input">
+                  <input
+                    class="input tabular"
+                    type="number"
+                    name={`eff-${f.id}`}
+                    value={f.efficiency}
+                    min="1"
+                    max="100"
+                    step="1"
+                    inputmode="numeric"
+                    data-eff={f.id}
+                  />
+                  <span class="calc__suffix">%</span>
+                </span>
+                <span class="field__hint">{f.appliance}</span>
+              </label>
+            ))
+          }
+        </div>
+      </details>
+    </fieldset>
+  </form>
+
+  <figure class="calc__chart" aria-labelledby="calc-title">
+    <div class="calc__chart-head">
+      <div>
+        <p class="calc__legend">3. Your estimate</p>
+        <h3 id="calc-title" class="calc__title">Estimated cost for a month of heat</h3>
+        <p class="calc__subtitle" data-calc-subtitle>Delivering 3.6 million BTU (20,000 BTU/hr × 6 hrs × 30 days)</p>
+      </div>
+      <button type="button" class="btn btn--outline btn--sm" data-table-toggle aria-expanded="false" aria-controls="calc-table">
+        View as table
+      </button>
+    </div>
+
+    <ol class="bars" role="list" data-bars>
+      {
+        fuels.map((f) => (
+          <li class="bars__row" data-bar={f.id} tabindex="0" aria-describedby="calc-tooltip">
+            <span class="bars__label">{f.name}</span>
+            <span class="bars__track">
+              <span class="bars__bar" data-bar-fill />
+              <span class="bars__value tabular" data-bar-value>
+                —
+              </span>
+              <span class="bars__flag" data-bar-flag hidden>
+                Lowest
+              </span>
+            </span>
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="tooltip" id="calc-tooltip" role="tooltip" hidden data-tooltip>
+      <strong data-tt-value></strong>
+      <span data-tt-name></span>
+      <span data-tt-detail></span>
+    </div>
+
+    <div class="calc__table" id="calc-table" hidden data-table>
+      <table>
+        <caption class="visually-hidden">Fuel cost comparison</caption>
+        <thead>
+          <tr>
+            <th scope="col">Fuel</th>
+            <th scope="col">Your price</th>
+            <th scope="col">Efficiency</th>
+            <th scope="col">Per million BTU</th>
+            <th scope="col">Per month</th>
+          </tr>
+        </thead>
+        <tbody data-table-body></tbody>
+      </table>
+    </div>
+
+    <figcaption class="calc__note">
+      <Icon name="info" size={16} />
+      <span>
+        Estimates for comparison only. Real-world costs depend on your appliance, home, wood species and moisture, and
+        local rates. Electric fireplace heaters typically produce about 5,000 BTU/hr, so they’re best for supplemental heat.
+      </span>
+    </figcaption>
+  </figure>
+</div>
+
+<style>
+  .calc {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 1000px) {
+    .calc {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      align-items: start;
+    }
+  }
+
+  .calc__inputs,
+  .calc__chart {
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .calc__inputs {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .calc__group {
+    display: grid;
+    gap: var(--space-3);
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .calc__legend {
+    padding: 0;
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-ember);
+  }
+
+  .calc__hint {
+    margin-top: calc(var(--space-2) * -1);
+  }
+
+  .calc__usage,
+  .calc__prices {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+  }
+
+  .calc__unit-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .calc__unit-input .input {
+    padding-right: 4.5rem;
+  }
+
+  .calc__prefix {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--c-text-muted);
+    pointer-events: none;
+  }
+
+  .calc__prefix + .input {
+    padding-left: 1.6rem;
+  }
+
+  .calc__suffix {
+    position: absolute;
+    right: 0.85rem;
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+    pointer-events: none;
+  }
+
+  .calc__advanced summary {
+    cursor: pointer;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-ember);
+  }
+
+  .calc__advanced[open] summary {
+    margin-bottom: var(--space-4);
+  }
+
+  .calc__chart {
+    position: relative;
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+  }
+
+  @media (min-width: 1000px) {
+    .calc__chart {
+      position: sticky;
+      top: calc(var(--header-h) + 1.5rem);
+    }
+  }
+
+  .calc__chart-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .calc__title {
+    margin-top: var(--space-2);
+    font-size: var(--fs-xl);
+  }
+
+  .calc__subtitle {
+    margin-top: var(--space-1);
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  /* ----- Bars ----- */
+  .bars {
+    display: grid;
+    gap: 2px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bars__row {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    align-items: center;
+    gap: var(--space-4);
+    padding: 0.7rem 0.5rem;
+    border-radius: var(--radius);
+    cursor: default;
+    transition: background-color var(--dur) var(--ease);
+  }
+
+  .bars__row:hover,
+  .bars__row:focus-visible {
+    background: var(--c-linen);
+  }
+
+  .bars__label {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-text);
+  }
+
+  .bars__track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 24px;
+  }
+
+  .bars__bar {
+    flex: none;
+    width: 0;
+    height: 22px;
+    min-width: 2px;
+    background: var(--c-ember);
+    border-radius: 0 4px 4px 0;
+    transition:
+      width 500ms var(--ease-out),
+      filter var(--dur) var(--ease);
+  }
+
+  .bars__row:hover .bars__bar,
+  .bars__row:focus-visible .bars__bar {
+    filter: brightness(1.12);
+  }
+
+  .bars__value {
+    font-size: var(--fs-sm);
+    font-weight: 650;
+    color: var(--c-text);
+    white-space: nowrap;
+  }
+
+  .bars__flag {
+    flex: none;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-ink);
+    color: var(--c-text-invert);
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .bars__flag[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .bars__row {
+      grid-template-columns: 1fr;
+      gap: var(--space-2);
+    }
+  }
+
+  /* ----- Tooltip ----- */
+  .tooltip {
+    position: absolute;
+    z-index: 3;
+    display: grid;
+    gap: 0.1rem;
+    min-width: 190px;
+    padding: 0.65rem 0.85rem;
+    background: var(--c-ink);
+    color: var(--c-text-invert-muted);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--fs-xs);
+    pointer-events: none;
+  }
+
+  .tooltip[hidden] {
+    display: none;
+  }
+
+  .tooltip strong {
+    font-size: var(--fs-md);
+    color: var(--c-text-invert);
+  }
+
+  /* ----- Table view ----- */
+  .calc__table {
+    overflow-x: auto;
+  }
+
+  .calc__table[hidden] {
+    display: none;
+  }
+
+  .calc__table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+
+  .calc__table th,
+  .calc__table :global(td) {
+    padding: 0.55rem 0.6rem;
+    border-bottom: 1px solid var(--c-stone);
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .calc__table th:first-child,
+  .calc__table :global(td:first-child) {
+    text-align: left;
+  }
+
+  .calc__table th {
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+
+  .calc__note {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+    line-height: 1.55;
+  }
+
+  .calc__note :global(svg) {
+    flex: none;
+    margin-top: 0.15em;
+  }
+</style>
+
+<script>
+  const money = (n: number, digits = 0) =>
+    n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+  const root = document.querySelector<HTMLElement>('[data-calc]');
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-calc-form]')!;
+    const priceInputs = Array.from(root.querySelectorAll<HTMLInputElement>('[data-price]'));
+    const subtitle = root.querySelector<HTMLElement>('[data-calc-subtitle]')!;
+    const tbody = root.querySelector<HTMLElement>('[data-table-body]')!;
+    const tooltip = root.querySelector<HTMLElement>('[data-tooltip]')!;
+    const chart = root.querySelector<HTMLElement>('.calc__chart')!;
+    const tableToggle = root.querySelector<HTMLButtonElement>('[data-table-toggle]')!;
+    const table = root.querySelector<HTMLElement>('[data-table]')!;
+
+    type Row = { id: string; name: string; unit: string; price: number; eff: number; perMM: number; monthly: number };
+    let rows: Row[] = [];
+
+    const num = (input: HTMLInputElement | null, fallback: number) => {
+      const v = Number(input?.value);
+      return Number.isFinite(v) && v >= 0 ? v : fallback;
+    };
+
+    const compute = () => {
+      const btuh = Math.min(Math.max(num(form.elements.namedItem('btuh') as HTMLInputElement, 20000), 0), 500000);
+      const hours = Math.min(Math.max(num(form.elements.namedItem('hours') as HTMLInputElement, 6), 0), 24);
+      const monthlyMM = (btuh * hours * 30) / 1e6;
+
+      rows = priceInputs.map((input) => {
+        const id = input.dataset.price!;
+        const effInput = root.querySelector<HTMLInputElement>(`[data-eff="${id}"]`);
+        const eff = Math.min(Math.max(num(effInput, 75), 1), 100) / 100;
+        const price = num(input, 0);
+        const btu = Number(input.dataset.btu);
+        const perMM = price / ((btu * eff) / 1e6);
+        return { id, name: input.dataset.name!, unit: input.dataset.unit!, price, eff, perMM, monthly: perMM * monthlyMM };
+      });
+
+      subtitle.textContent = `Delivering ${monthlyMM.toLocaleString('en-US', { maximumFractionDigits: 1 })} million BTU (${btuh.toLocaleString('en-US')} BTU/hr × ${hours} hrs × 30 days)`;
+
+      const max = Math.max(...rows.map((r) => r.monthly), 0.01);
+      const min = Math.min(...rows.map((r) => r.monthly));
+
+      rows.forEach((r) => {
+        const row = root.querySelector<HTMLElement>(`[data-bar="${r.id}"]`)!;
+        // Leave room after the longest bar for its value label and the "Lowest" flag.
+        row.querySelector<HTMLElement>('[data-bar-fill]')!.style.width = `calc(${(r.monthly / max) * 100}% - 8rem)`;
+        row.querySelector<HTMLElement>('[data-bar-value]')!.textContent = money(r.monthly);
+        row.querySelector<HTMLElement>('[data-bar-flag]')!.hidden = !(r.monthly === min && rows.length > 1);
+        row.setAttribute('aria-label', `${r.name}: about ${money(r.monthly)} per month, ${money(r.perMM, 2)} per million BTU`);
+      });
+
+      tbody.replaceChildren(
+        ...rows.map((r) => {
+          const tr = document.createElement('tr');
+          [r.name, `${money(r.price, 2)} / ${r.unit}`, `${Math.round(r.eff * 100)}%`, money(r.perMM, 2), money(r.monthly)].forEach(
+            (text) => {
+              const td = document.createElement('td');
+              td.textContent = text;
+              tr.append(td);
+            },
+          );
+          return tr;
+        }),
+      );
+    };
+
+    const showTip = (row: HTMLElement, x?: number, y?: number) => {
+      const r = rows.find((d) => d.id === row.dataset.bar);
+      if (!r) return;
+      tooltip.querySelector('[data-tt-value]')!.textContent = `${money(r.monthly)} / month`;
+      tooltip.querySelector('[data-tt-name]')!.textContent = r.name;
+      tooltip.querySelector('[data-tt-detail]')!.textContent = `${money(r.perMM, 2)} per million BTU · ${Math.round(r.eff * 100)}% efficient`;
+      tooltip.hidden = false;
+      const box = chart.getBoundingClientRect();
+      const rowBox = row.getBoundingClientRect();
+      const tipW = tooltip.offsetWidth;
+      const left = x !== undefined ? x - box.left + 14 : rowBox.left - box.left + 130;
+      const top = y !== undefined ? y - box.top + 14 : rowBox.bottom - box.top + 6;
+      tooltip.style.left = `${Math.min(left, box.width - tipW - 8)}px`;
+      tooltip.style.top = `${top}px`;
+    };
+
+    root.querySelectorAll<HTMLElement>('[data-bar]').forEach((row) => {
+      row.addEventListener('pointermove', (e) => showTip(row, e.clientX, e.clientY));
+      row.addEventListener('pointerleave', () => (tooltip.hidden = true));
+      row.addEventListener('focus', () => showTip(row));
+      row.addEventListener('blur', () => (tooltip.hidden = true));
+    });
+
+    tableToggle.addEventListener('click', () => {
+      const open = table.hidden;
+      table.hidden = !open;
+      tableToggle.setAttribute('aria-expanded', String(open));
+      tableToggle.textContent = open ? 'Hide table' : 'View as table';
+    });
+
+    form.addEventListener('input', compute);
+    compute();
+  }
+</script>

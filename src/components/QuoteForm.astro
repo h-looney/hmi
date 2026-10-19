@@ -1,0 +1,517 @@
+---
+/**
+ * Three-step quote request. Interests can be pre-selected via
+ * ?interest=gas-fireplaces,wood-stoves (used by product pages and the
+ * Fireplace Finder). Front-end only — see src/scripts/forms.ts.
+ */
+import Icon from './Icon.astro';
+import { categories } from '../data/categories';
+import { locations } from '../data/site';
+import { withBase } from '../scripts/url';
+
+const interests = [
+  ...categories.map((c) => ({ value: c.slug, label: c.name })),
+  { value: 'central-vacuum', label: 'Central vacuum systems' },
+  { value: 'not-sure', label: 'Not sure yet' },
+];
+
+const steps = ['Interests', 'Project', 'Contact'];
+---
+
+<div class="quote" data-quote>
+  <ol class="quote__steps" role="list" aria-label="Form progress">
+    {
+      steps.map((s, i) => (
+        <li class="quote__step" data-step-indicator={i} aria-current={i === 0 ? 'step' : undefined}>
+          <span class="quote__step-num">{i + 1}</span>
+          <span class="quote__step-label">{s}</span>
+        </li>
+      ))
+    }
+  </ol>
+
+  <form class="quote__form" data-quote-form novalidate>
+    <!-- Step 1 -->
+    <fieldset class="quote__panel" data-panel="0">
+      <legend class="quote__legend">What are you interested in?</legend>
+      <p class="quote__hint">Choose as many as you like.</p>
+      <div class="option-grid quote__interests" data-required-group data-msg-required="Pick at least one so we know where to start.">
+        {
+          interests.map((i) => (
+            <label class="option">
+              <input type="checkbox" name="interests" value={i.value} />
+              <span class="option__mark">
+                <Icon name="check" size={13} strokeWidth={3} />
+              </span>
+              <span class="option__text">{i.label}</span>
+            </label>
+          ))
+        }
+        <p class="field__error quote__group-error" role="alert"></p>
+      </div>
+      <div class="quote__nav">
+        <span></span>
+        <button type="button" class="btn btn--primary" data-next>
+          Next: your project <Icon name="arrow-right" size={18} class="icon-arrow" />
+        </button>
+      </div>
+    </fieldset>
+
+    <!-- Step 2 -->
+    <fieldset class="quote__panel" data-panel="1" hidden>
+      <legend class="quote__legend">Tell us about your project</legend>
+      <div class="quote__grid">
+        <div class="quote__full" data-required-group data-msg-required="Please choose the option that fits best.">
+          <p class="field__label">What kind of project is it?</p>
+          <div class="option-grid">
+            {
+              [
+                ['new-construction', 'New construction'],
+                ['remodel', 'Remodel or addition'],
+                ['replace', 'Replace or upgrade an existing fireplace'],
+                ['service', 'Repair or service'],
+                ['exploring', 'Just exploring'],
+              ].map(([value, label]) => (
+                <label class="option">
+                  <input type="radio" name="project" value={value} />
+                  <span class="option__mark">
+                    <Icon name="check" size={13} strokeWidth={3} />
+                  </span>
+                  <span class="option__text">{label}</span>
+                </label>
+              ))
+            }
+          </div>
+          <p class="field__error" role="alert"></p>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Timeline</span>
+          <select class="select" name="timeline">
+            <option value="asap">As soon as possible</option>
+            <option value="1-3-months">In the next 1–3 months</option>
+            <option value="3-6-months" selected>In 3–6 months</option>
+            <option value="6-plus">6 months or more</option>
+            <option value="researching">Just researching</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Preferred showroom</span>
+          <select class="select" name="store">
+            {locations.map((l) => <option value={l.slug}>{l.shortName}</option>)}
+            <option value="either" selected>Either is fine</option>
+          </select>
+        </label>
+
+        <label class="field quote__full">
+          <span class="field__label">Anything else we should know? <span class="field__optional">(optional)</span></span>
+          <textarea
+            class="textarea"
+            name="details"
+            rows="4"
+            placeholder="Room size, existing fireplace, fuel available, styles you like…"></textarea>
+        </label>
+      </div>
+      <div class="quote__nav">
+        <button type="button" class="btn btn--outline" data-back>
+          <Icon name="arrow-left" size={18} /> Back
+        </button>
+        <button type="button" class="btn btn--primary" data-next>
+          Next: contact info <Icon name="arrow-right" size={18} class="icon-arrow" />
+        </button>
+      </div>
+    </fieldset>
+
+    <!-- Step 3 -->
+    <fieldset class="quote__panel" data-panel="2" hidden>
+      <legend class="quote__legend">How can we reach you?</legend>
+      <div class="quote__grid">
+        <label class="field">
+          <span class="field__label">Full name</span>
+          <input class="input" type="text" name="name" autocomplete="name" required data-msg-required="Please tell us your name." />
+          <span class="field__error" role="alert"></span>
+        </label>
+        <label class="field">
+          <span class="field__label">Email</span>
+          <input class="input" type="email" name="email" autocomplete="email" required data-msg-required="Please enter your email address." />
+          <span class="field__error" role="alert"></span>
+        </label>
+        <label class="field">
+          <span class="field__label">Phone <span class="field__optional">(optional)</span></span>
+          <input
+            class="input"
+            type="tel"
+            name="phone"
+            autocomplete="tel"
+            pattern="[\d\s\(\)\.\+\-]{10,}"
+            data-msg-format="Please enter a 10-digit phone number."
+          />
+          <span class="field__error" role="alert"></span>
+        </label>
+        <label class="field">
+          <span class="field__label">ZIP code <span class="field__optional">(optional)</span></span>
+          <input class="input" type="text" name="zip" autocomplete="postal-code" inputmode="numeric" pattern="\d{5}" data-msg-format="Please enter a 5-digit ZIP code." />
+          <span class="field__error" role="alert"></span>
+        </label>
+        <div class="quote__full">
+          <p class="field__label">Best way to reach you</p>
+          <div class="cluster quote__contact-pref">
+            {
+              [
+                ['email', 'Email'],
+                ['phone', 'Phone call'],
+                ['text', 'Text message'],
+              ].map(([value, label], i) => (
+                <label class="option">
+                  <input type="radio" name="contactPref" value={value} checked={i === 0} />
+                  <span class="option__mark">
+                    <Icon name="check" size={13} strokeWidth={3} />
+                  </span>
+                  <span class="option__text">{label}</span>
+                </label>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+      <p class="quote__privacy">
+        <Icon name="shield" size={16} /> We’ll only use your information to respond to your request.
+      </p>
+      <div class="quote__nav">
+        <button type="button" class="btn btn--outline" data-back>
+          <Icon name="arrow-left" size={18} /> Back
+        </button>
+        <button type="submit" class="btn btn--primary btn--lg" data-submit>
+          Send my request <Icon name="arrow-right" size={18} class="icon-arrow" />
+        </button>
+      </div>
+      <p class="quote__fail" role="alert" hidden data-fail>
+        Something went wrong sending your request. Please try again or call the store nearest you.
+      </p>
+    </fieldset>
+  </form>
+
+  <div class="quote__done" data-done hidden tabindex="-1">
+    <span class="quote__done-icon"><Icon name="check" size={30} strokeWidth={2.4} /></span>
+    <h3 class="quote__done-title" data-done-title>Thank you!</h3>
+    <p class="muted">
+      Your request is on its way to our team, and someone will be in touch soon. Need an answer sooner? Give the
+      showroom nearest you a call.
+    </p>
+    <dl class="quote__summary" data-summary></dl>
+    <div class="cluster">
+      <a href={withBase('/fireplace-finder/')} class="btn btn--outline">Explore the Fireplace Finder</a>
+      <a href={withBase('/gallery/')} class="link-arrow">Browse inspiration <Icon name="arrow-right" size={16} /></a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .quote {
+    padding: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+
+  .quote__steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    padding: 0;
+    list-style: none;
+    counter-reset: q;
+  }
+
+  .quote__step {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 3px solid var(--c-stone);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-text-muted);
+    transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+
+  .quote__step[aria-current='step'],
+  .quote__step.is-done {
+    border-color: var(--c-ember);
+    color: var(--c-text);
+  }
+
+  .quote__step-num {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--c-linen);
+    font-size: var(--fs-2xs);
+  }
+
+  .quote__step[aria-current='step'] .quote__step-num,
+  .quote__step.is-done .quote__step-num {
+    background: var(--c-ember);
+    color: #fff;
+  }
+
+  .quote__panel {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .quote__panel[hidden],
+  .quote__done[hidden] {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .quote__panel:not([hidden]) {
+      animation: q-in 380ms var(--ease-out);
+    }
+  }
+
+  @keyframes q-in {
+    from {
+      opacity: 0;
+      translate: 14px 0;
+    }
+  }
+
+  .quote__legend {
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .quote__hint {
+    margin-top: var(--space-1);
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .quote__interests {
+    margin-top: var(--space-5);
+  }
+
+  .quote__interests .option {
+    min-height: 52px;
+  }
+
+  .quote__group-error {
+    grid-column: 1 / -1;
+  }
+
+  [data-required-group][data-invalid] .field__error {
+    display: block;
+  }
+
+  [data-required-group][data-invalid] .option {
+    border-color: var(--c-danger);
+  }
+
+  .quote__grid {
+    display: grid;
+    gap: var(--space-5);
+    margin-top: var(--space-5);
+  }
+
+  @media (min-width: 640px) {
+    .quote__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .quote__full {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .quote__contact-pref .option {
+    min-height: 48px;
+  }
+
+  .quote__privacy {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .quote__nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--c-stone);
+  }
+
+  .quote__fail {
+    margin-top: var(--space-4);
+    color: var(--c-danger);
+    font-weight: 550;
+  }
+
+  .quote__done {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+  }
+
+  .quote__done:focus {
+    outline: none;
+  }
+
+  .quote__done-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--c-open);
+    color: #fff;
+  }
+
+  .quote__done-title {
+    font-size: var(--fs-2xl);
+  }
+
+  .quote__summary {
+    display: grid;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-4) var(--space-5);
+    background: var(--c-linen);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+
+  .quote__summary :global(div) {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: var(--space-3);
+  }
+
+  .quote__summary :global(dt) {
+    color: var(--c-text-muted);
+  }
+</style>
+
+<script>
+  import { validate, liveClear, submit, setBusy } from '../scripts/forms';
+
+  const root = document.querySelector<HTMLElement>('[data-quote]');
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-quote-form]')!;
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+    const indicators = Array.from(root.querySelectorAll<HTMLElement>('[data-step-indicator]'));
+    const done = root.querySelector<HTMLElement>('[data-done]')!;
+    let step = 0;
+
+    const go = (n: number) => {
+      step = n;
+      panels.forEach((p, i) => (p.hidden = i !== n));
+      indicators.forEach((ind, i) => {
+        ind.toggleAttribute('aria-current', i === n);
+        if (i === n) ind.setAttribute('aria-current', 'step');
+        ind.classList.toggle('is-done', i < n);
+      });
+      // Bring the top of the form back into view only if it has scrolled away.
+      // (Default behavior defers to CSS, which disables smooth scrolling for reduced motion.)
+      const top = root.getBoundingClientRect().top;
+      if (top < 0 || top > window.innerHeight * 0.5) root.scrollIntoView({ block: 'start' });
+      panels[n].querySelector<HTMLElement>('input, select, textarea')?.focus({ preventScroll: true });
+    };
+
+    root.querySelectorAll<HTMLButtonElement>('[data-next]').forEach((b) =>
+      b.addEventListener('click', () => {
+        if (validate(panels[step])) go(step + 1);
+      }),
+    );
+    root.querySelectorAll<HTMLButtonElement>('[data-back]').forEach((b) => b.addEventListener('click', () => go(step - 1)));
+
+    liveClear(form);
+
+    // Pre-fill from the URL: ?interest=a,b (product pages, Fireplace Finder) and ?store=nixa
+    const params = new URLSearchParams(location.search);
+    params
+      .get('interest')
+      ?.split(',')
+      .forEach((v) => {
+        const box = form.querySelector<HTMLInputElement>(`input[name="interests"][value="${CSS.escape(v.trim())}"]`);
+        if (box) box.checked = true;
+      });
+    const store = params.get('store');
+    const storeSelect = form.elements.namedItem('store') as HTMLSelectElement | null;
+    if (store && storeSelect && [...storeSelect.options].some((o) => o.value === store)) storeSelect.value = store;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validate(panels[step])) return;
+      const button = form.querySelector<HTMLButtonElement>('[data-submit]');
+      const fail = form.querySelector<HTMLElement>('[data-fail]')!;
+      fail.hidden = true;
+      setBusy(button, true);
+      try {
+        await submit(form);
+        const data = new FormData(form);
+        const name = String(data.get('name') ?? '').split(' ')[0];
+        root.querySelector('[data-done-title]')!.textContent = name ? `Thank you, ${name}!` : 'Thank you!';
+
+        const labels = (field: string) =>
+          data
+            .getAll(field)
+            .map((v) => form.querySelector(`input[name="${field}"][value="${CSS.escape(String(v))}"]`)?.closest('label')?.textContent?.trim() ?? String(v))
+            .join(', ');
+        const select = (field: string) => {
+          const el = form.elements.namedItem(field) as HTMLSelectElement | null;
+          return el?.selectedOptions[0]?.textContent ?? '';
+        };
+        const rows: [string, string][] = [
+          ['Interested in', labels('interests')],
+          ['Project', labels('project')],
+          ['Timeline', select('timeline')],
+          ['Showroom', select('store')],
+          ['Contact', [data.get('email'), data.get('phone')].filter(Boolean).join(' · ')],
+        ];
+        const dl = root.querySelector<HTMLElement>('[data-summary]')!;
+        dl.replaceChildren(
+          ...rows
+            .filter(([, v]) => v)
+            .map(([k, v]) => {
+              const div = document.createElement('div');
+              const dt = document.createElement('dt');
+              const dd = document.createElement('dd');
+              dt.textContent = k;
+              dd.textContent = v;
+              div.append(dt, dd);
+              return div;
+            }),
+        );
+
+        form.hidden = true;
+        root.querySelector<HTMLElement>('.quote__steps')!.hidden = true;
+        done.hidden = false;
+        done.focus();
+      } catch {
+        fail.hidden = false;
+      } finally {
+        setBusy(button, false);
+      }
+    });
+  }
+</script>

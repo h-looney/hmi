@@ -1,0 +1,383 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import CategoryCard from '../../components/CategoryCard.astro';
+import BrandGrid from '../../components/BrandGrid.astro';
+import Icon from '../../components/Icon.astro';
+import CtaBand from '../../components/CtaBand.astro';
+
+import { categories, groups } from '../../data/categories';
+import { brands, brandCategories } from '../../data/brands';
+import panoDining from '../../assets/photos/pano-gas-dining.jpg';
+import { withBase } from '../../scripts/url';
+
+const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<BaseLayout
+  title="Fireplaces, Inserts, Stoves & Hearth Products"
+  description="Browse wood, gas, electric and pellet fireplaces, inserts and stoves, plus gas logs, mantels, doors, cultured stone and accessories at HMI Fireplace Shops in Osage Beach and Nixa, MO."
+>
+  <PageHero
+    title="Products"
+    titleHtml="Fireplaces, stoves <em>&amp; everything hearth.</em>"
+    eyebrow="Our products"
+    lead="Fourteen categories, 25+ trusted brands and two showrooms full of options. Filter by fuel or how you plan to use it — or let our Fireplace Finder narrow things down for you."
+    image={{ src: panoDining, alt: '', position: '50% 50%' }}
+    crumbs={[{ label: 'Products' }]}
+  >
+    <a href={withBase('/fireplace-finder/')} class="btn btn--primary btn--lg">
+      <Icon name="compass" size={18} /> Take the Fireplace Finder
+    </a>
+    <a href="#brands" class="btn btn--ghost-light btn--lg">Brands we carry</a>
+  </PageHero>
+
+  <section class="section catalog" data-catalog>
+    <div class="container">
+      <div class="filters" role="group" aria-label="Filter products">
+        <div class="filters__row">
+          <span class="filters__label" id="fuel-label">Fuel</span>
+          <div class="filters__chips" role="group" aria-labelledby="fuel-label">
+            {
+              [
+                ['all', 'All fuels'],
+                ['wood', 'Wood'],
+                ['gas', 'Gas'],
+                ['electric', 'Electric'],
+                ['pellet', 'Pellet'],
+              ].map(([value, label]) => (
+                <button type="button" class="chip" data-fuel={value} aria-pressed={value === 'all' ? 'true' : 'false'}>
+                  {label}
+                </button>
+              ))
+            }
+          </div>
+        </div>
+        <div class="filters__row">
+          <span class="filters__label" id="use-label">I’m looking for</span>
+          <div class="filters__chips" role="group" aria-labelledby="use-label">
+            <button type="button" class="chip" data-toggle="retrofit" aria-pressed="false">
+              Something for my existing fireplace
+            </button>
+            <button type="button" class="chip" data-toggle="outdoor" aria-pressed="false">Outdoor living</button>
+          </div>
+        </div>
+        <p class="filters__count" aria-live="polite" data-count>Showing all {categories.length} categories</p>
+      </div>
+
+      {
+        groups.map((g) => (
+          <div class="catalog__group" id={g.id} data-group-section>
+            <div class="catalog__head">
+              <h2>{g.name}</h2>
+              <p class="muted">{g.blurb}</p>
+            </div>
+            <div class="grid grid--3 catalog__grid">
+              {categories
+                .filter((c) => c.group === g.id)
+                .map((c) => (
+                  <div class="catalog__item" data-item>
+                    <CategoryCard category={c} showTags headingLevel="h3" />
+                  </div>
+                ))}
+            </div>
+          </div>
+        ))
+      }
+
+      <p class="catalog__empty" hidden data-empty>
+        Nothing matches that combination yet — <button type="button" class="text-link" data-reset>clear the filters</button>
+        or <a href={withBase('/contact/')} class="text-link">ask our team</a>.
+      </p>
+
+      <aside class="callout" data-reveal>
+        <span class="icon-tile"><Icon name="sparkle" size={24} /></span>
+        <div>
+          <h2 class="callout__title">Central vacuum systems, too</h2>
+          <p class="muted">
+            HMI has long been a source for central vacuum systems for new construction and existing homes. Ask either
+            showroom about options for your project.
+          </p>
+        </div>
+        <a href={withBase('/contact/?interest=central-vacuum')} class="btn btn--outline">Ask about central vacs</a>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Brand directory -->
+  <section class="section section--linen" id="brands" data-brand-directory>
+    <div class="container">
+      <SectionHeading
+        eyebrow="Brand directory"
+        title="Brands we <em>carry &amp; service.</em>"
+        lead="Search by name or filter by product type. Every brand here is one our team knows inside and out."
+        align="split"
+      />
+      <div class="brand-tools">
+        <label class="brand-search">
+          <Icon name="search" size={18} />
+          <span class="visually-hidden">Search brands</span>
+          <input type="search" class="input" placeholder="Search brands…" data-brand-search autocomplete="off" />
+        </label>
+        <div class="filters__chips" role="group" aria-label="Filter brands by product type">
+          <button type="button" class="chip" data-brand-cat="all" aria-pressed="true">All</button>
+          {
+            brandCategories.map((cat) => (
+              <button type="button" class="chip" data-brand-cat={cat} aria-pressed="false">
+                {cat}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+      <p class="filters__count" aria-live="polite" data-brand-count>{sortedBrands.length} brands</p>
+      <BrandGrid brands={sortedBrands} showCategories />
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .filters {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    margin-bottom: var(--space-8);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  @media (min-width: 900px) {
+    .filters {
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-3));
+      z-index: 5;
+    }
+  }
+
+  .filters__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .filters__label {
+    min-width: 120px;
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+
+  .filters__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .filters__count {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .catalog__group + .catalog__group {
+    margin-top: var(--space-9);
+  }
+
+  .catalog__group[hidden],
+  .catalog__item[hidden] {
+    display: none;
+  }
+
+  .catalog__head {
+    display: grid;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--c-stone);
+  }
+
+  @media (min-width: 760px) {
+    .catalog__head {
+      grid-template-columns: auto 1fr;
+      align-items: baseline;
+      gap: var(--space-6);
+    }
+  }
+
+  .catalog__head h2 {
+    font-size: var(--fs-2xl);
+  }
+
+  .catalog__item {
+    display: grid;
+  }
+
+  .catalog__empty {
+    padding: var(--space-7);
+    text-align: center;
+    color: var(--c-text-muted);
+    border: 1px dashed var(--c-stone-2);
+    border-radius: var(--radius-lg);
+  }
+
+  .catalog__empty button {
+    font: inherit;
+  }
+
+  .callout {
+    display: grid;
+    gap: var(--space-5);
+    align-items: center;
+    margin-top: var(--space-9);
+    padding: var(--space-6);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  @media (min-width: 760px) {
+    .callout {
+      grid-template-columns: auto 1fr auto;
+    }
+  }
+
+  .callout__title {
+    font-size: var(--fs-lg);
+    margin-bottom: var(--space-1);
+  }
+
+  .brand-tools {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  @media (min-width: 900px) {
+    .brand-tools {
+      grid-template-columns: 320px 1fr;
+      align-items: center;
+    }
+  }
+
+  .brand-search {
+    position: relative;
+    display: block;
+  }
+
+  .brand-search :global(svg) {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--c-text-muted);
+    pointer-events: none;
+  }
+
+  .brand-search .input {
+    padding-left: 2.6rem;
+  }
+
+  [data-brand-count] {
+    margin-bottom: var(--space-4);
+  }
+</style>
+
+<script>
+  /* ----- Category filters ----- */
+  const catalog = document.querySelector<HTMLElement>('[data-catalog]');
+  if (catalog) {
+    const fuelButtons = Array.from(catalog.querySelectorAll<HTMLButtonElement>('[data-fuel]'));
+    const toggles = Array.from(catalog.querySelectorAll<HTMLButtonElement>('[data-toggle]'));
+    const items = Array.from(catalog.querySelectorAll<HTMLElement>('[data-item]'));
+    const sections = Array.from(catalog.querySelectorAll<HTMLElement>('[data-group-section]'));
+    const count = catalog.querySelector<HTMLElement>('[data-count]')!;
+    const empty = catalog.querySelector<HTMLElement>('[data-empty]')!;
+
+    let fuel = 'all';
+    const active = new Set<string>();
+
+    const apply = () => {
+      let shown = 0;
+      items.forEach((item) => {
+        const card = item.querySelector<HTMLElement>('[data-group]')!;
+        const fuels = (card.dataset.fuels ?? '').split(' ').filter(Boolean);
+        const okFuel = fuel === 'all' || fuels.includes(fuel);
+        const okToggles = [...active].every((t) => card.dataset[t] === 'true');
+        const show = okFuel && okToggles;
+        item.hidden = !show;
+        if (show) shown++;
+      });
+      sections.forEach((s) => (s.hidden = !s.querySelector('[data-item]:not([hidden])')));
+      empty.hidden = shown > 0;
+      count.textContent =
+        shown === items.length ? `Showing all ${items.length} categories` : `Showing ${shown} of ${items.length} categories`;
+    };
+
+    fuelButtons.forEach((b) =>
+      b.addEventListener('click', () => {
+        fuel = b.dataset.fuel ?? 'all';
+        fuelButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        apply();
+      }),
+    );
+
+    toggles.forEach((b) =>
+      b.addEventListener('click', () => {
+        const key = b.dataset.toggle!;
+        active.has(key) ? active.delete(key) : active.add(key);
+        b.setAttribute('aria-pressed', String(active.has(key)));
+        apply();
+      }),
+    );
+
+    catalog.querySelector('[data-reset]')?.addEventListener('click', () => {
+      fuel = 'all';
+      active.clear();
+      fuelButtons.forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.fuel === 'all')));
+      toggles.forEach((x) => x.setAttribute('aria-pressed', 'false'));
+      apply();
+    });
+
+    // Deep link support: /products/?fuel=gas
+    const param = new URLSearchParams(location.search).get('fuel');
+    if (param) fuelButtons.find((b) => b.dataset.fuel === param)?.click();
+  }
+
+  /* ----- Brand directory ----- */
+  const directory = document.querySelector<HTMLElement>('[data-brand-directory]');
+  if (directory) {
+    const search = directory.querySelector<HTMLInputElement>('[data-brand-search]')!;
+    const catButtons = Array.from(directory.querySelectorAll<HTMLButtonElement>('[data-brand-cat]'));
+    const brandItems = Array.from(directory.querySelectorAll<HTMLElement>('[data-brand-name]'));
+    const count = directory.querySelector<HTMLElement>('[data-brand-count]')!;
+    let cat = 'all';
+
+    const apply = () => {
+      const q = search.value.trim().toLowerCase();
+      let shown = 0;
+      brandItems.forEach((b) => {
+        const okCat = cat === 'all' || (b.dataset.brandCategories ?? '').split('|').includes(cat);
+        const okQuery = !q || (b.dataset.brandName ?? '').includes(q);
+        b.hidden = !(okCat && okQuery);
+        if (!b.hidden) shown++;
+      });
+      count.textContent = `${shown} ${shown === 1 ? 'brand' : 'brands'}`;
+    };
+
+    search.addEventListener('input', apply);
+    catButtons.forEach((b) =>
+      b.addEventListener('click', () => {
+        cat = b.dataset.brandCat ?? 'all';
+        catButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        apply();
+      }),
+    );
+  }
+</script>

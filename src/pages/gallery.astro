@@ -1,0 +1,455 @@
+---
+import { getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import Photo from '../components/Photo.astro';
+import Icon from '../components/Icon.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { gallery, galleryTags } from '../data/gallery';
+import { withBase } from '../scripts/url';
+
+// Larger renditions for the lightbox (never upscaled past the source width).
+const items = await Promise.all(
+  gallery.map(async (item) => {
+    const full = await getImage({ src: item.src, width: Math.min(item.src.width, 1500), format: 'webp' });
+    return { ...item, full: full.src };
+  }),
+);
+---
+
+<BaseLayout
+  title="Inspiration Gallery"
+  description="Browse fireplace, insert, stove and outdoor fireplace inspiration from the brands carried by HMI Fireplace Shops in Osage Beach and Nixa, MO."
+>
+  <PageHero
+    title="Inspiration"
+    titleHtml="Inspiration for <em>every room.</em>"
+    eyebrow="Inspiration gallery"
+    lead="Browse fireplaces, inserts, stoves and outdoor fire from the brands we carry. See something you love? Bring it in — we’ll help you make it yours."
+    crumbs={[{ label: 'Inspiration' }]}
+  />
+
+  <section class="section" data-gallery>
+    <div class="container">
+      <div class="gallery-filters" role="group" aria-label="Filter photos">
+        <button type="button" class="chip" data-tag="all" aria-pressed="true">All</button>
+        {
+          galleryTags.map((t) => (
+            <button type="button" class="chip" data-tag={t} aria-pressed="false">
+              {t}
+            </button>
+          ))
+        }
+        <span class="gallery-count" aria-live="polite" data-count>{items.length} photos</span>
+      </div>
+
+      <ul class="masonry" role="list">
+        {
+          items.map((item, i) => (
+            <li
+              class:list={['tile', { 'tile--wide': item.wide, 'tile--tall': item.tall }]}
+              data-tags={item.tags.join('|')}
+              data-index={i}
+            >
+              <button
+                type="button"
+                class="tile__btn"
+                data-open
+                data-full={item.full}
+                data-title={item.title}
+                data-alt={item.alt}
+                data-tags-label={item.tags.join(' · ')}
+              >
+                <Photo
+                  src={item.src}
+                  alt={item.alt}
+                  sizes={item.wide ? '(min-width: 1000px) 800px, 100vw' : '(min-width: 1000px) 400px, 50vw'}
+                  position={item.position}
+                />
+                <span class="tile__caption">
+                  <span class="tile__title">{item.title}</span>
+                  <span class="tile__tags">{item.tags.join(' · ')}</span>
+                </span>
+                <span class="tile__zoom" aria-hidden="true">
+                  <Icon name="expand" size={18} />
+                </span>
+                <span class="visually-hidden">Open larger photo</span>
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+
+      <aside class="gallery-note" data-reveal>
+        <Icon name="camera" size={22} />
+        <p>
+          Many photos shown are manufacturer images of products we carry. <strong>Have an HMI fireplace you love?</strong>{' '}
+          We’d be honored to feature it — <a href={withBase('/contact/')} class="text-link">send us a note</a>.
+        </p>
+      </aside>
+    </div>
+
+    <dialog class="lightbox" data-lightbox aria-label="Photo viewer">
+      <figure class="lightbox__figure">
+        <img class="lightbox__img" alt="" data-lb-img />
+        <figcaption class="lightbox__caption">
+          <span class="lightbox__title" data-lb-title></span>
+          <span class="lightbox__tags" data-lb-tags></span>
+          <span class="lightbox__count" data-lb-count></span>
+        </figcaption>
+      </figure>
+      <button type="button" class="lightbox__btn lightbox__close" data-lb-close>
+        <Icon name="close" size={24} /><span class="visually-hidden">Close</span>
+      </button>
+      <button type="button" class="lightbox__btn lightbox__prev" data-lb-prev>
+        <Icon name="chevron-left" size={28} /><span class="visually-hidden">Previous photo</span>
+      </button>
+      <button type="button" class="lightbox__btn lightbox__next" data-lb-next>
+        <Icon name="chevron-right" size={28} /><span class="visually-hidden">Next photo</span>
+      </button>
+    </dialog>
+  </section>
+
+  <CtaBand title="Found your <em>inspiration?</em>" text="Bring a screenshot to either showroom or send it with your quote request — we’ll help you find the products, finishes and layout to match." />
+</BaseLayout>
+
+<style>
+  .gallery-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+  }
+
+  .gallery-count {
+    margin-left: auto;
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .masonry {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 210px;
+    grid-auto-flow: dense;
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (max-width: 1000px) {
+    .masonry {
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 180px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .masonry {
+      grid-template-columns: 1fr;
+      grid-auto-rows: 220px;
+    }
+  }
+
+  .tile--wide {
+    grid-column: span 2;
+  }
+
+  .tile--tall {
+    grid-row: span 2;
+  }
+
+  @media (max-width: 520px) {
+    .tile--wide {
+      grid-column: span 1;
+    }
+  }
+
+  .tile[hidden] {
+    display: none;
+  }
+
+  .tile__btn {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--c-linen);
+    text-align: left;
+  }
+
+  .tile__btn :global(picture),
+  .tile__btn :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .tile__btn :global(img) {
+    object-fit: cover;
+    transition: transform 700ms var(--ease-out);
+  }
+
+  .tile__btn:hover :global(img),
+  .tile__btn:focus-visible :global(img) {
+    transform: scale(1.05);
+  }
+
+  .tile__btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgb(20 17 15 / 0.75), transparent 55%);
+    opacity: 0.85;
+    transition: opacity var(--dur) var(--ease);
+  }
+
+  .tile__caption {
+    position: absolute;
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: var(--space-4);
+    z-index: 1;
+    display: grid;
+    gap: 0.15rem;
+    color: #fff;
+  }
+
+  .tile__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    line-height: 1.25;
+  }
+
+  .tile__tags {
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.75);
+  }
+
+  .tile__zoom {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgb(20 17 15 / 0.55);
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: all var(--dur) var(--ease);
+  }
+
+  .tile__btn:hover .tile__zoom,
+  .tile__btn:focus-visible .tile__zoom {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .gallery-note {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+    margin-top: var(--space-7);
+    padding: var(--space-5);
+    background: var(--c-linen);
+    border-radius: var(--radius-lg);
+    color: var(--c-text-muted);
+  }
+
+  .gallery-note :global(svg) {
+    flex: none;
+    color: var(--c-ember);
+  }
+
+  /* Lightbox */
+  .lightbox {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgb(14 12 10 / 0.96);
+    color: var(--c-text-invert);
+  }
+
+  .lightbox::backdrop {
+    background: rgb(14 12 10 / 0.6);
+  }
+
+  .lightbox[open] {
+    display: grid;
+    place-items: center;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lightbox[open] {
+      animation: lb-in 260ms var(--ease-out);
+    }
+  }
+
+  @keyframes lb-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .lightbox__figure {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: center;
+    width: min(1200px, 100% - 7rem);
+  }
+
+  @media (max-width: 700px) {
+    .lightbox__figure {
+      width: calc(100% - 2rem);
+    }
+  }
+
+  .lightbox__img {
+    max-width: 100%;
+    max-height: calc(100dvh - 10rem);
+    width: auto;
+    height: auto;
+    border-radius: var(--radius);
+    box-shadow: 0 30px 80px rgb(0 0 0 / 0.6);
+  }
+
+  .lightbox__caption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+    text-align: center;
+  }
+
+  .lightbox__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+  }
+
+  .lightbox__tags,
+  .lightbox__count {
+    font-size: var(--fs-xs);
+    color: var(--c-text-invert-muted);
+  }
+
+  .lightbox__btn {
+    position: fixed;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.08);
+    color: #fff;
+    transition: background-color var(--dur) var(--ease);
+  }
+
+  .lightbox__btn:hover {
+    background: rgb(255 255 255 / 0.18);
+  }
+
+  .lightbox__close {
+    top: var(--space-4);
+    right: var(--space-4);
+  }
+
+  .lightbox__prev {
+    left: var(--space-4);
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  .lightbox__next {
+    right: var(--space-4);
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  @media (max-width: 700px) {
+    .lightbox__prev,
+    .lightbox__next {
+      top: auto;
+      bottom: var(--space-4);
+      translate: none;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-gallery]');
+  if (root) {
+    const tiles = Array.from(root.querySelectorAll<HTMLElement>('.tile'));
+    const chips = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tag]'));
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const dialog = root.querySelector<HTMLDialogElement>('[data-lightbox]')!;
+    const img = dialog.querySelector<HTMLImageElement>('[data-lb-img]')!;
+    let visible: HTMLElement[] = tiles;
+    let current = 0;
+    let opener: HTMLElement | null = null;
+
+    /* ----- Filters ----- */
+    const filter = (tag: string) => {
+      tiles.forEach((t) => (t.hidden = tag !== 'all' && !(t.dataset.tags ?? '').split('|').includes(tag)));
+      visible = tiles.filter((t) => !t.hidden);
+      count.textContent = `${visible.length} ${visible.length === 1 ? 'photo' : 'photos'}`;
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.tag === tag)));
+    };
+    chips.forEach((c) => c.addEventListener('click', () => filter(c.dataset.tag ?? 'all')));
+
+    /* ----- Lightbox ----- */
+    const show = (i: number) => {
+      current = (i + visible.length) % visible.length;
+      const btn = visible[current].querySelector<HTMLElement>('[data-open]')!;
+      img.src = btn.dataset.full ?? '';
+      img.alt = btn.dataset.alt ?? '';
+      dialog.querySelector('[data-lb-title]')!.textContent = btn.dataset.title ?? '';
+      dialog.querySelector('[data-lb-tags]')!.textContent = btn.dataset.tagsLabel ?? '';
+      dialog.querySelector('[data-lb-count]')!.textContent = `${current + 1} / ${visible.length}`;
+    };
+
+    tiles.forEach((tile) =>
+      tile.querySelector('[data-open]')?.addEventListener('click', (e) => {
+        opener = e.currentTarget as HTMLElement;
+        show(visible.indexOf(tile));
+        dialog.showModal();
+      }),
+    );
+
+    dialog.querySelector('[data-lb-close]')?.addEventListener('click', () => dialog.close());
+    dialog.querySelector('[data-lb-prev]')?.addEventListener('click', () => show(current - 1));
+    dialog.querySelector('[data-lb-next]')?.addEventListener('click', () => show(current + 1));
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(current - 1);
+      if (e.key === 'ArrowRight') show(current + 1);
+    });
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', () => opener?.focus());
+
+    let startX = 0;
+    dialog.addEventListener('touchstart', (e) => (startX = e.touches[0].clientX), { passive: true });
+    dialog.addEventListener(
+      'touchend',
+      (e) => {
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 50) show(current + (dx < 0 ? 1 : -1));
+      },
+      { passive: true },
+    );
+  }
+</script>

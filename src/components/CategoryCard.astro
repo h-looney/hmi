@@ -1,0 +1,136 @@
+---
+import Photo from './Photo.astro';
+import Icon from './Icon.astro';
+import { categoryHref, fuelLabels, type Category } from '../data/categories';
+
+interface Props {
+  category: Category;
+  headingLevel?: 'h2' | 'h3';
+  showTags?: boolean;
+  compact?: boolean;
+}
+
+const { category: c, headingLevel: H = 'h3', showTags = false, compact = false } = Astro.props;
+
+const tags = [
+  ...c.fuels.map((f) => fuelLabels[f]),
+  ...(c.outdoor ? ['Outdoor'] : []),
+  ...(c.retrofit ? ['Existing fireplace'] : []),
+];
+---
+
+<article
+  class:list={['card', 'card--hover', 'cat-card', { 'cat-card--compact': compact }]}
+  data-fuels={c.fuels.join(' ')}
+  data-group={c.group}
+  data-outdoor={c.outdoor ? 'true' : undefined}
+  data-retrofit={c.retrofit ? 'true' : undefined}
+>
+  <div class:list={['card__media', { 'is-cutout': c.card.cutout }]}>
+    <Photo
+      src={c.card.src}
+      alt={c.card.alt}
+      sizes="(min-width: 1240px) 400px, (min-width: 700px) 45vw, 100vw"
+      position={c.card.position}
+    />
+  </div>
+  <div class="card__body">
+    {
+      showTags && tags.length > 0 && (
+        <ul class="cat-card__tags" role="list">
+          {tags.map((t) => (
+            <li class="chip">{t}</li>
+          ))}
+        </ul>
+      )
+    }
+    <H class="cat-card__title">
+      <a href={categoryHref(c.slug)} class="card__link">{c.name}</a>
+    </H>
+    {!compact && <p class="cat-card__text">{c.short}</p>}
+    <span class="link-arrow cat-card__more" aria-hidden="true">
+      Explore <Icon name="arrow-right" size={16} />
+    </span>
+  </div>
+</article>
+
+<style>
+  .cat-card .card__media {
+    --ratio: 4 / 3;
+  }
+
+  .cat-card--compact .card__media {
+    --ratio: 3 / 2;
+  }
+
+  .card__media.is-cutout {
+    display: grid;
+    place-items: center;
+    padding: var(--space-5);
+    background:
+      radial-gradient(circle at 50% 62%, rgb(240 160 75 / 0.3), transparent 62%),
+      linear-gradient(160deg, #f6efe4, #e8dccb);
+  }
+
+  .card__media.is-cutout :global(img) {
+    object-fit: contain;
+    filter: drop-shadow(0 18px 18px rgb(27 23 20 / 0.28));
+  }
+
+  .cat-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cat-card__tags .chip {
+    font-size: var(--fs-2xs);
+    padding: 0.2em 0.65em;
+    background: var(--c-linen);
+    border-color: transparent;
+  }
+
+  .cat-card__title {
+    font-size: var(--fs-lg);
+    line-height: 1.25;
+  }
+
+  .cat-card__title a {
+    color: inherit;
+  }
+
+  .cat-card__text {
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .cat-card__more {
+    margin-top: auto;
+    padding-top: var(--space-2);
+  }
+
+  .card:hover .cat-card__more :global(svg) {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 640px) {
+    .cat-card--compact .card__body {
+      gap: 0.35rem;
+      padding: 0.85rem 0.9rem 1rem;
+    }
+
+    .cat-card--compact .cat-card__title {
+      font-size: 1.05rem;
+    }
+
+    .cat-card--compact .cat-card__more {
+      font-size: var(--fs-xs);
+    }
+
+    .cat-card--compact .card__media.is-cutout {
+      padding: var(--space-3);
+    }
+  }
+</style>

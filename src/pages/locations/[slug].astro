@@ -1,0 +1,415 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import Icon from '../../components/Icon.astro';
+import Photo from '../../components/Photo.astro';
+import OpenStatus from '../../components/OpenStatus.astro';
+import LazyMap from '../../components/LazyMap.astro';
+import CategoryCard from '../../components/CategoryCard.astro';
+import FaqList from '../../components/FaqList.astro';
+import CtaBand from '../../components/CtaBand.astro';
+
+import { locations, site, tel, prettyPhone, type Location } from '../../data/site';
+import { teamAt } from '../../data/team';
+import { getCategory } from '../../data/categories';
+import { getFaqs } from '../../data/faqs';
+import storefront from '../../assets/photos/storefront-sign.jpg';
+import { withBase } from '../../scripts/url';
+
+export const getStaticPaths = (() => locations.map((location) => ({ params: { slug: location.slug }, props: { location } }))) satisfies GetStaticPaths;
+
+interface Props {
+  location: Location;
+}
+
+const { location: l } = Astro.props;
+const other = locations.find((x) => x.slug !== l.slug)!;
+const people = teamAt(l.slug as 'osage-beach' | 'nixa');
+const popular = ['gas-fireplaces', 'fireplace-inserts', 'wood-stoves', 'outdoor-fireplaces'].map(getCategory);
+const slugify = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
+// TODO: add a Nixa storefront photo — only the Osage Beach storefront is on the current site.
+const photo = l.slug === 'osage-beach' ? storefront : undefined;
+---
+
+<BaseLayout
+  title={`Fireplace Store in ${l.city}, MO — ${l.region}`}
+  description={`Visit HMI Fireplace Shops at ${l.street}, ${l.city}, MO ${l.zip}. Fireplaces, inserts, stoves and certified installation and service. Call ${prettyPhone(l.phone)}.`}
+>
+  <PageHero
+    title={`${l.shortName}, Missouri`}
+    titleHtml={`${l.shortName}, <em>Missouri.</em>`}
+    eyebrow={l.region}
+    lead={l.blurb}
+    crumbs={[{ label: 'Locations', href: withBase('/contact/#locations') }, { label: l.shortName }]}
+  >
+    <a href={tel(l.phone)} class="btn btn--primary btn--lg">
+      <Icon name="phone" size={18} /> {prettyPhone(l.phone)}
+    </a>
+    <a href={l.directionsUrl} class="btn btn--ghost-light btn--lg" target="_blank" rel="noopener">
+      <Icon name="pin" size={18} /> Get directions
+    </a>
+  </PageHero>
+
+  <section class="section">
+    <div class="container store">
+      <div class="store__info" data-reveal>
+        <div class="store__status">
+          <OpenStatus location={l} />
+        </div>
+        <dl class="store__list">
+          <div>
+            <dt><Icon name="pin" size={20} /> Address</dt>
+            <dd>
+              <address>{l.street}<br />{`${l.city}, ${l.state} ${l.zip}`}</address>
+              <a href={l.directionsUrl} class="link-arrow" target="_blank" rel="noopener">
+                Directions <Icon name="arrow-up-right" size={14} />
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt><Icon name="phone" size={20} /> Phone</dt>
+            <dd>
+              <a href={tel(l.phone)} class="store__phone tabular">{prettyPhone(l.phone)}</a>
+              <span class="muted small tabular">Toll-free {prettyPhone(l.tollFree)}</span>
+              <span class="muted small tabular">Fax {prettyPhone(l.fax)}</span>
+            </dd>
+          </div>
+          <div>
+            <dt><Icon name="clock" size={20} /> Hours</dt>
+            <dd>
+              <ul role="list" class="store__hours">
+                {
+                  site.hoursSummary.map((h) => (
+                    <li>
+                      <span>{h.days}</span>
+                      <span>{h.time}</span>
+                    </li>
+                  ))
+                }
+              </ul>
+            </dd>
+          </div>
+        </dl>
+        <div class="cluster">
+          <a href={withBase(`/contact/?store=${l.slug}`)} class="btn btn--primary">Request a quote</a>
+          <a href={withBase('/service-request/')} class="btn btn--outline">Request service</a>
+        </div>
+      </div>
+
+      <div class="store__media" data-reveal style="--reveal-delay: 100ms">
+        {
+          photo && (
+            <div class="media-frame store__photo">
+              <Photo src={photo} alt={`The HMI Fireplace Shop storefront in ${l.city}`} sizes="(min-width: 960px) 600px, 100vw" />
+            </div>
+          )
+        }
+        <LazyMap src={l.mapEmbed} title={`Map of ${l.name}`} label={`${l.street}, ${l.city}`} class="store__map" />
+      </div>
+    </div>
+  </section>
+
+  {
+    people.length > 0 && (
+      <section class="section section--linen">
+        <div class="container">
+          <SectionHeading eyebrow="Your local team" title={`Meet the ${l.shortName} <em>crew.</em>`} align="split">
+            <a href={withBase(`/about/team/#${l.slug}`)} class="link-arrow">
+              Full team <Icon name="arrow-right" size={16} />
+            </a>
+          </SectionHeading>
+          <ul class="crew" role="list">
+            {people.map((m, i) => (
+              <li data-reveal style={`--reveal-delay: ${i * 80}ms`}>
+                <a href={withBase(`/about/team/#${slugify(m.name)}`)} class="crew__card">
+                  <span class="crew__photo">
+                    <Photo src={m.photo} alt="" sizes="160px" widths={[200, 350]} position={m.focus} />
+                  </span>
+                  <span>
+                    <span class="crew__name">{m.name}</span>
+                    <span class="crew__role">{m.role}</span>
+                    <span class="crew__since">With HMI since {m.since}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section">
+    <div class="container">
+      <SectionHeading
+        eyebrow="In the showroom"
+        title="Popular with <em>our neighbors.</em>"
+        lead={`Stop by ${l.street} to compare these and more in person.`}
+        align="split"
+      >
+        <a href={withBase('/products/')} class="link-arrow">All products <Icon name="arrow-right" size={16} /></a>
+      </SectionHeading>
+      <div class="grid grid--cats popular">
+        {
+          popular.map((c, i) => (
+            <div data-reveal style={`--reveal-delay: ${i * 70}ms`}>
+              <CategoryCard category={c} compact />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="container areas">
+      <div data-reveal>
+        <p class="eyebrow">Areas we serve</p>
+        <h2>Proudly serving <em>{l.region}.</em></h2>
+        <p class="muted">
+          Our {l.shortName} team sells, installs and services hearth products for homes and builders throughout the area,
+          including:
+        </p>
+      </div>
+      <ul class="areas__list" role="list" data-reveal>
+        {l.nearby.map((town) => <li class="chip">{town}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container--narrow">
+      <SectionHeading eyebrow="Visiting" title="Planning <em>your visit.</em>" align="center" />
+      <FaqList faqs={getFaqs(['visit', 'quote', 'insert-fit'])} />
+      <p class="other-store">
+        Closer to {other.city}? Visit our <a href={withBase(`/locations/${other.slug}/`)} class="text-link">{other.shortName} showroom</a>
+        {' '}or call <a href={tel(other.phone)} class="text-link tabular">{prettyPhone(other.phone)}</a>.
+      </p>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .store {
+    display: grid;
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  @media (min-width: 960px) {
+    .store {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+  }
+
+  .store__info {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .store__status :global(.status) {
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    font-size: var(--fs-sm);
+  }
+
+  .store__list {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .store__list > div {
+    display: grid;
+    gap: var(--space-2);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--c-stone);
+  }
+
+  .store__list dt {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+
+  .store__list dt :global(svg) {
+    color: var(--c-ember);
+  }
+
+  .store__list dd {
+    display: grid;
+    gap: 0.25rem;
+    justify-items: start;
+    font-size: var(--fs-md);
+  }
+
+  .store__list address {
+    font-style: normal;
+  }
+
+  .store__phone {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    color: var(--c-text);
+    text-decoration: none;
+  }
+
+  .store__phone:hover {
+    color: var(--c-ember);
+  }
+
+  .store__hours {
+    display: grid;
+    gap: 0.3rem;
+    width: 100%;
+    max-width: 380px;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-sm);
+  }
+
+  .store__hours li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .store__hours li span:first-child {
+    color: var(--c-text-muted);
+  }
+
+  .store__media {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .store__photo {
+    aspect-ratio: 800 / 475;
+  }
+
+  .store__media :global(.store__map) {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--c-stone);
+  }
+
+  .crew {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .crew__card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    color: var(--c-text);
+    text-decoration: none;
+    transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+
+  .crew__card:hover {
+    border-color: var(--c-stone-2);
+    box-shadow: var(--shadow);
+  }
+
+  .crew__card > span:last-child {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .crew__photo {
+    flex: none;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--c-linen);
+  }
+
+  .crew__photo :global(picture),
+  .crew__photo :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .crew__photo :global(img) {
+    object-fit: cover;
+  }
+
+  .crew__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+  }
+
+  .crew__card:hover .crew__name {
+    color: var(--c-ember);
+  }
+
+  .crew__role {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-ember);
+  }
+
+  .crew__since {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .popular > div {
+    display: grid;
+  }
+
+  .areas {
+    display: grid;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  @media (min-width: 960px) {
+    .areas {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-8);
+    }
+  }
+
+  .areas > div {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .areas__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .areas__list .chip {
+    font-size: var(--fs-sm);
+    padding: 0.5em 1em;
+  }
+
+  .other-store {
+    margin-top: var(--space-6);
+    text-align: center;
+    color: var(--c-text-muted);
+  }
+</style>

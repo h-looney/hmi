@@ -1,0 +1,701 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Icon from '../components/Icon.astro';
+import OpenStatus from '../components/OpenStatus.astro';
+import FaqList from '../components/FaqList.astro';
+import { brands } from '../data/brands';
+import { getFaqs } from '../data/faqs';
+import { locations, tel, prettyPhone } from '../data/site';
+import { withBase } from '../scripts/url';
+
+const hearthBrands = brands
+  .filter((b) => b.categories.some((c) => ['Fireplaces', 'Inserts', 'Stoves', 'Gas logs', 'Electric', 'Outdoor'].includes(c)))
+  .map((b) => b.name)
+  .sort();
+
+const appliances = [
+  'Gas fireplace',
+  'Gas insert',
+  'Gas stove',
+  'Gas logs',
+  'Vent-free appliance',
+  'Wood fireplace',
+  'Wood stove or insert',
+  'Pellet stove or insert',
+  'Electric fireplace',
+  'Outdoor fireplace',
+  'Other / not sure',
+];
+
+const issues = [
+  { value: 'annual', label: 'Annual service & cleaning', icon: 'calendar' },
+  { value: 'wont-light', label: 'Won’t light or won’t stay lit', icon: 'flame' },
+  { value: 'ignition', label: 'Pilot or ignition problem', icon: 'bolt' },
+  { value: 'controls', label: 'Remote, fan or controls', icon: 'wrench' },
+  { value: 'glass', label: 'Glass, doors or gaskets', icon: 'shield' },
+  { value: 'other', label: 'Something else', icon: 'chat' },
+] as const;
+
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+---
+
+<BaseLayout
+  title="Request Fireplace & Stove Service"
+  description="Schedule service for your fireplace, insert or stove with HMI Fireplace Shops in Osage Beach and Nixa, MO. Tell us about your appliance and the issue, and we’ll be in touch to schedule."
+>
+  <PageHero
+    title="Request service"
+    titleHtml="Request <em>service.</em>"
+    eyebrow="Service department"
+    lead="From routine annual service to a fireplace that won’t light, tell us what’s going on and our service coordinator will reach out to schedule a visit."
+    crumbs={[{ label: 'Services', href: withBase('/services/') }, { label: 'Request service' }]}
+  />
+
+  <section class="section">
+    <div class="container service-layout">
+      <div class="sr" data-sr>
+        <form class="sr__form" data-sr-form novalidate>
+          <!-- Contact -->
+          <fieldset class="sr__group">
+            <legend class="sr__legend"><span>1</span> Your information</legend>
+            <div class="sr__grid">
+              <label class="field">
+                <span class="field__label">Full name</span>
+                <input class="input" type="text" name="name" autocomplete="name" required data-msg-required="Please tell us your name." />
+                <span class="field__error" role="alert"></span>
+              </label>
+              <label class="field">
+                <span class="field__label">Phone</span>
+                <input
+                  class="input"
+                  type="tel"
+                  name="phone"
+                  autocomplete="tel"
+                  required
+                  pattern="[\d\s\(\)\.\+\-]{10,}"
+                  data-msg-required="We’ll need a phone number to schedule."
+                  data-msg-format="Please enter a 10-digit phone number."
+                />
+                <span class="field__error" role="alert"></span>
+              </label>
+              <label class="field">
+                <span class="field__label">Email</span>
+                <input class="input" type="email" name="email" autocomplete="email" required data-msg-required="Please enter your email address." />
+                <span class="field__error" role="alert"></span>
+              </label>
+              <label class="field">
+                <span class="field__label">Service address</span>
+                <input class="input" type="text" name="address" autocomplete="street-address" required data-msg-required="Please enter the address for the visit." />
+                <span class="field__error" role="alert"></span>
+              </label>
+              <div class="sr__full" data-required-group data-msg-required="Please choose a showroom.">
+                <p class="field__label">Nearest showroom</p>
+                <div class="option-grid">
+                  {
+                    locations.map((l) => (
+                      <label class="option">
+                        <input type="radio" name="store" value={l.slug} />
+                        <span class="option__mark">
+                          <Icon name="check" size={13} strokeWidth={3} />
+                        </span>
+                        <span class="option__text">
+                          <span>{l.shortName}</span>
+                          <span class="option__sub">{l.region}</span>
+                        </span>
+                      </label>
+                    ))
+                  }
+                </div>
+                <p class="field__error" role="alert"></p>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Appliance -->
+          <fieldset class="sr__group">
+            <legend class="sr__legend"><span>2</span> Your appliance</legend>
+            <div class="sr__grid">
+              <label class="field">
+                <span class="field__label">Type of appliance</span>
+                <select class="select" name="appliance" required data-msg-required="Please choose the type of appliance.">
+                  <option value="">Choose one…</option>
+                  {appliances.map((a) => <option>{a}</option>)}
+                </select>
+                <span class="field__error" role="alert"></span>
+              </label>
+              <label class="field">
+                <span class="field__label">Brand</span>
+                <select class="select" name="brand">
+                  <option value="">Not sure</option>
+                  {hearthBrands.map((b) => <option>{b}</option>)}
+                  <option>Other</option>
+                </select>
+              </label>
+              <label class="field">
+                <span class="field__label">Model or serial number <span class="field__optional">(optional)</span></span>
+                <input class="input" type="text" name="model" />
+                <span class="field__hint">Usually on a rating plate behind the lower grille or on the back.</span>
+              </label>
+              <label class="field">
+                <span class="field__label">Purchased from HMI?</span>
+                <select class="select" name="purchased">
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="unsure" selected>Not sure</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Issue -->
+          <fieldset class="sr__group">
+            <legend class="sr__legend"><span>3</span> What do you need?</legend>
+            <div class="option-grid sr__issues" data-required-group data-msg-required="Please choose what you need help with.">
+              {
+                issues.map((i) => (
+                  <label class="option">
+                    <input type="radio" name="issue" value={i.value} />
+                    <span class="option__mark">
+                      <Icon name="check" size={13} strokeWidth={3} />
+                    </span>
+                    <span class="option__icon">
+                      <Icon name={i.icon} size={20} />
+                    </span>
+                    <span class="option__text">{i.label}</span>
+                  </label>
+                ))
+              }
+              <p class="field__error sr__group-error" role="alert"></p>
+            </div>
+            <label class="field">
+              <span class="field__label">Describe what’s happening</span>
+              <textarea
+                class="textarea"
+                name="description"
+                rows="5"
+                required
+                minlength="10"
+                data-msg-required="A short description helps us send the right technician and parts."
+                placeholder="When did it start? Any sounds, smells, error lights or recent changes?"></textarea>
+              <span class="field__error" role="alert"></span>
+            </label>
+
+            <div class="field">
+              <span class="field__label">Photos <span class="field__optional">(optional)</span></span>
+              <label class="dropzone" data-dropzone>
+                <input type="file" name="photos" accept="image/*" multiple class="visually-hidden" data-file-input />
+                <Icon name="upload" size={26} />
+                <span><strong>Add photos</strong> of the appliance, rating plate or problem area</span>
+                <span class="field__hint">Up to 6 images</span>
+              </label>
+              <ul class="thumbs" role="list" data-thumbs></ul>
+            </div>
+          </fieldset>
+
+          <!-- Scheduling -->
+          <fieldset class="sr__group">
+            <legend class="sr__legend"><span>4</span> Scheduling preferences</legend>
+            <div class="sr__grid">
+              <div class="sr__full">
+                <p class="field__label">Best days for a visit</p>
+                <div class="days">
+                  {
+                    days.map((d) => (
+                      <label class="day">
+                        <input type="checkbox" name="days" value={d} />
+                        <span>{d}</span>
+                      </label>
+                    ))
+                  }
+                </div>
+              </div>
+              <label class="field">
+                <span class="field__label">Time of day</span>
+                <select class="select" name="time">
+                  <option>Morning</option>
+                  <option>Afternoon</option>
+                  <option selected>Either</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="sr__submit">
+            <p class="sr__note">
+              <Icon name="info" size={16} /> Smell gas? Leave the house and call your gas utility or 911 from outside — don’t
+              use this form.
+            </p>
+            <button type="submit" class="btn btn--primary btn--lg" data-submit>
+              Submit service request <Icon name="arrow-right" size={18} class="icon-arrow" />
+            </button>
+          </div>
+          <p class="sr__fail" role="alert" hidden data-fail>
+            Something went wrong. Please try again or call the showroom nearest you.
+          </p>
+        </form>
+
+        <div class="sr__done" data-done hidden tabindex="-1">
+          <span class="sr__done-icon"><Icon name="check" size={30} strokeWidth={2.4} /></span>
+          <h2 class="sr__done-title" data-done-title>Request received</h2>
+          <p class="muted">
+            Thanks for reaching out. Our service coordinator will contact you to confirm a time. If the issue is urgent,
+            please call the showroom nearest you.
+          </p>
+          <a href={withBase('/resources/')} class="link-arrow">While you wait: owner resources <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </div>
+
+      <aside class="service-aside">
+        <div class="aside-panel on-dark" data-reveal>
+          <h2 class="aside-panel__title">Call the service team</h2>
+          <ul role="list">
+            {
+              locations.map((l) => (
+                <li>
+                  <span class="aside-panel__store">{l.shortName}</span>
+                  <a href={tel(l.phone)} class="aside-panel__phone tabular">
+                    {prettyPhone(l.phone)}
+                  </a>
+                  <OpenStatus location={l} />
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div class="aside-panel aside-panel--light" data-reveal>
+          <h2 class="aside-panel__title">Before your visit</h2>
+          <ul role="list" class="checklist">
+            <li><Icon name="check" size={18} /><span>Note the brand and model if you can find them.</span></li>
+            <li><Icon name="check" size={18} /><span>Let the appliance cool completely.</span></li>
+            <li><Icon name="check" size={18} /><span>Clear a path and the area around the fireplace.</span></li>
+            <li><Icon name="check" size={18} /><span>Gas unit won’t light after an outage? Check the batteries in your remote and backup first.</span></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--linen">
+    <div class="container--narrow">
+      <SectionHeading eyebrow="Service FAQ" title="Keeping your fire <em>safe &amp; reliable.</em>" align="center" />
+      <FaqList faqs={getFaqs(['annual-service', 'power-outage', 'certified'])} />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .service-layout {
+    display: grid;
+    gap: var(--space-7);
+    align-items: start;
+  }
+
+  @media (min-width: 1040px) {
+    .service-layout {
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    }
+
+    .service-aside {
+      position: sticky;
+      top: calc(var(--header-h) + 2rem);
+    }
+  }
+
+  .sr {
+    padding: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+
+  .sr__form {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .sr__form[hidden],
+  .sr__done[hidden] {
+    display: none;
+  }
+
+  .sr__group {
+    display: grid;
+    gap: var(--space-5);
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .sr__legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0;
+    margin-bottom: var(--space-1);
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    font-weight: 500;
+  }
+
+  .sr__legend span {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--c-ink);
+    color: var(--c-text-invert);
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 650;
+  }
+
+  .sr__grid {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 640px) {
+    .sr__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .sr__full {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  [data-required-group][data-invalid] .field__error {
+    display: block;
+  }
+
+  [data-required-group][data-invalid] .option {
+    border-color: var(--c-danger);
+  }
+
+  .sr__group-error {
+    grid-column: 1 / -1;
+  }
+
+  .dropzone {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    padding: var(--space-6);
+    border: 1.5px dashed var(--c-stone-2);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    text-align: center;
+    color: var(--c-text-muted);
+    cursor: pointer;
+    transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+  }
+
+  .dropzone :global(svg) {
+    color: var(--c-ember);
+  }
+
+  .dropzone strong {
+    color: var(--c-text);
+  }
+
+  .dropzone:hover,
+  .dropzone.is-over {
+    border-color: var(--c-ember);
+    background: var(--c-ember-50);
+  }
+
+  .dropzone:has(input:focus-visible) {
+    outline: 2px solid var(--c-ember);
+    outline-offset: 2px;
+  }
+
+  .thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .thumbs :global(li) {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--c-stone);
+  }
+
+  .thumbs :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumbs :global(button) {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgb(20 17 15 / 0.75);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .day {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .day input {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .day span {
+    display: grid;
+    place-items: center;
+    min-width: 58px;
+    min-height: 46px;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--c-stone-2);
+    border-radius: var(--radius);
+    background: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    transition: all var(--dur) var(--ease);
+  }
+
+  .day input:checked + span {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-text-invert);
+  }
+
+  .day input:focus-visible + span {
+    outline: 2px solid var(--c-ember);
+    outline-offset: 2px;
+  }
+
+  .sr__submit {
+    display: grid;
+    gap: var(--space-4);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--c-stone);
+  }
+
+  @media (min-width: 760px) {
+    .sr__submit {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+  }
+
+  .sr__note {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .sr__note :global(svg) {
+    flex: none;
+    margin-top: 0.15em;
+    color: var(--c-danger);
+  }
+
+  .sr__fail {
+    color: var(--c-danger);
+    font-weight: 550;
+  }
+
+  .sr__done {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+  }
+
+  .sr__done:focus {
+    outline: none;
+  }
+
+  .sr__done-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--c-open);
+    color: #fff;
+  }
+
+  .sr__done-title {
+    font-size: var(--fs-2xl);
+  }
+
+  .service-aside {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .aside-panel {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    background: var(--c-ink);
+  }
+
+  .aside-panel--light {
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+  }
+
+  .aside-panel__title {
+    font-size: var(--fs-lg);
+  }
+
+  .aside-panel ul:not(.checklist) {
+    display: grid;
+    gap: var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .aside-panel ul:not(.checklist) li {
+    display: grid;
+    gap: 0.2rem;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--c-ink-line);
+  }
+
+  .aside-panel__store {
+    font-size: var(--fs-xs);
+    font-weight: 650;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c-brass-light);
+  }
+
+  .aside-panel__phone {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    color: var(--c-text-invert);
+    text-decoration: none;
+  }
+
+  .aside-panel__phone:hover {
+    color: var(--c-flame);
+  }
+
+  .aside-panel :global(.status) {
+    color: var(--c-text-invert-muted);
+  }
+
+  .aside-panel--light .checklist {
+    font-size: var(--fs-sm);
+  }
+</style>
+
+<script>
+  import { validate, liveClear, submit, setBusy } from '../scripts/forms';
+
+  const root = document.querySelector<HTMLElement>('[data-sr]');
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-sr-form]')!;
+    const done = root.querySelector<HTMLElement>('[data-done]')!;
+    const fileInput = root.querySelector<HTMLInputElement>('[data-file-input]')!;
+    const dropzone = root.querySelector<HTMLElement>('[data-dropzone]')!;
+    const thumbs = root.querySelector<HTMLElement>('[data-thumbs]')!;
+    const MAX_FILES = 6;
+    let files: File[] = [];
+
+    liveClear(form);
+
+    /* ----- Photo previews (stay in the browser) ----- */
+    const sync = () => {
+      const dt = new DataTransfer();
+      files.forEach((f) => dt.items.add(f));
+      fileInput.files = dt.files;
+      thumbs.replaceChildren(
+        ...files.map((file, i) => {
+          const li = document.createElement('li');
+          const img = document.createElement('img');
+          img.alt = file.name;
+          img.src = URL.createObjectURL(file);
+          img.onload = () => URL.revokeObjectURL(img.src);
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.textContent = '×';
+          remove.setAttribute('aria-label', `Remove ${file.name}`);
+          remove.addEventListener('click', () => {
+            files.splice(i, 1);
+            sync();
+          });
+          li.append(img, remove);
+          return li;
+        }),
+      );
+    };
+
+    const addFiles = (list: FileList | null) => {
+      if (!list) return;
+      files = [...files, ...Array.from(list).filter((f) => f.type.startsWith('image/'))].slice(0, MAX_FILES);
+      sync();
+    };
+
+    fileInput.addEventListener('change', () => addFiles(fileInput.files));
+    ['dragenter', 'dragover'].forEach((t) =>
+      dropzone.addEventListener(t, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('is-over');
+      }),
+    );
+    ['dragleave', 'drop'].forEach((t) => dropzone.addEventListener(t, () => dropzone.classList.remove('is-over')));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      addFiles((e as DragEvent).dataTransfer?.files ?? null);
+    });
+
+    /* ----- Submit ----- */
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validate(form)) return;
+      const button = form.querySelector<HTMLButtonElement>('[data-submit]');
+      const fail = form.querySelector<HTMLElement>('[data-fail]')!;
+      fail.hidden = true;
+      setBusy(button, true);
+      try {
+        await submit(form);
+        const name = String(new FormData(form).get('name') ?? '').split(' ')[0];
+        root.querySelector('[data-done-title]')!.textContent = name ? `Thanks, ${name} — request received` : 'Request received';
+        form.hidden = true;
+        done.hidden = false;
+        done.focus();
+        root.scrollIntoView({ block: 'start' });
+      } catch {
+        fail.hidden = false;
+      } finally {
+        setBusy(button, false);
+      }
+    });
+  }
+</script>

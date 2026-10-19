@@ -1,0 +1,53 @@
+---
+/**
+ * Live "Open now / Closed" indicator for a store. Renders a static fallback
+ * on the server (the site is pre-rendered), then updates in the browser.
+ */
+import type { Location } from '../data/site';
+import { site } from '../data/site';
+
+interface Props {
+  location: Location;
+  /** Show the "until 5 PM" detail text */
+  detail?: boolean;
+  class?: string;
+}
+
+const { location, detail = true, class: className } = Astro.props;
+---
+
+<span
+  class:list={['status', className]}
+  data-open-status
+  data-hours={JSON.stringify(location.hours)}
+  data-tz={site.timezone}
+  data-detail={detail ? 'true' : undefined}
+>
+  <span class="status__dot" aria-hidden="true"></span>
+  <span class="status__text">Mon–Fri 8–5 · Sat 9–1</span>
+</span>
+
+<script>
+  import { getOpenStatus } from '../scripts/hours';
+
+  const update = () => {
+    document.querySelectorAll<HTMLElement>('[data-open-status]').forEach((el) => {
+      try {
+        const hours = JSON.parse(el.dataset.hours ?? '[]');
+        const status = getOpenStatus(hours, el.dataset.tz);
+        el.dataset.state = status.state;
+        const text = el.querySelector('.status__text');
+        if (text) {
+          text.textContent =
+            el.dataset.detail && status.detail ? `${status.label} · ${status.detail}` : status.label;
+        }
+      } catch {
+        /* keep the static fallback */
+      }
+    });
+  };
+
+  update();
+  // Refresh every minute so a long-open tab stays accurate.
+  setInterval(update, 60_000);
+</script>

@@ -1,0 +1,104 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Embers from '../components/Embers.astro';
+import Icon from '../components/Icon.astro';
+import { locations, tel, prettyPhone } from '../data/site';
+import { withBase } from '../scripts/url';
+---
+
+<BaseLayout title="Page not found" noindex>
+  <section class="nf on-dark">
+    <Embers density={0.8} />
+    <div class="container nf__inner">
+      <p class="nf__code">404</p>
+      <h1>This page went up <em>in smoke.</em></h1>
+      <p class="lead">The page you’re looking for may have moved when we refreshed our website. Let’s get you back by the fire.</p>
+      <div class="nf__actions">
+        <a href={withBase('/')} class="btn btn--primary btn--lg">Back to home</a>
+        <a href={withBase('/products/')} class="btn btn--ghost-light btn--lg">Browse products</a>
+      </div>
+      <ul role="list" class="nf__links">
+        <li><a href={withBase('/fireplace-finder/')}>Fireplace Finder <Icon name="arrow-right" size={14} /></a></li>
+        <li><a href={withBase('/services/')}>Services <Icon name="arrow-right" size={14} /></a></li>
+        <li><a href={withBase('/contact/')}>Contact <Icon name="arrow-right" size={14} /></a></li>
+        {
+          locations.map((l) => (
+            <li>
+              <a href={tel(l.phone)}>
+                Call {l.shortName} {prettyPhone(l.phone)}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .nf {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 70vh;
+    display: grid;
+    align-items: center;
+    background:
+      radial-gradient(ellipse 60% 60% at 50% 110%, rgb(185 71 27 / 0.4), transparent 70%),
+      var(--c-ink);
+  }
+
+  .nf__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--space-5);
+    justify-items: center;
+    padding-block: var(--space-9);
+    text-align: center;
+  }
+
+  .nf__code {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 3rem + 10vw, 10rem);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 0.9;
+    color: transparent;
+    -webkit-text-stroke: 1px rgb(240 160 75 / 0.6);
+  }
+
+  .nf .lead {
+    margin-inline: auto;
+  }
+
+  .nf__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+
+  .nf__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3) var(--space-6);
+    margin-top: var(--space-4);
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-sm);
+  }
+
+  .nf__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    color: var(--c-text-invert-muted);
+    text-decoration: none;
+  }
+
+  .nf__links a:hover {
+    color: var(--c-flame);
+  }
+</style>

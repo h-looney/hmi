@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Icon from '../components/Icon.astro';
+import Photo from '../components/Photo.astro';
+import { site, locations } from '../data/site';
+import panoWoodStoves from '../assets/photos/pano-wood-stoves.jpg';
+import family from '../assets/photos/family-outdoors.jpg';
+import { withBase } from '../scripts/url';
+
+const reasons = [
+  { icon: 'heart', title: 'A family business', text: `HMI has been family-owned since ${site.founded}. We treat each other — and our customers — like family.` },
+  { icon: 'award', title: 'Training & certification', text: 'Continuing education is one of our guiding principles, from National Fireplace Institute certification to manufacturer training.' },
+  { icon: 'wrench', title: 'Skills that last', text: 'Learn a specialized trade that combines craftsmanship, building science and customer care.' },
+  { icon: 'pin', title: 'Two Missouri locations', text: `Work close to home at our ${locations.map((l) => l.shortName).join(' or ')} showroom.` },
+] as const;
+
+const areas = [
+  { title: 'Installation', text: 'Install fireplaces, inserts and stoves alongside experienced, certified crew leaders.' },
+  { title: 'Service', text: 'Diagnose, maintain and repair hearth appliances and help customers stay safe.' },
+  { title: 'Showroom sales', text: 'Help homeowners and builders find the right fire for their space and style.' },
+  { title: 'Office & operations', text: 'Keep scheduling, parts, warranty and accounting running smoothly.' },
+];
+---
+
+<BaseLayout
+  title="Careers at HMI Fireplace Shops"
+  description="Build a career in the hearth industry with HMI Fireplace Shops in Osage Beach and Nixa, MO. Family-owned since 1975 with a commitment to training and certification."
+>
+  <PageHero
+    title="Careers"
+    titleHtml="Build a career <em>by the fire.</em>"
+    eyebrow="Careers"
+    lead="We’re always glad to meet hard-working people who take pride in doing things right. If you like working with your hands, solving problems and helping people, there may be a place for you at HMI."
+    image={{ src: panoWoodStoves, alt: '', position: '50% 60%' }}
+    crumbs={[{ label: 'About', href: withBase('/about/') }, { label: 'Careers' }]}
+  >
+    <a href={site.links.employmentApplication} class="btn btn--primary btn--lg" target="_blank" rel="noopener">
+      Apply online <Icon name="arrow-up-right" size={18} />
+    </a>
+  </PageHero>
+
+  <section class="section">
+    <div class="container">
+      <SectionHeading eyebrow="Why HMI" title="More than a job — <em>a trade and a team.</em>" align="center" />
+      <div class="grid grid--4">
+        {
+          reasons.map((r, i) => (
+            <div class="reason" data-reveal style={`--reveal-delay: ${i * 80}ms`}>
+              <span class="icon-tile">
+                <Icon name={r.icon} size={24} />
+              </span>
+              <h3>{r.title}</h3>
+              <p class="muted small">{r.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--linen">
+    <div class="container areas">
+      <div class="areas__media" data-reveal>
+        <div class="media-frame">
+          <Photo src={family} alt="Four people smiling together on a mountain trail" sizes="(min-width: 960px) 500px, 100vw" />
+        </div>
+      </div>
+      <div class="areas__copy" data-reveal style="--reveal-delay: 100ms">
+        <p class="eyebrow">Where you could fit</p>
+        <h2>Our team works <em>across four areas.</em></h2>
+        <p class="muted">Openings vary through the year. Tell us where your strengths are and we’ll keep you in mind.</p>
+        <ul class="areas__list" role="list">
+          {
+            areas.map((a) => (
+              <li>
+                <h3>{a.title}</h3>
+                <p class="muted small">{a.text}</p>
+              </li>
+            ))
+          }
+        </ul>
+        <a href={site.links.employmentApplication} class="btn btn--primary" target="_blank" rel="noopener">
+          Fill out the employment application <Icon name="arrow-up-right" size={18} />
+        </a>
+        <p class="small muted">The application opens in a new tab on our secure form provider.</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .reason {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-6) var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .reason h3 {
+    margin-top: var(--space-2);
+    font-size: var(--fs-lg);
+  }
+
+  .areas {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  @media (min-width: 960px) {
+    .areas {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+  }
+
+  .areas__media .media-frame {
+    aspect-ratio: 4 / 3;
+  }
+
+  .areas__copy {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+  }
+
+  .areas__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: var(--space-4) var(--space-5);
+    width: 100%;
+    margin-block: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .areas__list li {
+    padding-top: var(--space-3);
+    border-top: 2px solid var(--c-ember);
+  }
+
+  .areas__list h3 {
+    font-size: var(--fs-md);
+    margin-bottom: var(--space-1);
+  }
+</style>

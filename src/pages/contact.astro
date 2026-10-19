@@ -1,0 +1,234 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import QuoteForm from '../components/QuoteForm.astro';
+import LocationCard from '../components/LocationCard.astro';
+import OpenStatus from '../components/OpenStatus.astro';
+import FaqList from '../components/FaqList.astro';
+import Icon from '../components/Icon.astro';
+import { locations, site, tel, prettyPhone } from '../data/site';
+import { getFaqs } from '../data/faqs';
+import { withBase } from '../scripts/url';
+---
+
+<BaseLayout
+  title="Contact & Request a Quote"
+  description="Request a quote, ask a question or plan a visit to HMI Fireplace Shops in Osage Beach (573-348-9002) or Nixa (417-725-2550), Missouri."
+>
+  <PageHero
+    title="Contact"
+    titleHtml="Let’s talk <em>fire.</em>"
+    eyebrow="Contact & quotes"
+    lead="Tell us a little about your project and we’ll follow up with ideas, options and a clear quote. Prefer a real conversation? Call or stop by either showroom."
+    crumbs={[{ label: 'Contact' }]}
+  />
+
+  <section class="section">
+    <div class="container contact">
+      <div class="contact__form">
+        <SectionHeading eyebrow="Request a quote" title="Start your <em>project.</em>" />
+        <QuoteForm />
+      </div>
+
+      <aside class="contact__aside">
+        <div class="aside-card" data-reveal>
+          <h2 class="aside-card__title">Prefer to talk?</h2>
+          <ul role="list" class="aside-stores">
+            {
+              locations.map((l) => (
+                <li>
+                  <div class="aside-stores__head">
+                    <a href={withBase(`/locations/${l.slug}/`)} class="aside-stores__name">
+                      {l.shortName}
+                    </a>
+                    <OpenStatus location={l} />
+                  </div>
+                  <a href={tel(l.phone)} class="aside-stores__phone tabular">
+                    <Icon name="phone" size={16} /> {prettyPhone(l.phone)}
+                  </a>
+                  <p class="aside-stores__meta tabular">
+                    Toll-free {prettyPhone(l.tollFree)}
+                    <br />
+                    {l.street}, {l.city}
+                  </p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="aside-card aside-card--dark on-dark" id="visit" data-reveal>
+          <span class="icon-tile"><Icon name="calendar" size={22} /></span>
+          <h2 class="aside-card__title">After-hours visits</h2>
+          <p>
+            Can’t make it during the week? Evening and Sunday showroom visits are available by appointment. Call the store
+            you’d like to visit, or mention your preferred time in your quote request.
+          </p>
+          <dl class="hours">
+            {
+              site.hoursSummary.map((h) => (
+                <div>
+                  <dt>{h.days}</dt>
+                  <dd>{h.time}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </div>
+
+        <div class="aside-card" data-reveal>
+          <span class="icon-tile"><Icon name="wrench" size={22} /></span>
+          <h2 class="aside-card__title">Need service instead?</h2>
+          <p class="muted">Use our service request form to tell us about your appliance and schedule a visit.</p>
+          <a href={withBase('/service-request/')} class="link-arrow">Request service <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--linen" id="locations">
+    <div class="container">
+      <SectionHeading eyebrow="Visit" title="Two showrooms, <em>one family.</em>" align="split" lead="Walk in any time during showroom hours to see displays, compare finishes and talk with our team." />
+      <div class="grid grid--2">
+        {locations.map((l) => <LocationCard location={l} headingLevel="h3" />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container--narrow">
+      <SectionHeading eyebrow="Before you reach out" title="Quick <em>answers.</em>" align="center" />
+      <FaqList faqs={getFaqs(['quote', 'visit', 'install', 'builders'])} />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact {
+    display: grid;
+    gap: var(--space-7);
+    align-items: start;
+  }
+
+  @media (min-width: 1040px) {
+    .contact {
+      grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    }
+
+    .contact__aside {
+      position: sticky;
+      top: calc(var(--header-h) + 2rem);
+    }
+  }
+
+  .contact__form :global(.section-head) {
+    margin-bottom: var(--space-5);
+  }
+
+  .contact__aside {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .aside-card {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    padding: var(--space-6);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .aside-card--dark {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+  }
+
+  .aside-card--dark p {
+    color: var(--c-text-invert-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .aside-card__title {
+    font-size: var(--fs-lg);
+  }
+
+  .aside-stores {
+    display: grid;
+    gap: var(--space-4);
+    width: 100%;
+    padding: 0;
+    list-style: none;
+  }
+
+  .aside-stores li {
+    display: grid;
+    gap: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--c-stone);
+  }
+
+  .aside-stores__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .aside-stores__head :global(.status) {
+    color: var(--c-text-muted);
+  }
+
+  .aside-stores__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    color: var(--c-text);
+    text-decoration: none;
+  }
+
+  .aside-stores__name:hover {
+    color: var(--c-ember);
+  }
+
+  .aside-stores__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: var(--fs-lg);
+    font-weight: 650;
+    color: var(--c-ember);
+    text-decoration: none;
+  }
+
+  .aside-stores__meta {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .hours {
+    display: grid;
+    gap: var(--space-2);
+    width: 100%;
+    margin-top: var(--space-2);
+    font-size: var(--fs-sm);
+  }
+
+  .hours div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--c-ink-line);
+  }
+
+  .hours dt {
+    color: var(--c-text-invert-muted);
+  }
+
+  .hours dd {
+    font-weight: 600;
+  }
+</style>
