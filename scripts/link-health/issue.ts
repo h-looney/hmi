@@ -4,8 +4,9 @@
  *   failing links → open the issue, or update it (and comment when new links start failing)
  *   all passing   → comment and close it
  *
- * Runs in GitHub Actions with GITHUB_TOKEN (permissions: issues: write) and GITHUB_REPOSITORY. `--dry-run` prints
- * what it would do. Moved and unverified links are listed when the issue is open, but don't open it on their own.
+ * Runs in GitHub Actions with GITHUB_TOKEN (permissions: issues: write) and GITHUB_REPOSITORY, after a build that's
+ * about to be deployed — so the fallbacks it describes are the ones going live. `--dry-run` prints what it would do.
+ * Moved and unverified links are listed when the issue is open, but don't open it on their own.
  */
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
@@ -40,9 +41,16 @@ const fallbackText = (r: LinkResult) =>
 const day = (iso: string | null) => (iso ? iso.slice(0, 10) : '—');
 const cell = (s: string) => s.replace(/\|/g, '/').replace(/\n/g, ' ');
 
+const CHECK_NAME: Record<LinkReport['trigger'], string> = {
+  nightly: 'Last night’s link check',
+  push: 'The link check for the latest deploy',
+  manual: 'A link check started by hand',
+  local: 'A link check',
+};
+
 function body(): string {
   const lines = [
-    `The nightly link check found **${failing.length} manufacturer link${failing.length === 1 ? '' : 's'} not working**. Customers aren’t affected: each one’s /go/ page now sends people to a safe fallback until the link is fixed.`,
+    `${CHECK_NAME[report.trigger] ?? 'A link check'} found **${failing.length} manufacturer link${failing.length === 1 ? '' : 's'} not working**. Customers aren’t affected: each one’s /go/ page now sends people to a safe fallback until the link is fixed.`,
     '',
     '| Link | Status | What’s wrong | Failing since | Fallback in effect |',
     '|---|---|---|---|---|',

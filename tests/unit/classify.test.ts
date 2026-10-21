@@ -190,6 +190,7 @@ describe('synthetic cases', () => {
     const v = classify(model('https://www.example-hearth.com/products/aurora-36/', ['Aurora 36']), page(productHtml('Gas Inserts | Example Hearth', 'Gas inserts')));
     assert.equal(v.status, 'wrong-page');
     assert.equal(v.needsBrowser, true);
+    assert.match(v.reason, /it shows “Gas Inserts \| Example Hearth”/);
   });
 
   it('page with no title or heading at all (JavaScript-rendered shell): wrong page for now, recheck in a browser', () => {
@@ -249,6 +250,25 @@ describe('firewall block pages count as bot checks (never dead)', () => {
 
   it('Cloudflare “Sorry, you have been blocked”', () => {
     assert.equal(blocked(403, '<html><head><title>Attention Required!</title></head><body><h1>Sorry, you have been blocked</h1><h2>You are unable to access example-hearth.com</h2></body></html>').status, 'blocked');
+  });
+
+  // What GitHub's runners got from heatilator.com (Vercel) on 2026-10-21, while the same page loaded normally elsewhere
+  const checkpoint = (extra = '') =>
+    `<!DOCTYPE html><html lang="en"><head><title>Vercel Security Checkpoint</title><meta name="robots" content="noindex"></head><body>${extra}<noscript>Please enable JavaScript to continue.</noscript><script src="/.well-known/vercel/security/static/challenge.v2.min.js"></script></body></html>`;
+
+  it('Vercel Security Checkpoint (429, x-vercel-mitigated: challenge)', () => {
+    const v = blocked(429, checkpoint(), { server: 'Vercel', 'x-vercel-mitigated': 'challenge' });
+    assert.equal(v.status, 'blocked');
+    assert.match(v.reason, /Vercel Security Checkpoint/);
+  });
+
+  it('the same checkpoint as a browser renders it (200, with a heading of its own)', () => {
+    assert.equal(blocked(200, checkpoint('<h1>We’re verifying your browser</h1>')).status, 'blocked');
+  });
+
+  it('a normal page that only loads a firewall script is not a bot check', () => {
+    const v = blocked(200, '<html><head><title>Aurora 36 | Example Hearth</title></head><body><h1>Aurora 36</h1><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></body></html>', { server: 'cloudflare' });
+    assert.equal(v.status, 'ok');
   });
 
   it('a plain 404 is still dead', () => {

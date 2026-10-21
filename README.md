@@ -229,13 +229,15 @@ FireBuilder — run with `npm run links:check`. Its only dependency is `puppetee
   | dead | DNS, TLS, connection or timeout errors, or HTTP 4xx/5xx |
   | wrong page | Loads, but it’s another site, the homepage, a general list, or doesn’t mention the model |
   | soft 404 | Loads, but says “not found” / “no longer available”, or marks the product discontinued |
-  | unverified | A bot check (Cloudflare, Akamai, AWS WAF, Imperva…) that a real browser couldn’t see past either. Never counted as dead; CAPTCHAs are never worked around |
+  | unverified | A bot check (Cloudflare, Akamai, AWS WAF, Imperva, Vercel…) that a real browser couldn’t see past either. Never counted as dead; CAPTCHAs are never worked around |
 
   “Right page” is decided by **fingerprint**: each link stores text its page must show in the `<title>`, an `<h1>` or a
   JSON-LD Product name (usually the model name). Brand-level links may also match the site’s own name. Known moves
   are listed as allowed hosts (e.g. quadrafire.com → forgenflame.com).
 - **Retries in a browser:** bot checks, and pages that render their headings with JavaScript, get the retry in headless
-  Chrome (`CHROME_PATH`, or the usual install paths).
+  Chrome (`CHROME_PATH`, or the usual install paths). A check that a browser passes on its own (Cloudflare’s “Just a
+  moment…”, Vercel’s Security Checkpoint) gets up to 15 s to reload into the real page; anything still showing a check
+  after that is “unverified”.
 - **Report:** `.link-health/report.json` (published as `/data/link-health.json`): for each link its status, reason,
   final URL, HTTP status, where /go/ now sends people, and first-failed / last-ok dates carried over from the previous
   report.
@@ -257,8 +259,10 @@ npm run build                       # the build reads .link-health/ for /go/ tar
 (`tests/fixtures/link-health/`, no network) plus edge cases, the retry logic, report history, /go/ targets and sitemap
 parsing. `npm run links:smoke` runs the real checker on the audit links and checks Avalon and Eco Choice come back
 “wrong page”, the Fireplaces.com links “dead”, Cultured Stone and Thermo-Rite “moved” and Dimplex “ok” or
-“unverified”. A site may put up a bot check for automated clients at any moment (Westlake’s AWS WAF does): then the
-honest answer is “unverified”, which the smoke test accepts with a warning. `npm run test:site` fails if any built
+“unverified”. A site may put up a bot check for automated clients at any moment (Westlake’s AWS WAF does, and
+heatilator.com’s Vercel firewall showed GitHub’s servers a Security Checkpoint on the first deploy while loading
+normally everywhere else): then the honest answer is “unverified”, which the smoke test accepts with a warning. The
+browser retry itself is tested against a local server (skipped if Chrome isn’t installed). `npm run test:site` fails if any built
 page links straight to a manufacturer instead of through `/go/`.
 
 ### The sitemap watcher

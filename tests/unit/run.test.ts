@@ -53,6 +53,19 @@ describe('checkLink: one request, one retry', () => {
     assert.equal(c.verdict.status, 'unverified');
   });
 
+  it('a check the browser can’t clear either (Vercel Security Checkpoint on a CI runner) → unverified, not wrong page', async () => {
+    const page = '<title>Vercel Security Checkpoint</title><h1>We’re verifying your browser</h1>';
+    const c = await checkLink(link({ kind: 'brand', url: 'https://www.example-hearth.com', fingerprint: ['Example Hearth'] }), {
+      queue: fast(),
+      browser: true,
+      fetcher: async () => res({ url: 'https://www.example-hearth.com', status: 429, headers: { 'x-vercel-mitigated': 'challenge' }, body: page }),
+      browserFetcher: async () => res({ url: 'https://www.example-hearth.com', status: 200, body: page, via: 'browser' }),
+    });
+    assert.equal(c.verdict.status, 'unverified');
+    assert.match(c.verdict.reason, /Vercel/);
+    assert.match(c.firstTry ?? '', /^blocked: HTTP 429/);
+  });
+
   it('no browser installed → a bot check is unverified', async () => {
     const c = await checkLink(link(), { queue: fast(), browser: false, fetcher: async () => challenge });
     assert.equal(c.verdict.status, 'unverified');

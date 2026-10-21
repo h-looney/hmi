@@ -113,8 +113,9 @@ jobs:
         with:
           path: dist
 
+      # Only after a build that's about to go live (a push that fails its check is reported by the failed run itself)
       - name: Open, update or close the link-health issue
-        if: always() && hashFiles('.link-health/report.json') != ''
+        if: success() && hashFiles('.link-health/report.json') != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PAGES_URL: ${{ steps.pages.outputs.base_url }}

@@ -76,12 +76,13 @@ async function readCapped(res: Response, cap = MAX_BODY): Promise<string> {
   return new TextDecoder('utf-8', { fatal: false }).decode(Buffer.concat(chunks).subarray(0, cap));
 }
 
-const KEPT_HEADERS = ['server', 'cf-mitigated', 'cf-ray', 'x-datadome', 'x-iinfo', 'x-sucuri-id', 'akamai-grn', 'retry-after'];
+const KEPT_HEADERS = ['server', 'cf-mitigated', 'cf-ray', 'x-datadome', 'x-iinfo', 'x-sucuri-id', 'x-vercel-mitigated', 'akamai-grn', 'retry-after'];
 
-function pickHeaders(h: Headers): Record<string, string> {
+/** The headers worth keeping, from a fetch() response or a browser's (lower-cased) header record. */
+export function pickHeaders(h: Headers | Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const k of KEPT_HEADERS) {
-    const v = h.get(k);
+    const v = h instanceof Headers ? h.get(k) : h[k];
     if (v) out[k] = v;
   }
   return out;

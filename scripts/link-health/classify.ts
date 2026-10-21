@@ -6,7 +6,8 @@
  *   dead        DNS / TLS / connection / timeout errors, or HTTP 4xx/5xx
  *   wrong-page  loads, but it's another brand's site, the homepage, a general list, or doesn't mention the model
  *   soft-404    loads, but says "not found" / "no longer available" (or marks the product discontinued)
- *   blocked     a bot check (401/403/429/503 challenge page) — retried in a real browser, then "unverified"
+ *   blocked     a bot check (a 401/403/429/503 challenge page, or a page titled like one) — retried in a real
+ *               browser, then "unverified"
  *
  * "Right page" is decided mainly by fingerprint: each link stores text the page must contain (usually the model
  * name), looked for in the <title>, the <h1>s and any JSON-LD Product name.
@@ -69,6 +70,15 @@ export function softNotFound(page: PageFacts): string | undefined {
   return undefined;
 }
 
+/**
+ * Titles only a bot check gives its page. A page titled like this is the check itself, whatever its status code
+ * or headings (a check can answer 200 and print a heading of its own).
+ */
+export const CHALLENGE_TITLE = /^\s*(just a moment\b|attention required\b|vercel security checkpoint|security checkpoint\b|pardon our interruption|access denied\b|checking your browser|one moment, please)/i;
+
+/** Checks that clear themselves in a real browser after a few seconds of JavaScript — worth waiting for. */
+export const SELF_CLEARING_TITLE = /^\s*(just a moment\b|vercel security checkpoint|security checkpoint\b|checking your browser|one moment, please)/i;
+
 /** Recognise a bot check / challenge page. Returns a short label, or undefined. */
 export function botCheck(res: FetchResult, page: PageFacts): string | undefined {
   // A PDF or image is never a challenge page, whatever firewall served it
@@ -80,8 +90,11 @@ export function botCheck(res: FetchResult, page: PageFacts): string | undefined 
   // AWS WAF answers a challenge with 202 (JavaScript check) or 405 (CAPTCHA) and a near-empty page
   if (/awsWafCookieDomainList|gokuProps|AwsWafIntegration|\.token\.awswaf\.com|captcha\.awswaf\.com/i.test(head)) return 'AWS WAF challenge';
   if ((blocking && h['cf-mitigated'] === 'challenge') || /\/cdn-cgi\/challenge-platform|cf-browser-verification|cf_chl_|Just a moment\.\.\.|Attention Required! \| Cloudflare/i.test(head)) return 'Cloudflare challenge';
+  // Vercel's firewall sends traffic it doesn't trust (shared and datacenter networks, like CI runners) to a
+  // "Security Checkpoint"; the mitigation header only appears on those answers
+  if (h['x-vercel-mitigated'] || /Vercel Security Checkpoint|\/\.well-known\/vercel\/security\//i.test(head)) return 'Vercel Security Checkpoint';
   if (/captcha-delivery\.com|geo\.captcha-delivery/i.test(head) || (blocking && h['x-datadome'])) return 'DataDome check';
-  if (/_Incapsula_Resource|Incapsula incident ID/i.test(head) || (blocking && h['x-iinfo'])) return 'Imperva check';
+  if (/_Incapsula_Resource|Incapsula incident ID|<title>\s*Pardon Our Interruption/i.test(head) || (blocking && h['x-iinfo'])) return 'Imperva check';
   if (/px-captcha|perimeterx|Press & Hold/i.test(head)) return 'PerimeterX check';
   if (/Sucuri WebSite Firewall|sucuri\.net\/privacy-policy/i.test(head) || (blocking && h['x-sucuri-id'])) return 'Sucuri firewall';
   if (/^access denied\b/i.test(page.title) || (/Access Denied/i.test(head) && /Reference\s*#\s*[\d.a-f]+/i.test(head))) return 'access denied (Akamai-style bot block)';
@@ -129,6 +142,10 @@ export function matchFingerprint(link: Pick<OutboundLink, 'fingerprint' | 'kind'
 }
 
 const short = (u: URL) => `${bare(u.hostname)}${u.pathname === '/' ? '' : u.pathname.replace(/\/$/, '')}`;
+const clip = (s: string, n: number) => {
+  const t = s.replace(/\s+/g, ' ').trim();
+  return t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t;
+};
 
 export function classify(link: Pick<OutboundLink, 'url' | 'kind' | 'fingerprint' | 'hosts'>, res: FetchResult): Verdict {
   const base = { finalUrl: res.finalUrl, httpStatus: res.status, via: res.via };
@@ -139,7 +156,9 @@ export function classify(link: Pick<OutboundLink, 'url' | 'kind' | 'fingerprint'
   const page = readPage(res.body);
   const facts = { title: page.title, h1: page.h1, productNames: page.productNames };
   const challenge = botCheck(res, page);
-  if (challenge && ([202, 401, 403, 405, 429, 503].includes(res.status) || !page.h1.length)) {
+  // Firewall scripts ride along on normal pages too, so a marker alone isn't enough: it takes a blocking status, a
+  // page with no heading of its own, or a page titled like a check
+  if (challenge && ([202, 401, 403, 405, 429, 503].includes(res.status) || !page.h1.length || CHALLENGE_TITLE.test(page.title))) {
     return { ...base, page: facts, status: 'blocked', reason: `HTTP ${res.status} — ${challenge}`, needsBrowser: true };
   }
   if (res.status >= 400 || res.status === 0) {
@@ -177,7 +196,14 @@ export function classify(link: Pick<OutboundLink, 'url' | 'kind' | 'fingerprint'
     if (toHome) return { ...base, page: facts, status: 'wrong-page', reason: `sends visitors to the ${finalHost} homepage` };
     if (toList) return { ...base, page: facts, status: 'wrong-page', reason: `lands on a general list (${short(final)}) instead of the model` };
     if (!same) return { ...base, page: facts, status: 'wrong-page', reason: `redirects to ${short(final)}, which doesn’t mention ${want}` };
-    return { ...base, page: facts, status: 'wrong-page', reason: `the page no longer mentions ${want} in its title or heading`, needsBrowser: true };
+    const shows = page.title || page.h1[0];
+    return {
+      ...base,
+      page: facts,
+      status: 'wrong-page',
+      reason: `the page no longer mentions ${want} in its title or heading${shows ? ` (it shows “${clip(shows, 70)}”)` : ''}`,
+      needsBrowser: true,
+    };
   }
   if (toList) return { ...base, page: facts, matched, status: 'wrong-page', reason: `lands on a general list (${short(final)}) instead of the model` };
   if (toHome && link.kind === 'model') return { ...base, page: facts, matched, status: 'wrong-page', reason: `sends visitors to the ${finalHost} homepage` };

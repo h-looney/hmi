@@ -22,6 +22,8 @@ export interface Checked {
   link: OutboundLink;
   verdict: Verdict & { status: LinkStatus };
   attempts: number;
+  /** What the first request saw, when it took a retry (for the log) */
+  firstTry?: string;
 }
 
 /** Check one link: a browser-like GET, then — only if that didn't come back ok or moved — one retry. */
@@ -34,6 +36,7 @@ export async function checkLink(link: OutboundLink, opts: RunOptions = {}): Prom
   const first = classify(link, await queue.run(link.url, () => fetcher(link.url)));
   if (first.status === 'ok' || first.status === 'moved') return { link, verdict: first as Checked['verdict'], attempts: 1 };
 
+  const firstTry = `${first.status}: ${first.reason}`;
   let second: Verdict | undefined;
   if ((first.status === 'blocked' || first.needsBrowser) && useBrowser) {
     const res = await queue.run(link.url, () => browserFetcher(link.url));
@@ -47,13 +50,15 @@ export async function checkLink(link: OutboundLink, opts: RunOptions = {}): Prom
     second = classify(link, await queue.run(link.url, () => fetcher(link.url)));
   }
   if (second.status === 'blocked') {
-    return { link, verdict: { ...second, status: 'unverified', reason: `still behind a bot check in a real browser (${second.reason.replace(/^HTTP \d+ — /, '')})` }, attempts: 2 };
+    const check = second.reason.replace(/^HTTP \d+ — /, '');
+    const reason = second.via === 'browser' ? `still behind a bot check in a real browser (${check})` : `behind a bot check (${check}) — no browser available to retry`;
+    return { link, verdict: { ...second, status: 'unverified', reason }, attempts: 2, firstTry };
   }
   // A plain-HTTP bot check followed by a browser page that only fails the fingerprint is still "can't tell"
   if (first.status === 'blocked' && second.status === 'wrong-page' && second.via === 'browser' && !second.page?.title && !second.page?.h1.length) {
-    return { link, verdict: { ...second, status: 'unverified', reason: 'behind a bot check; the browser saw an empty page' }, attempts: 2 };
+    return { link, verdict: { ...second, status: 'unverified', reason: 'behind a bot check; the browser saw an empty page' }, attempts: 2, firstTry };
   }
-  return { link, verdict: second as Checked['verdict'], attempts: 2 };
+  return { link, verdict: second as Checked['verdict'], attempts: 2, firstTry };
 }
 
 export async function checkAll(links: OutboundLink[], opts: RunOptions = {}): Promise<Checked[]> {
@@ -63,7 +68,7 @@ export async function checkAll(links: OutboundLink[], opts: RunOptions = {}): Pr
     return await Promise.all(
       links.map(async (link) => {
         const c = await checkLink(link, { ...opts, queue });
-        log(`${c.verdict.status.padEnd(10)} ${link.slug.padEnd(34)} ${c.verdict.reason}${c.verdict.via === 'browser' ? ' [browser]' : ''}`);
+        log(`${c.verdict.status.padEnd(10)} ${link.slug.padEnd(34)} ${c.verdict.reason}${c.verdict.via === 'browser' ? ' [browser]' : ''}${c.firstTry ? ` — first try: ${c.firstTry}` : ''}`);
         return c;
       }),
     );
