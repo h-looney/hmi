@@ -12,6 +12,7 @@ import AnnouncementBar from '../components/AnnouncementBar.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import MobileActionBar from '../components/MobileActionBar.astro';
+import ModeSwitch from '../components/ModeSwitch.astro';
 import { withBase } from '../scripts/url';
 
 interface Props {
@@ -49,6 +50,16 @@ const announcementId = 'fall-2026-vermont-castings';
       } catch (e) {}
     </script>
 
+    <script is:inline>
+      // Navigating again mid-transition rejects the page transition's promises — nothing to report.
+      ['pageswap', 'pagereveal'].forEach((type) =>
+        addEventListener(type, (e) => {
+          const vt = e.viewTransition;
+          if (vt) [vt.ready, vt.finished, vt.updateCallbackDone].forEach((p) => p && p.catch(() => {}));
+        }),
+      );
+    </script>
+
     <SEO title={title} description={description} image={image} noindex={noindex} schema={schema} />
   </head>
   <body>
@@ -66,6 +77,7 @@ const announcementId = 'fall-2026-vermont-castings';
 
     <Footer />
     <MobileActionBar />
+    <ModeSwitch />
 
     <script>
       // Reveal-on-scroll for elements marked [data-reveal]

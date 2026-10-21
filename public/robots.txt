@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+# HMI mode (staff app)
+Disallow: /office/
 
 Sitemap: https://www.hmifireplaceshop.com/sitemap.xml

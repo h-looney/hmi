@@ -30,7 +30,7 @@ const steps = ['Interests', 'Project', 'Contact'];
     }
   </ol>
 
-  <form class="quote__form" data-quote-form novalidate>
+  <form class="quote__form" data-quote-form data-office="quote" novalidate>
     <!-- Step 1 -->
     <fieldset class="quote__panel" data-panel="0">
       <legend class="quote__legend">What are you interested in?</legend>
@@ -200,6 +200,10 @@ const steps = ['Interests', 'Project', 'Contact'];
       showroom nearest you a call.
     </p>
     <dl class="quote__summary" data-summary></dl>
+    <p class="demo-handoff" data-office-note hidden>
+      <Icon name="briefcase" size={16} />
+      <span><strong>Concept demo:</strong> this request was just delivered to HMI mode, the staff side of the site. <a href="#" data-office-link>See it arrive in the HMI inbox</a></span>
+    </p>
     <div class="cluster">
       <a href={withBase('/fireplace-finder/')} class="btn btn--outline">Explore the Fireplace Finder</a>
       <a href={withBase('/gallery/')} class="link-arrow">Browse inspiration <Icon name="arrow-right" size={16} /></a>
@@ -413,6 +417,7 @@ const steps = ['Interests', 'Project', 'Contact'];
 
 <script>
   import { validate, liveClear, submit, setBusy } from '../scripts/forms';
+  import { withBase } from '../scripts/url';
 
   const root = document.querySelector<HTMLElement>('[data-quote]');
   if (root) {
@@ -467,7 +472,7 @@ const steps = ['Interests', 'Project', 'Contact'];
       fail.hidden = true;
       setBusy(button, true);
       try {
-        await submit(form);
+        const officeRef = await submit(form);
         const data = new FormData(form);
         const name = String(data.get('name') ?? '').split(' ')[0];
         root.querySelector('[data-done-title]')!.textContent = name ? `Thank you, ${name}!` : 'Thank you!';
@@ -502,6 +507,11 @@ const steps = ['Interests', 'Project', 'Contact'];
               return div;
             }),
         );
+
+        if (officeRef) {
+          root.querySelector<HTMLAnchorElement>('[data-office-link]')!.href = withBase(`/office/inbox/?ref=${officeRef}`);
+          root.querySelector<HTMLElement>('[data-office-note]')!.hidden = false;
+        }
 
         form.hidden = true;
         root.querySelector<HTMLElement>('.quote__steps')!.hidden = true;

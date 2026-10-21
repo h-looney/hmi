@@ -13,9 +13,12 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/preact": "6.0.6",
     "@fontsource-variable/fraunces": "5.3.0",
     "@fontsource-variable/inter": "5.3.0",
-    "astro": "7.3.5"
+    "@preact/signals": "2.11.3",
+    "astro": "7.3.5",
+    "preact": "10.29.8"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",

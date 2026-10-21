@@ -4,99 +4,7 @@
    soot-and-cream palette with an ember accent.
    ========================================================================== */
 
-/* ---------- Tokens ---------- */
-:root {
-  /* Surfaces */
-  --c-cream: #f7f2ea;
-  --c-paper: #fffcf7;
-  --c-linen: #efe7db;
-  --c-stone: #e3d9cb;
-  --c-stone-2: #cdbfac;
-
-  /* Dark surfaces ("soot") */
-  --c-ink: #1b1714;
-  --c-ink-2: #241f1b;
-  --c-ink-3: #332b25;
-  --c-ink-line: #3f362f;
-
-  /* Text */
-  --c-text: #2b2420;
-  --c-text-muted: #6a5d52;
-  --c-text-invert: #f6efe4;
-  --c-text-invert-muted: #c9bcab;
-
-  /* Accents */
-  --c-ember: #ad4118; /* ≥4.5:1 on every light surface */
-  --c-ember-600: #933712;
-  --c-ember-700: #7a2d0f;
-  --c-ember-300: #e8835a;
-  --c-ember-50: #fbeee6;
-  --c-flame: #f0a04b;
-  --c-brass: #a8834a; /* decorative rules & icons */
-  --c-brass-text: #7f6030; /* brass-toned text, ≥4.5:1 */
-  --c-brass-light: #d4b27a;
-
-  /* Status */
-  --c-open: #2f7a4f;
-  --c-open-bright: #5fd08f;
-  --c-closed: #a23b2a;
-  --c-appt: #a8834a;
-  --c-danger: #b42318;
-
-  /* Typography */
-  --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  --font-body: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-
-  --fs-2xs: 0.75rem;
-  --fs-xs: 0.8125rem;
-  --fs-sm: 0.9375rem;
-  --fs-base: 1.0625rem;
-  --fs-md: 1.1875rem;
-  --fs-lg: clamp(1.25rem, 1.12rem + 0.55vw, 1.5rem);
-  --fs-xl: clamp(1.5rem, 1.25rem + 1.05vw, 2rem);
-  --fs-2xl: clamp(1.875rem, 1.45rem + 1.9vw, 2.75rem);
-  --fs-3xl: clamp(2.25rem, 1.6rem + 2.9vw, 3.75rem);
-  --fs-display: clamp(2.6rem, 1.7rem + 4.1vw, 5.25rem);
-
-  --lh-tight: 1.08;
-  --lh-snug: 1.25;
-  --lh-body: 1.65;
-
-  /* Space */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4rem;
-  --space-9: 6rem;
-  --space-10: 8rem;
-  --section-y: clamp(4rem, 2.6rem + 5.5vw, 7.5rem);
-
-  /* Shape & depth */
-  --radius-sm: 4px;
-  --radius: 8px;
-  --radius-lg: 14px;
-  --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgb(43 36 32 / 0.06), 0 1px 1px rgb(43 36 32 / 0.04);
-  --shadow: 0 2px 6px rgb(43 36 32 / 0.06), 0 10px 24px -8px rgb(43 36 32 / 0.14);
-  --shadow-lg: 0 4px 12px rgb(43 36 32 / 0.08), 0 28px 60px -18px rgb(43 36 32 / 0.32);
-
-  /* Layout */
-  --container: 1240px;
-  --container-narrow: 820px;
-  --gutter: clamp(1rem, 0.6rem + 2.2vw, 2rem);
-  --header-h: 76px;
-
-  /* Motion */
-  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur: 220ms;
-
-  color-scheme: light;
-}
+@import './tokens.css';
 
 /* ---------- Reset ---------- */
 *,
@@ -1224,4 +1132,34 @@ button.chip[aria-selected='true'] {
   .announcement {
     display: none !important;
   }
+}
+
+/* ---------- Concept demo hand-off (form confirmations → HMI mode) ---------- */
+.demo-handoff {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-block: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px dashed var(--c-brass);
+  background: var(--c-linen);
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  text-align: left;
+}
+
+.demo-handoff .icon {
+  flex: none;
+  margin-top: 3px;
+  color: var(--c-brass-text);
+}
+
+.demo-handoff a {
+  color: var(--c-ember);
+  font-weight: 600;
+}
+
+.demo-handoff[hidden] {
+  display: none;
 }

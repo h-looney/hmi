@@ -1,0 +1,78 @@
+---
+/**
+ * HMI mode — the staff side of the concept. Every section is pre-rendered as its own page so
+ * deep links work on static hosting; the app itself is a client-only Preact island.
+ */
+import '@fontsource-variable/fraunces/opsz.css';
+import '@fontsource-variable/inter/opsz.css';
+import '../../office/styles/index.css';
+
+import interLatin from '@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+import OfficeApp from '../../office/App';
+import logoLight from '../../assets/brand/logo-light.png';
+import signinPhoto from '../../assets/photos/pano-gas-living-room.jpg';
+import gas from '../../assets/photos/gas-see-through.jpg';
+import wood from '../../assets/photos/wood-fireplace-stone.jpg';
+import electric from '../../assets/photos/electric-linear.jpg';
+import insert from '../../assets/photos/gas-insert.jpg';
+import stove from '../../assets/photos/stove-wood-cast-iron.png';
+import logs from '../../assets/photos/gas-logs.jpg';
+import outdoor from '../../assets/photos/outdoor-stone-fireplace.jpg';
+import doors from '../../assets/photos/fireplace-doors.jpg';
+import stone from '../../assets/photos/stone-samples.jpg';
+import accessories from '../../assets/photos/hearth-accessories.jpg';
+import care from '../../assets/photos/care-products.jpg';
+import { team } from '../../data/team';
+import { withBase } from '../../scripts/url';
+
+export function getStaticPaths() {
+  return [undefined, 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'settings'].map((section) => ({
+    params: { section },
+  }));
+}
+
+const src = async (image: ImageMetadata, width: number) => (await getImage({ src: image, width, format: 'webp' })).src;
+const slug = (name: string) => name.toLowerCase().replace(/[^a-z]+/g, '-');
+
+const thumbs: Record<string, ImageMetadata> = { gas, wood, electric, insert, stove, logs, outdoor, doors, stone, accessories, care };
+
+const assets = {
+  logo: await src(logoLight, 480),
+  mark: withBase('/favicon.svg'),
+  signin: await src(signinPhoto, 1400),
+  avatars: Object.fromEntries(await Promise.all(team.map(async (m) => [slug(m.name), await src(m.photo, 96)]))),
+  photos: Object.fromEntries(await Promise.all(Object.entries(thumbs).map(async ([key, image]) => [key, await src(image, 96)]))),
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1b1714" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>HMI Office</title>
+    <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+    <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
+    <script is:inline>
+      // Navigating again mid-transition rejects the page transition's promises — nothing to report.
+      ['pageswap', 'pagereveal'].forEach((type) =>
+        addEventListener(type, (e) => {
+          const vt = e.viewTransition;
+          if (vt) [vt.ready, vt.finished, vt.updateCallbackDone].forEach((p) => p && p.catch(() => {}));
+        }),
+      );
+    </script>
+  </head>
+  <body>
+    <OfficeApp client:only="preact" assets={assets}>
+      <div slot="fallback" class="boot" role="status"><span class="spinner" aria-hidden="true"></span> Loading HMI mode…</div>
+    </OfficeApp>
+    <noscript><p class="boot">HMI mode is an interactive demo and needs JavaScript.</p></noscript>
+  </body>
+</html>

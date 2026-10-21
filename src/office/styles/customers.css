@@ -1,0 +1,441 @@
+/* ---------- Customers ---------- */
+
+/* Toolbars inside flush cards (shared with Warranty) */
+.cust-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 14px 18px 10px;
+}
+
+.cust-toolbar__search {
+  flex: 1 1 260px;
+  max-width: 380px;
+}
+
+.cust-toolbar__checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.cust-count {
+  padding: 0 18px 10px;
+  color: var(--o-muted);
+  font-size: 0.8125rem;
+}
+
+.field__error-text {
+  color: var(--bad);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.tag-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Record layout */
+.cust-tags {
+  margin: -8px 0 18px;
+}
+
+.cust-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: 'main side';
+  gap: 16px;
+  align-items: start;
+}
+
+.cust-main {
+  grid-area: main;
+  min-width: 0;
+}
+
+.cust-side {
+  grid-area: side;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .cust-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'side' 'main';
+  }
+
+  .cust-side {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    align-items: start;
+  }
+}
+
+.contact-list {
+  display: grid;
+  gap: 2px;
+}
+
+.contact-list li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 5px 0;
+}
+
+.contact-list .icon {
+  margin-top: 2px;
+  color: var(--o-muted);
+}
+
+.contact-list a {
+  font-weight: 500;
+}
+
+.contact-list a .icon {
+  display: inline;
+  margin: 0 0 -1px 2px;
+  color: currentColor;
+}
+
+.contact-list__email {
+  overflow-wrap: anywhere;
+}
+
+.cust-side__link {
+  margin-top: 12px;
+}
+
+.cust-side__due {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.cust-notes {
+  white-space: pre-wrap;
+}
+
+/* Rows that open something in place */
+.mini-list__row--btn {
+  width: 100%;
+  text-align: left;
+}
+
+.mini-list__icon--green {
+  background: #e0f0e5;
+  color: #1d6a3d;
+}
+
+.mini-list__icon--teal {
+  background: #dff1f1;
+  color: #155e63;
+}
+
+/* Equipment cards */
+.unit-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.unit-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.unit-card__thumb {
+  width: 48px;
+  height: 48px;
+}
+
+.unit-card__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.unit-card__title h3 {
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.unit-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.unit-card__note {
+  margin: 0;
+}
+
+.unit-card__section .section-label {
+  margin-top: 0;
+}
+
+.unit-card__list {
+  display: grid;
+  gap: 8px;
+}
+
+.unit-card__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.unit-card__visit {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.unit-card__history summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 4px;
+  margin-left: -4px;
+}
+
+.unit-card__history summary::-webkit-details-marker {
+  display: none;
+}
+
+.unit-card__history summary:hover {
+  background: var(--o-hover);
+}
+
+.unit-card__history[open] .unit-card__chev {
+  transform: rotate(90deg);
+}
+
+.unit-card__history[open] summary {
+  margin-bottom: 10px;
+}
+
+.reg-yes {
+  color: var(--good);
+  font-weight: 600;
+}
+
+.reg-yes .icon {
+  display: inline-block;
+  margin-right: 2px;
+  vertical-align: -2px;
+}
+
+.reg-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #7a4f06;
+  font-weight: 600;
+}
+
+/* Warranty coverage bars */
+.coverage {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--o-radius);
+  border: 1px solid var(--o-line-soft);
+  background: var(--o-surface-2);
+}
+
+.coverage__row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) minmax(0, 230px);
+  gap: 12px;
+  align-items: center;
+}
+
+.coverage__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.coverage__track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: #2f8a62;
+}
+
+.coverage__row--expiring .coverage__track {
+  background: #c98500;
+}
+
+.coverage__row--ended .coverage__track {
+  background: #d9cfc2;
+}
+
+.coverage__used {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px 0 0 4px;
+  background: #ddd3c6;
+}
+
+.coverage__row--ended .coverage__used {
+  border-radius: 4px;
+}
+
+.coverage__today {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--o-text);
+  box-shadow: 0 0 0 2px var(--o-surface-2);
+}
+
+.coverage__text {
+  color: var(--o-muted);
+  font-size: 0.78125rem;
+}
+
+.coverage__lifetime {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--o-muted);
+  font-size: 0.78125rem;
+}
+
+@media (max-width: 640px) {
+  .coverage__row {
+    grid-template-columns: 70px minmax(0, 1fr);
+    row-gap: 4px;
+  }
+
+  .coverage__text {
+    grid-column: 2;
+  }
+}
+
+/* Activity composer & timeline accents */
+.composer {
+  display: grid;
+  gap: 10px;
+}
+
+.composer__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.timeline__icon--call,
+.timeline__icon--text {
+  background: #e3edf8;
+  color: #1f4f86;
+}
+
+.timeline__icon--email {
+  background: #ece7f8;
+  color: #4f3d99;
+}
+
+.timeline__icon--payment {
+  background: #e0f0e5;
+  color: #1d6a3d;
+}
+
+.timeline__icon--received,
+.timeline__icon--invoice,
+.timeline__icon--estimate {
+  background: #fbe9df;
+  color: #8a330f;
+}
+
+.timeline__icon--reminder {
+  background: #fbefd5;
+  color: #7a4f06;
+}
+
+/* Customer form */
+.cust-form__statezip {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.cust-form__tags {
+  border: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.cust-form__tags legend {
+  margin-bottom: 8px;
+}
+
+.cust-form__newtag {
+  display: flex;
+  gap: 8px;
+  max-width: 340px;
+}
+
+.table .cell-sub.is-bad {
+  color: var(--bad);
+}
+
+.cust-form__tags legend {
+  padding: 0;
+}
+
+.cust-mobile-contact {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .cust-layout {
+    grid-template-areas: 'main' 'side';
+  }
+
+  .cust-mobile-contact {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .cust-side__contact {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .cust-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cust-stats .stat {
+    padding: 12px;
+  }
+
+  .cust-stats .stat__value {
+    font-size: 1.375rem;
+  }
+
+  .unit-card .details--2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

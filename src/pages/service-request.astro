@@ -56,7 +56,7 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   <section class="section">
     <div class="container service-layout">
       <div class="sr" data-sr>
-        <form class="sr__form" data-sr-form novalidate>
+        <form class="sr__form" data-sr-form data-office="service" novalidate>
           <!-- Contact -->
           <fieldset class="sr__group">
             <legend class="sr__legend"><span>1</span> Your information</legend>
@@ -244,6 +244,10 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             please call the showroom nearest you.
           </p>
           <a href={withBase('/resources/')} class="link-arrow">While you wait: owner resources <Icon name="arrow-right" size={16} /></a>
+          <p class="demo-handoff" data-office-note hidden>
+            <Icon name="briefcase" size={16} />
+            <span><strong>Concept demo:</strong> this request was just delivered to HMI mode, the staff side of the site. <a href="#" data-office-link>See it arrive in the HMI inbox</a></span>
+          </p>
         </div>
       </div>
 
@@ -617,6 +621,7 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 <script>
   import { validate, liveClear, submit, setBusy } from '../scripts/forms';
+  import { withBase } from '../scripts/url';
 
   const root = document.querySelector<HTMLElement>('[data-sr]');
   if (root) {
@@ -684,8 +689,12 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       fail.hidden = true;
       setBusy(button, true);
       try {
-        await submit(form);
+        const officeRef = await submit(form);
         const name = String(new FormData(form).get('name') ?? '').split(' ')[0];
+        if (officeRef) {
+          root.querySelector<HTMLAnchorElement>('[data-office-link]')!.href = withBase(`/office/inbox/?ref=${officeRef}`);
+          root.querySelector<HTMLElement>('[data-office-note]')!.hidden = false;
+        }
         root.querySelector('[data-done-title]')!.textContent = name ? `Thanks, ${name} — request received` : 'Request received';
         form.hidden = true;
         done.hidden = false;
