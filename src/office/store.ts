@@ -7,6 +7,7 @@
  */
 import { batch, computed, effect, signal } from '@preact/signals';
 import { CHANNEL, QUEUE_KEY, clearQueue, readQueue, type QueuedSubmission } from './bridge';
+import { profiles } from './data/people';
 import { createDemo, DB_VERSION, demoClock } from './data/seed';
 import type { DB, History, Lead, Section, StoreId, UIState } from './data/types';
 import { diffDays, now, shiftDates, today } from './lib/dates';
@@ -21,7 +22,7 @@ export const ready = signal(false);
 const UI_KEY = 'hmi-office-ui';
 const defaultUI: UIState = {
   signedIn: false,
-  userId: 'cheryl',
+  userId: 'charlie',
   store: 'all',
   jobsView: 'board',
   range: '90d',
@@ -31,7 +32,10 @@ const defaultUI: UIState = {
 
 function loadUI(): UIState {
   try {
-    return { ...defaultUI, ...JSON.parse(localStorage.getItem(UI_KEY) ?? '{}') };
+    const saved: UIState = { ...defaultUI, ...JSON.parse(localStorage.getItem(UI_KEY) ?? '{}') };
+    // A profile the demo no longer offers (an earlier version's owner) becomes today's default
+    if (!profiles.some((p) => p.id === saved.userId)) saved.userId = defaultUI.userId;
+    return saved;
   } catch {
     return defaultUI;
   }

@@ -81,9 +81,9 @@ everything can be clicked, edited and saved, but **nothing leaves the browser** 
 payment providers are simulated. Data is stored in the visitor's own browser (IndexedDB), so each person exploring the
 demo gets their own copy. **Reset demo data** (account menu or Settings → Demo data) starts over.
 
-**Sign-in profiles** show how roles change what people see: Owner (everything), Service coordinator, Office &
-accounting, and a Technician with a phone-friendly day view. Owners can change each role's access under Settings →
-Team & permissions.
+**Sign-in profiles** show how roles change what people see: Charlie as Owner (everything), Gabe as Store manager
+(opens on the Nixa store), a Service coordinator, Office & accounting, and a Technician with a phone-friendly day view.
+Owners can change each role's access under Settings → Team & permissions.
 
 | Section | What it does |
 | --- | --- |

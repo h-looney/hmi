@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { profiles, roleLabels } from '../data/people';
 import type { Staff } from '../data/types';
 import { navigate, sectionPath } from '../router';
+import { storeName } from '../selectors';
 import { db, markTried, resetDemo, setUI } from '../store';
 import { toast } from '../toast';
 import { Avatar } from '../ui/core';
@@ -10,11 +11,13 @@ import { Icon } from '../ui/Icon';
 
 export function switchProfile(id: string) {
   const person = db.value.staff.find((s) => s.id === id)!;
-  setUI({ userId: id, signedIn: true });
+  // Store managers start on their own store; everyone else starts on both
+  const store = person.role === 'manager' && person.store !== 'both' ? person.store : 'all';
+  setUI({ userId: id, signedIn: true, store });
   if (person.role === 'tech') markTried('tech');
   const home = db.value.settings.permissions[person.role].includes('dashboard') ? 'dashboard' : 'my-day';
   navigate(sectionPath(home));
-  toast(`Signed in as ${person.name} (${roleLabels[person.role]})`);
+  toast(`Signed in as ${person.name} (${roleLabels[person.role]})${store === 'all' ? '' : ` — showing ${storeName(store)}`}`);
 }
 
 export function UserMenu({ user }: { user: Staff }) {
@@ -36,7 +39,7 @@ export function UserMenu({ user }: { user: Staff }) {
             <div>
               <p class="profile-current__name">{user.name}</p>
               <p class="muted small">
-                {user.title} · {roleLabels[user.role]}
+                {user.title} · {storeName(user.store)}
               </p>
             </div>
           </div>

@@ -53,7 +53,7 @@ import type {
   WarrantyClaim,
 } from './types';
 
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 /** Detailed records cover this many days before today */
 export const WINDOW_DAYS = 35;
 const HISTORY_DAYS = 455;

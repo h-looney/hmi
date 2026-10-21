@@ -11,7 +11,7 @@ export function SignIn() {
   const { signin, logo } = useAssets();
   return (
     <div class="signin">
-      <div class="signin__art">
+      <aside class="signin__art" aria-label="About HMI mode">
         <div class="signin__art-inner">
           <img src={logo} alt="HMI Fireplace Shops" width={200} height={40} class="signin__logo" />
           <p class="signin__kicker">HMI mode</p>
@@ -32,7 +32,7 @@ export function SignIn() {
           </ul>
           <img class="signin__photo" src={signin} alt="" width={600} height={160} />
         </div>
-      </div>
+      </aside>
       <main class="signin__panel" id="office-main">
         <div class="signin__box">
           <h1 class="signin__title" data-page-title tabIndex={-1}>

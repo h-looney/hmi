@@ -58,7 +58,7 @@ export function Dialog({ title, description, onClose, children, footer, size = '
       }}
     >
       <div class="dialog__inner">
-        <header class="dialog__head">
+        <div class="dialog__head">
           <div class="dialog__titles">
             <h2 id={`${id}-title`} class="dialog__title">
               {title}
@@ -73,9 +73,9 @@ export function Dialog({ title, description, onClose, children, footer, size = '
           <button type="button" class="btn btn--ghost btn--md btn--icon dialog__close" aria-label="Close" onClick={onClose}>
             <Icon name="close" size={18} />
           </button>
-        </header>
+        </div>
         <div class="dialog__body">{children}</div>
-        {footer && <footer class="dialog__foot">{footer}</footer>}
+        {footer && <div class="dialog__foot">{footer}</div>}
       </div>
     </dialog>
   );

@@ -12,7 +12,7 @@ export const staff: Staff[] = [
   { id: 'cheryl', name: 'Cheryl Wormek', role: 'owner', title: 'Owner', store: 'both', color: '#ad4118', active: true },
   { id: 'charlie', name: 'Charlie Wormek', role: 'owner', title: 'Owner', store: 'both', color: '#7f6030', active: true },
   { id: 'mike', name: 'Mike Swanigan', role: 'manager', title: 'General Manager', store: 'osage-beach', photo: 'mike-swanigan', color: '#2f6db0', active: true },
-  { id: 'gabe', name: 'Gabriel Kurtz', role: 'manager', title: 'General Manager', store: 'nixa', photo: 'gabriel-kurtz', color: '#277553', active: true },
+  { id: 'gabe', name: 'Gabe Kurtz', role: 'manager', title: 'General Manager', store: 'nixa', photo: 'gabriel-kurtz', color: '#277553', active: true },
   { id: 'matt', name: 'Matthew Kirtley', role: 'sales', title: 'Showroom Sales', store: 'osage-beach', photo: 'matthew-kirtley', color: '#8a5a1c', active: true },
   { id: 'mark', name: 'Mark Ranum', role: 'sales', title: 'Showroom Sales', store: 'nixa', photo: 'mark-ranum', color: '#6b4fa3', active: true },
   { id: 'melanie', name: 'Melanie Powers', role: 'office', title: 'Accounts Payable', store: 'osage-beach', photo: 'melanie-powers', color: '#a2456b', active: true },
@@ -30,7 +30,8 @@ export const staff: Staff[] = [
 
 /** Demo sign-in profiles */
 export const profiles: { id: string; blurb: string }[] = [
-  { id: 'cheryl', blurb: 'Everything: requests, jobs, inventory, books, reports and settings.' },
+  { id: 'charlie', blurb: 'Everything: requests, jobs, inventory, books, reports and settings.' },
+  { id: 'gabe', blurb: 'Runs the Nixa store: its requests, schedule, stock, sales and reports. Opens on Nixa.' },
   { id: 'amanda', blurb: 'Scheduling and dispatch, service requests, warranty claims and parts.' },
   { id: 'melanie', blurb: 'Invoices, bills, banking, QuickBooks and customer accounts.' },
   { id: 'luis', blurb: 'A phone-friendly day view: today’s calls, checklists, parts and signatures.' },
@@ -67,7 +68,7 @@ export const defaultPermissions: Record<Role, Section[]> = {
 
 export const roleLabels: Record<Role, string> = {
   owner: 'Owner',
-  manager: 'General manager',
+  manager: 'Store manager',
   coordinator: 'Service coordinator',
   office: 'Office & accounting',
   sales: 'Showroom sales',
