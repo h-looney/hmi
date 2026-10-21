@@ -206,6 +206,23 @@ describe('synthetic cases', () => {
     assert.equal(v.status, 'ok');
   });
 
+  // heatilator.com (Next.js) sends its <title> and meta tags in <head> on some requests and after ~900 KB of page
+  // data on others; on 2026-10-21 GitHub's runner got the late version and the check missed the title
+  it('a <title> streamed at the end of a large page is still read: ok', () => {
+    const data = `<script>self.__next_f.push([1,"${'x'.repeat(600_000)}"])</script>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${'.a{color:red}'.repeat(25_000)}</style></head><body><h1>Introducing the IntelliFire App</h1>${data}<title>Heatilator Home Page | Heatilator</title><meta property="og:site_name" content="Heatilator"/></body></html>`;
+    const v = classify(brand('https://www.heatilator.com', ['Heatilator'], ['heatilator.com']), page(html, { url: 'https://www.heatilator.com' }));
+    assert.equal(v.status, 'ok');
+    assert.equal(v.matched?.in, 'title');
+    assert.deepEqual(readPage(html).siteNames, ['Heatilator']);
+  });
+
+  it('an icon’s <title> inside an inline SVG is never taken for the page title', () => {
+    const facts = readPage('<html><head></head><body><svg viewBox="0 0 24 24"><title>Search</title><path d="M0 0"/></svg><h1>Gas inserts</h1></body></html>');
+    assert.equal(facts.title, '');
+    assert.equal(readPage('<html><body><svg><title>Menu</title></svg><h1>Aurora 36</h1><title>Aurora 36 | Example</title></body></html>').title, 'Aurora 36 | Example');
+  });
+
   it('fingerprints ignore case, ™/® marks and punctuation, but need whole words', () => {
     const u = 'https://www.example-hearth.com/products/aurora-36/';
     assert.equal(classify(model(u, ['Northfield GSR2']), page(productHtml('NORTHFIELD™ GSR2 | Example'))).status, 'ok');
@@ -252,7 +269,7 @@ describe('firewall block pages count as bot checks (never dead)', () => {
     assert.equal(blocked(403, '<html><head><title>Attention Required!</title></head><body><h1>Sorry, you have been blocked</h1><h2>You are unable to access example-hearth.com</h2></body></html>').status, 'blocked');
   });
 
-  // What GitHub's runners got from heatilator.com (Vercel) on 2026-10-21, while the same page loaded normally elsewhere
+  // Vercel's firewall can show datacenter traffic (CI runners included) this page instead of the site
   const checkpoint = (extra = '') =>
     `<!DOCTYPE html><html lang="en"><head><title>Vercel Security Checkpoint</title><meta name="robots" content="noindex"></head><body>${extra}<noscript>Please enable JavaScript to continue.</noscript><script src="/.well-known/vercel/security/static/challenge.v2.min.js"></script></body></html>`;
 

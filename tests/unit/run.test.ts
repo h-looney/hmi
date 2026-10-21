@@ -53,7 +53,7 @@ describe('checkLink: one request, one retry', () => {
     assert.equal(c.verdict.status, 'unverified');
   });
 
-  it('a check the browser can’t clear either (Vercel Security Checkpoint on a CI runner) → unverified, not wrong page', async () => {
+  it('a check the browser can’t clear either (Vercel Security Checkpoint) → unverified, not wrong page', async () => {
     const page = '<title>Vercel Security Checkpoint</title><h1>We’re verifying your browser</h1>';
     const c = await checkLink(link({ kind: 'brand', url: 'https://www.example-hearth.com', fingerprint: ['Example Hearth'] }), {
       queue: fast(),

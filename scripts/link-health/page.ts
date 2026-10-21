@@ -89,13 +89,21 @@ function walkLd(node: unknown, out: { names: string[]; types: string[]; availabi
 }
 
 export function readPage(html: string): PageFacts {
-  const head = html.slice(0, 400_000);
-  const title = cleanText(head.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '');
+  // The title and meta tags belong in <head>, but a framework that streams them (Next.js) can send them after
+  // everything else instead, near the end of a large page — on some requests and not others. So read them from the
+  // whole page, minus the blocks whose markup isn't the page's own: scripts, styles, comments and inline SVG icons
+  // (which carry <title>s of their own).
+  const markup = html
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<svg\b[\s\S]*?<\/svg>/gi, ' ');
+  const title = cleanText(markup.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '');
   const h1 = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)].map((m) => cleanText(m[1])).filter(Boolean).slice(0, 5);
   const meta = (attr: string, value: string) => {
     const re = new RegExp(`<meta\\b(?=[^>]*\\b${attr}=["']${value}["'])[^>]*\\bcontent=["']([^"']*)["'][^>]*>`, 'i');
     const re2 = new RegExp(`<meta\\b[^>]*\\bcontent=["']([^"']*)["'][^>]*\\b${attr}=["']${value}["'][^>]*>`, 'i');
-    const m = head.match(re) ?? head.match(re2);
+    const m = markup.match(re) ?? markup.match(re2);
     return m ? cleanText(m[1]) : undefined;
   };
   const ld = { names: [] as string[], types: [] as string[], availability: [] as string[], sites: [] as string[] };
@@ -112,12 +120,8 @@ export function readPage(html: string): PageFacts {
       }
     }
   }
-  const canonical = head.match(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*\bhref=["']([^"']+)["']/i)?.[1];
-  const body = html
-    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')
-    .replace(/<!--[\s\S]*?-->/g, ' ');
+  const canonical = markup.match(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*\bhref=["']([^"']+)["']/i)?.[1];
+  const body = markup.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ');
   const text = cleanText(body).slice(0, 60_000);
   const productLinks = new Set([...html.matchAll(/href=["']([^"'#?]*\/products?\/[^"'#?]+)["']/gi)].map((m) => m[1])).size;
   return {

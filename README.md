@@ -259,10 +259,11 @@ npm run build                       # the build reads .link-health/ for /go/ tar
 (`tests/fixtures/link-health/`, no network) plus edge cases, the retry logic, report history, /go/ targets and sitemap
 parsing. `npm run links:smoke` runs the real checker on the audit links and checks Avalon and Eco Choice come back
 “wrong page”, the Fireplaces.com links “dead”, Cultured Stone and Thermo-Rite “moved” and Dimplex “ok” or
-“unverified”. A site may put up a bot check for automated clients at any moment (Westlake’s AWS WAF does, and
-heatilator.com’s Vercel firewall showed GitHub’s servers a Security Checkpoint on the first deploy while loading
-normally everywhere else): then the honest answer is “unverified”, which the smoke test accepts with a warning. The
-browser retry itself is tested against a local server (skipped if Chrome isn’t installed). `npm run test:site` fails if any built
+“unverified”. A site may put up a bot check for automated clients at any moment (Westlake’s AWS WAF does): then the
+honest answer is “unverified”, which the smoke test accepts with a warning. The browser retry itself is tested against
+a local server (skipped if Chrome isn’t installed). Pages can also differ from one request to the next: the Hearth &
+Home Technologies sites (Heat & Glo, Heatilator… built with Next.js) send their title either in `<head>` or at the very
+end of the page, so the checker reads titles and meta tags from the whole page. `npm run test:site` fails if any built
 page links straight to a manufacturer instead of through `/go/`.
 
 ### The sitemap watcher
