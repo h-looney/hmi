@@ -9,8 +9,9 @@ import { FAILING, goPath, outboundLinks, type LinkReport, type LinkResult, type 
 import { brandSites, productPath, products, type Product, type ProductStatus } from '../../../data/products';
 import type { SitemapFeed, SitemapSuggestion } from '../../../data/sitemapFeed';
 import { CHANNEL, CLICKS_KEY, readClicks, type GoClick } from '../../bridge';
-import type { DraftProduct, LinkUrlEdit, ProductEdit, StoreId } from '../../data/types';
+import type { DraftProduct, LinkUrlEdit, ProductEdit, ProductPhotoMeta, StoreId } from '../../data/types';
 import { db } from '../../store';
+import { samePhotos } from './photos';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -86,10 +87,17 @@ export interface WebProduct {
   edit?: ProductEdit;
   urlEdit?: LinkUrlEdit;
   draft?: DraftProduct;
+  /** Photos added in HMI mode, in order (the first one leads) */
+  photos: ProductPhotoMeta[];
+  /** The photos differ from the ones last published */
+  photosPending: boolean;
   /** Has changes waiting for the next publish (simulated) */
   pending: boolean;
   product?: Product;
 }
+
+/** On the floor at either showroom */
+export const onDisplay = (p: Pick<WebProduct, 'display'>) => p.display['osage-beach'] + p.display.nixa > 0;
 
 const linkBySlug = computed(() => new Map(report.value.state === 'ready' ? report.value.data.results.map((r) => [r.slug, r]) : []));
 
@@ -98,11 +106,14 @@ export const webProducts = computed<WebProduct[]>(() => {
   if (!d) return [];
   const edits = d.website?.edits ?? {};
   const urls = d.website?.linkUrls ?? {};
+  const photos = d.website?.photos ?? {};
+  const live = d.website?.photosLive ?? {};
   const items = new Map(d.items.map((i) => [i.id, i]));
   const list: WebProduct[] = products.map((p) => {
     const e = edits[p.id];
     const ue = urls[p.slug];
-    const pendingEdit = (e && !e.publishedAt) || (ue && !ue.publishedAt);
+    const photosPending = !samePhotos(photos[p.id], live[p.id]);
+    const pendingEdit = (e && !e.publishedAt) || (ue && !ue.publishedAt) || photosPending;
     const status = e?.status ?? p.status;
     const repId = e?.replacement ?? p.replacement?.id;
     const rep = repId ? products.find((x) => x.id === repId) : undefined;
@@ -125,6 +136,8 @@ export const webProducts = computed<WebProduct[]>(() => {
       display: { 'osage-beach': item?.stock['osage-beach'].display ?? p.display['osage-beach'], nixa: item?.stock.nixa.display ?? p.display.nixa },
       edit: e,
       urlEdit: ue,
+      photos: photos[p.id] ?? [],
+      photosPending,
       pending: !!pendingEdit,
       product: p,
     };
@@ -143,6 +156,8 @@ export const webProducts = computed<WebProduct[]>(() => {
       liveUrl: dr.url,
       display: { 'osage-beach': 0, nixa: 0 },
       draft: dr,
+      photos: [],
+      photosPending: false,
       pending: !dr.publishedAt,
     });
   }
@@ -152,7 +167,13 @@ export const webProducts = computed<WebProduct[]>(() => {
 export const pendingCount = computed(() => {
   const w = db.value?.website;
   if (!w) return 0;
-  return Object.values(w.edits).filter((e) => !e.publishedAt).length + Object.values(w.linkUrls).filter((e) => !e.publishedAt).length + w.drafts.filter((dr) => !dr.publishedAt).length;
+  const photoSets = new Set([...Object.keys(w.photos ?? {}), ...Object.keys(w.photosLive ?? {})]);
+  return (
+    Object.values(w.edits).filter((e) => !e.publishedAt).length +
+    Object.values(w.linkUrls).filter((e) => !e.publishedAt).length +
+    w.drafts.filter((dr) => !dr.publishedAt).length +
+    [...photoSets].filter((id) => !samePhotos(w.photos?.[id], w.photosLive?.[id])).length
+  );
 });
 
 /* ---------- Links ---------- */

@@ -472,6 +472,21 @@ export interface LinkUrlEdit {
   publishedAt?: string;
 }
 
+/** Where a model photo was taken — it becomes the caption on the model page */
+export type PhotoPlace = StoreId | 'install';
+
+/** A photo of a model added in HMI mode. The image itself is kept in this browser's IndexedDB (`photo:<id>`). */
+export interface ProductPhotoMeta {
+  id: string;
+  /** What it shows, for people who can't see it */
+  alt: string;
+  where?: PhotoPlace;
+  width: number;
+  height: number;
+  by: string;
+  at: string;
+}
+
 export interface WebsiteState {
   /** Pending and published edits, by product id */
   edits: Record<string, ProductEdit>;
@@ -485,6 +500,10 @@ export interface WebsiteState {
   digestSentAt?: string;
   /** Simulated publishes */
   publishes: { id: string; at: string; by: string; changes: number }[];
+  /** Model photos added in HMI mode, by product id, in order (the first one leads) */
+  photos: Record<string, ProductPhotoMeta[]>;
+  /** The photos as last published (simulated), by product id */
+  photosLive: Record<string, ProductPhotoMeta[]>;
 }
 
 /** Everything HMI mode keeps — saved to localStorage as one document. */

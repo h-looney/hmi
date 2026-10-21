@@ -36,7 +36,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  max-width: 230px;
+  max-width: min(230px, 100%);
   min-width: 0;
   color: var(--o-muted);
   font-size: 0.78125rem;
@@ -143,6 +143,199 @@
 
 .web-groups > .card .card__title {
   font-size: 0.96875rem;
+}
+
+/* Photos: the column in Products, and the Photos dialog */
+.web-photos {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 8px 2px 2px;
+  border: 1px solid var(--o-line);
+  border-radius: 8px;
+  background: var(--o-surface);
+  color: var(--o-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.web-photos:hover {
+  border-color: var(--o-line-strong);
+}
+
+.web-photos__img {
+  display: block;
+  width: 40px;
+  height: 30px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--o-surface-2);
+}
+
+.photo-img--loading {
+  display: block;
+  background: var(--o-surface-2);
+}
+
+.photo-dialog {
+  display: grid;
+  gap: 14px;
+}
+
+.photo-hint {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.875rem;
+  color: var(--o-muted);
+}
+
+.photo-hint .icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--c-ember);
+}
+
+.photo-drop {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 22px 16px;
+  border: 1.5px dashed var(--o-line-strong);
+  border-radius: 12px;
+  background: var(--o-surface-2);
+  text-align: center;
+  cursor: pointer;
+}
+
+.photo-drop .icon {
+  color: var(--c-ember);
+}
+
+.photo-drop:hover,
+.photo-drop.is-dragging {
+  border-color: var(--c-ember);
+  background: var(--o-surface);
+}
+
+.photo-drop:focus-within {
+  outline: 2px solid var(--c-ember);
+  outline-offset: 2px;
+}
+
+.photo-drop.is-disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.photo-drop__title {
+  font-weight: 650;
+}
+
+.photo-drop__hint {
+  font-size: 0.8125rem;
+  color: var(--o-muted);
+}
+
+.photo-status:empty {
+  display: none;
+}
+
+.photo-status {
+  display: grid;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.photo-errors {
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  color: var(--bad);
+}
+
+.photo-warn {
+  font-size: 0.8125rem;
+  color: var(--bad);
+}
+
+.photo-errors .icon {
+  vertical-align: -2px;
+}
+
+.photo-list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.photo-row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 12px 16px;
+  padding: 12px;
+  border: 1px solid var(--o-line);
+  border-radius: 12px;
+}
+
+.photo-row__img {
+  position: relative;
+  align-self: start;
+}
+
+.photo-row__img img,
+.photo-row__img .photo-img--loading {
+  display: block;
+  width: 132px;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--o-surface-2);
+}
+
+.photo-row__main {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgb(27 23 20 / 0.82);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 650;
+}
+
+.photo-row__fields {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.photo-row__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.photo-footer-note {
+  margin-right: auto;
+}
+
+@media (max-width: 520px) {
+  .photo-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .photo-row__img img,
+  .photo-row__img .photo-img--loading {
+    width: 100%;
+  }
 }
 
 /* Weekly summary */

@@ -17,7 +17,7 @@ const onDisplay = locations.filter((l) => (p.display[l.slug as keyof typeof p.di
 ---
 
 <article class="card card--hover model-card">
-  <div class="card__media model-card__media">
+  <div class="card__media model-card__media" data-product-photo={p.id}>
     <ProductImage product={p} sizes="(min-width: 1240px) 300px, (min-width: 700px) 45vw, 100vw" />
   </div>
   <div class="card__body model-card__body">
@@ -37,6 +37,12 @@ const onDisplay = locations.filter((l) => (p.display[l.slug as keyof typeof p.di
     }
   </div>
 </article>
+
+<script>
+  // Photos published from HMI mode in this browser take the placeholder's place (a preview)
+  import { initProductPhotos } from '../scripts/productPhotos';
+  initProductPhotos();
+</script>
 
 <style>
   .model-card__media {

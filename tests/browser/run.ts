@@ -14,6 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { crc32, deflateSync } from 'node:zlib';
 import { buildReport, type Checked } from '../../scripts/link-health/run.ts';
 import { outboundLinks } from '../../src/data/links.ts';
 import { productPath, products, productsIn, publicProducts } from '../../src/data/products.ts';
@@ -121,7 +122,7 @@ await test(`every model page loads (${publicProducts().length}), with its photo`
     assert(res?.status() === 200, `${p.id}: HTTP ${res?.status()}`);
     const h1 = await page.$eval('h1', (h) => h.textContent ?? '');
     assert(h1.includes(p.model), `${p.id}: h1 “${h1}”`);
-    const img = await page.$eval('.mhero__media img', (i) => ({ ok: (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0, alt: i.getAttribute('alt') }));
+    const img = await page.$eval('.gallery__frame img', (i) => ({ ok: (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0, alt: i.getAttribute('alt') }));
     assert(img.ok && img.alt?.includes(p.model), `${p.id}: photo placeholder missing or unlabelled`);
   }
 });
@@ -400,6 +401,153 @@ await test('Website tabs: keyboard (arrow keys move between tabs) and axe at 144
 });
 
 /* ---------- Existing pages ---------- */
+console.log('\nModel photos');
+
+/** A small striped PNG, made on the spot so no image files live in the repo */
+function pngFile(name: string, w: number, h: number, [r, g, b]: [number, number, number]) {
+  const stride = 1 + w * 3;
+  const raw = Buffer.alloc(stride * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const k = (x + y) % 48 < 24 ? 1 : 0.8;
+      raw.set([r * k, g * k, b * k], y * stride + 1 + x * 3);
+    }
+  }
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const out = Buffer.alloc(8 + data.length + 4);
+    out.writeUInt32BE(data.length, 0);
+    body.copy(out, 4);
+    out.writeUInt32BE(crc32(body), 8 + data.length);
+    return out;
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr.set([8, 2, 0, 0, 0], 8);
+  const file = join(fixDir, name);
+  writeFileSync(file, Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]));
+  return file;
+}
+const landscape = pngFile('artisan-floor.png', 640, 480, [176, 82, 31]);
+const portrait = pngFile('artisan-close.png', 480, 640, [47, 109, 176]);
+const artisan = products.find((p) => p.id === 'MON-ART42')!;
+const artisanPath = `/hmi${productPath(artisan)}`;
+
+await test('a category with a single model keeps its card the usual size', async () => {
+  const { page } = await open();
+  await goto(page, `${REAL}/hmi/products/vent-free-gas/`);
+  const w = await page.$eval('#models .model-card', (c) => c.getBoundingClientRect().width);
+  assert(w < 460, `the only model card is ${Math.round(w)}px wide`);
+});
+
+await test('a model without photos says where to see it: the maker’s site (through /go/) or the showroom', async () => {
+  const { page } = await open();
+  await goto(page, `${REAL}${artisanPath}`);
+  const note = await page.$eval('.gallery__note', (n) => ({ text: n.textContent?.replace(/\s+/g, ' ').trim(), links: [...n.querySelectorAll('a')].map((a) => a.getAttribute('href')) }));
+  assert(note.text === 'See it on Monessen’s site (opens in a new tab) or on the showroom floor in Osage Beach.', `note says “${note.text}”`);
+  assert(note.links[0] === '/hmi/go/monessen-artisan-42/' && note.links[1] === '/hmi/locations/osage-beach/', `note links: ${note.links.join(', ')}`);
+});
+
+await test('Photos: add two to a model on display, describe and reorder them; a publish shows them on its page and cards', async () => {
+  const t = await website();
+  const { page } = t;
+  const row = async (text: string) => {
+    for (const r of await page.$$('.table tbody tr')) if ((await r.evaluate((x) => x.textContent ?? '')).includes(text)) return r;
+    throw new Error(`no row for ${text}`);
+  };
+  const add = await (await row('Artisan 42')).$('.btn');
+  assert(add && (await add.evaluate((b) => b.textContent)).includes('Add photos'), 'no “Add photos” button for a model on display');
+  await add.click();
+  await page.waitForSelector('dialog[open] input[type=file]');
+  await axe(page, 'photos dialog (empty)');
+  const input = (await page.$('dialog[open] input[type=file]')) as import('puppeteer-core').ElementHandle<HTMLInputElement>;
+  await input.uploadFile(landscape, portrait);
+  await page.waitForFunction(() => document.querySelectorAll('dialog[open] .photo-row img').length === 2, { timeout: 20_000 });
+  const alts = () => page.$$eval('dialog[open] .photo-row input.input', (xs) => xs.map((x) => (x as HTMLInputElement).value));
+  const first = await alts();
+  assert(first.every((a) => a === 'Monessen Artisan 42 on the Osage Beach showroom floor'), `descriptions start as ${JSON.stringify(first)}`);
+  // Shrunk and re-encoded as JPEG in the browser
+  const kinds = await page.$$eval('dialog[open] .photo-row img', (xs) => xs.map((x) => (x as HTMLImageElement).src.slice(0, 5)));
+  assert(kinds.every((k) => k === 'blob:'), 'photos aren’t shown from this browser');
+  const second = (await page.$$('dialog[open] .photo-row input.input'))[1];
+  await second.click({ count: 3 });
+  await second.type('Artisan 42 with its logs lit, up close');
+  const makeMain = await page.$$('dialog[open] .photo-row:nth-child(2) .photo-row__actions .btn');
+  await makeMain[0].click();
+  await page.waitForFunction(() => (document.querySelector('dialog[open] .photo-row input.input') as HTMLInputElement | null)?.value === 'Artisan 42 with its logs lit, up close');
+  // A description that's still the starting one follows the place
+  await page.select('dialog[open] .photo-row:nth-child(2) select', 'nixa');
+  await page.waitForFunction(() => (document.querySelectorAll('dialog[open] .photo-row input.input')[1] as HTMLInputElement | undefined)?.value === 'Monessen Artisan 42 on the Nixa showroom floor');
+  await axe(page, 'photos dialog (two photos)');
+  await page.$eval('dialog[open] .dialog__foot .btn--primary', (b) => (b as HTMLButtonElement).click());
+  await page.waitForFunction(() => !document.querySelector('dialog[open]'));
+  assert((await (await row('Artisan 42')).evaluate((x) => x.textContent ?? '')).includes('2 photos'), 'the row doesn’t say “2 photos”');
+  await page.$eval('.web-pending button', (b) => (b as HTMLButtonElement).click());
+  await page.waitForFunction(() => !document.querySelector('.web-pending'));
+
+  // Same browser, public model page: the published photos take the placeholder's place, marked as a preview
+  for (const width of [1440, 390]) {
+    const pub = await open({ context: page.browserContext(), width, label: `photos ${width}` });
+    await goto(pub.page, `${FIX}${artisanPath}`);
+    await pub.page.waitForSelector('.gallery[data-preview]');
+    const g = await pub.page.$eval('.gallery', (el) => ({
+      slides: el.querySelectorAll('[data-slide]').length,
+      shown: [...el.querySelectorAll<HTMLElement>('[data-slide]')].filter((s) => !s.hidden).map((s) => s.querySelector('img')?.alt),
+      caption: el.querySelector('[data-slide]:not([hidden]) figcaption')?.textContent,
+      thumbs: el.querySelectorAll('.gallery__thumb').length,
+      note: el.querySelector('.gallery__note--preview')?.textContent ?? '',
+    }));
+    assert(g.slides === 2 && g.thumbs === 2, `${g.slides} slides, ${g.thumbs} thumbnails`);
+    assert(g.shown.length === 1 && g.shown[0] === 'Artisan 42 with its logs lit, up close', `showing ${JSON.stringify(g.shown)}`);
+    assert(g.caption === 'On the Osage Beach showroom floor', `caption “${g.caption}”`);
+    assert(g.note.includes('Preview'), 'no preview note');
+    await pub.page.$eval('.gallery__thumb[data-show="1"]', (b) => (b as HTMLButtonElement).click());
+    const now = await pub.page.$eval('.gallery', (el) => ({
+      alt: el.querySelector<HTMLElement>('[data-slide]:not([hidden]) img')?.getAttribute('alt'),
+      caption: el.querySelector('[data-slide]:not([hidden]) figcaption')?.textContent,
+      pressed: [...el.querySelectorAll('.gallery__thumb')].map((b) => b.getAttribute('aria-pressed')),
+    }));
+    assert(now.alt === 'Monessen Artisan 42 on the Nixa showroom floor' && now.caption === 'On the Nixa showroom floor', `second photo: ${JSON.stringify(now)}`);
+    assert(now.pressed.join() === 'false,true', `thumbnail states ${now.pressed.join()}`);
+    await axe(pub.page, `model page with published photos (${width}px)`);
+    await noSideScroll(pub.page, `model page with published photos (${width}px)`);
+    const stops = await tabStops(pub.page);
+    // (on a short page the 80 Tab presses go round more than once)
+    assert(new Set(stops.filter((s) => s.startsWith('button|Photo '))).size === 2, `thumbnails aren’t reachable by keyboard:\n${stops.join('\n')}`);
+  }
+  const cat = await open({ context: page.browserContext() });
+  await goto(cat.page, `${FIX}/hmi/products/vent-free-gas/`);
+  await cat.page.waitForSelector('.model-card__media[data-preview] img');
+  const card = await cat.page.$eval('.model-card__media[data-preview] img', (i) => ({ src: (i as HTMLImageElement).src.slice(0, 5), alt: i.getAttribute('alt') }));
+  assert(card.src === 'blob:' && card.alt === 'Artisan 42 with its logs lit, up close', `card image ${JSON.stringify(card)}`);
+
+  // Removing one and publishing again leaves a single photo (no thumbnails). Back in HMI mode's tab, which has to be
+  // in front: background tabs pause the animation frames the waits poll on
+  await page.bringToFront();
+  await (await (await row('Artisan 42')).$('.web-photos'))!.click();
+  await page.waitForSelector('dialog[open] .photo-row');
+  const remove = await page.$$('dialog[open] .photo-row:nth-child(2) .photo-row__actions .btn');
+  await remove[remove.length - 1].click();
+  await page.waitForFunction(() => document.querySelectorAll('dialog[open] .photo-row').length === 1);
+  await page.$eval('dialog[open] .dialog__foot .btn--primary', (b) => (b as HTMLButtonElement).click());
+  await page.$eval('.web-pending button', (b) => (b as HTMLButtonElement).click());
+  await page.waitForFunction(() => !document.querySelector('.web-pending'));
+  const again = await open({ context: page.browserContext() });
+  await goto(again.page, `${FIX}${artisanPath}`);
+  await again.page.waitForSelector('.gallery[data-preview]');
+  const one = await again.page.$eval('.gallery', (el) => [el.querySelectorAll('[data-slide]').length, el.querySelectorAll('.gallery__thumb').length]);
+  assert(one.join() === '1,0', `after removing one: ${one.join()} (slides, thumbnails)`);
+});
+
+await test('Photos: a fresh browser still sees the placeholder (nothing is published to the site)', async () => {
+  const { page } = await open();
+  await goto(page, `${FIX}${artisanPath}`);
+  await sleep(400);
+  assert(!(await page.$('.gallery[data-preview]')), 'a fresh browser shows preview photos');
+  assert((await page.$eval('.gallery__frame img', (i) => i.getAttribute('alt'))) === 'Photo coming soon: Monessen Artisan 42', 'placeholder missing');
+});
+
 console.log('\nExisting pages');
 
 const sitemap = readFileSync(join(DIST, 'sitemap.xml'), 'utf8');

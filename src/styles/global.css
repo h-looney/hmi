@@ -371,6 +371,12 @@ p {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
 }
 
+/* Model cards: three across on desktop. auto-fill keeps the columns when a category has only one or two models,
+   so their cards stay the usual size instead of stretching across the row. */
+.grid--models {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
 /* Category card grids: four across on desktop, two compact columns on phones */
 .grid--cats {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));

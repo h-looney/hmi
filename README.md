@@ -81,9 +81,10 @@ previews stay out of search results.
 - **Multi-step quote form** and **service request form** with inline validation (front-end only — see below).
 - **Mega menu**, mobile drawer, and a phone **action bar** (Call · Visit · Get a quote) for local customers.
 - **Filterable product catalog**, searchable **brand directory**, and an **inspiration gallery** with lightbox.
-- **A page for every model** with specs checked against the manufacturer, which showroom has it on display, and a
-  one-click quote — plus **manufacturer links that fix themselves**: checked every night, with a safe fallback when a
-  manufacturer’s page breaks (see [Product pages & manufacturer links](#product-pages--manufacturer-links)).
+- **A page for every model** with specs checked against the manufacturer, a photo gallery (staff can add their own
+  showroom photos in HMI mode), which showroom has it on display, and a one-click quote — plus **manufacturer links
+  that fix themselves**: checked every night, with a safe fallback when a manufacturer’s page breaks (see
+  [Product pages & manufacturer links](#product-pages--manufacturer-links)).
 - **Local SEO**: per-page titles and descriptions, Open Graph images, `LocalBusiness` + `FAQPage` +
   `BreadcrumbList` structured data, a sitemap, and dedicated location pages.
 - **Performance**: static HTML, WebP images at responsive sizes, self-hosted fonts, click-to-load maps and videos.
@@ -112,7 +113,7 @@ Owners can change each role's access under Settings → Team & permissions.
 | Inventory | Stock at Osage Beach and Nixa (on hand, reserved for jobs, showroom displays), transfers, adjustments, purchase orders and receiving |
 | Accounting | Invoices, estimates, payments, vendor bills, bank transactions and reports (P&L, sales tax, AR aging). Books can be kept **in-house** or **synced to QuickBooks Online** (simulated connection, sync settings, account mapping and log) |
 | Analytics | Reports filtered by date range and showroom — see below |
-| Website | The product list behind the model pages and manufacturer links: status and replacements, link health from the nightly check, new and discontinued models from the weekly sitemap watch, outbound clicks, the Monday summary and printable showroom tags with QR codes. Owners and store managers by default |
+| Website | The product list behind the model pages and manufacturer links: status and replacements, model photos, link health from the nightly check, new and discontinued models from the weekly sitemap watch, outbound clicks, the Monday summary and printable showroom tags with QR codes. Owners and store managers by default |
 | Settings | Business profile, team & permissions, website-form routing and auto-reply, invoicing & tax, notifications, demo data |
 
 **The public site and HMI mode are connected.** Submit the quote or service-request form on the public site and the
@@ -186,9 +187,12 @@ commercial data (cost, price, stock, reorder points). The checker refuses to run
   ratings appear on public pages; the checker fails if one sneaks into the list.
 - **Model status:** `current`, `discontinued` (page stays up) or `hidden` (on the list, but no public page or link —
   used for a model HMI should confirm first).
-- **Photos:** no manufacturer image is copied or hotlinked into this public repo. Model pages show a clean labelled
-  placeholder (`src/data/productArt.ts`, one SVG per model, also used as the JSON-LD image). Production would use each
-  manufacturer’s dealer media kit, or HMI’s own showroom photos, through `src/data/productPhotos.ts`.
+- **Photos:** no manufacturer image is copied or hotlinked into this public repo. A model’s photos go in
+  `src/assets/products/<model id>/`: they show as a gallery on its page (thumbnails switch the large photo), the first
+  one on its cards, in its JSON-LD and as its link-preview image. Alt text, captions and credits live in
+  `src/data/productPhotos.ts`. Until a model has a photo, its page shows a clean labelled placeholder
+  (`src/data/productArt.ts`) with where to see it meanwhile: the manufacturer’s site (through /go/) and the showrooms
+  that have one on the floor. Staff can also add their own photos in HMI mode (below).
 - **Structured data:** each model page has schema.org `Product` JSON-LD (name, brand, model, image, the checked specs
   as properties) — no offers, prices, ratings or reviews.
 - “Get a quote on this model” opens the quote form with the model filled in (`/contact/?model=<SKU>`), and the request
@@ -307,8 +311,13 @@ dates and the sitemap snapshot come from the JSON the previous run published wit
 built to take whoever owns it about five minutes a week:
 
 - **Products** — the one list: brand, model, category, status and replacement, HMI page and manufacturer link, link
-  health and last check, and which showroom has it on display (the same counts as Inventory and the public pages).
-  Edits are saved in this browser like the rest of HMI mode and marked “goes live on next publish (simulated)”.
+  health and last check, photos, and which showroom has it on display (the same counts as Inventory and the public
+  pages). Edits are saved in this browser like the rest of HMI mode and marked “goes live on next publish (simulated)”.
+- **Photos** — staff add their own photos of a model (a unit on the showroom floor, or one they installed); models on
+  display without any get an “Add photos” button and a filter. Each photo is shrunk to 1600 px and re-encoded as JPEG
+  in the browser, which also strips its location data; it needs a description (alt text) and can say where it was
+  taken, which becomes its caption. Reorder them or pick the main photo. After a publish (simulated), the model page
+  and cards *in that browser* show them, marked as a preview; another browser still sees the placeholder.
 - **Link health** — the latest real report: counts, failures with reasons, fallbacks in effect, and “update stored
   URL” suggestions with one-click Accept. Shows a friendly empty state when the build has no report (local dev).
 - **New & discontinued** — the sitemap suggestions, with Add / Dismiss / Mark discontinued.
@@ -327,7 +336,7 @@ The dashboard’s “Needs attention” list flags failing links, URLs to update
 | The link checks, their verdicts, fallbacks and dates (`npm run links:check`, and the nightly job) | “Publish” of edits made in HMI mode (nothing on the public site changes) |
 | The sitemap reads and suggestions (`npm run links:sitemaps`, and the Monday job) | Sending the weekly summary (previewed only) |
 | /go/ redirects and the clicks recorded in your browser | Click counts across visitors (production would use server-side analytics) |
-| The GitHub issue alert (once the workflow runs) | Model photos (labelled placeholders until HMI supplies media-kit or showroom photos) |
+| The GitHub issue alert (once the workflow runs) | Model photos: placeholders until HMI supplies media-kit or showroom photos. Photos added in HMI mode stay in that browser (published = previewed there) |
 
 ## Editing content
 
@@ -368,8 +377,9 @@ Photos, team portraits and the logo come from the current website. Many are smal
 Higher-resolution originals would let us use larger, full-bleed photography.
 
 Model pages use labelled placeholders rather than manufacturer photos (none are copied or hotlinked into this public
-repo). In production, add photos from the manufacturers’ dealer media kits — or HMI’s own showroom photos — to
-`src/data/productPhotos.ts` and set `photo` on the model in `src/data/products.ts`.
+repo). To add real ones (from the manufacturers’ dealer media kits, or HMI’s own showroom photos), put the files in
+`src/assets/products/<model id>/` and describe them in `src/data/productPhotos.ts`. File-name order is gallery order,
+and the first file is the main photo.
 
 ## To confirm with HMI
 
@@ -408,6 +418,8 @@ repo). In production, add photos from the manufacturers’ dealer media kits —
   needed before launch.
 - **Website owner** — who should receive the Monday website summary (Gabe by default), and which roles should see the
   Website section?
+- **Model photos** — can HMI share the manufacturers’ dealer media-kit images (or its logins to the dealer portals)?
+  They’re the only manufacturer photos the site can use. And which floor models should staff photograph first?
 - **Click counts** — production would count outbound clicks server-side; which analytics does HMI use, if any?
 - **Service areas** listed on the location pages are an educated guess.
 - **Services** — do you service brands you didn’t sell? Offer routine annual service, chimney sweeping or financing?

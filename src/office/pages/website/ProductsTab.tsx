@@ -9,14 +9,17 @@ import { Button, Card, Chips, EmptyState, Field, Menu, SearchInput } from '../..
 import { Dialog } from '../../ui/Dialog';
 import { Icon } from '../../ui/Icon';
 import { DataTable, type Column } from '../../ui/Table';
-import { editProduct, removeDraft, setLinkUrl, undoEdit, undoLinkUrl } from './actions';
-import { goHref, report, siteHref, webProducts, type WebProduct } from './data';
+import { editProduct, removeDraft, setLinkUrl, undoEdit, undoLinkUrl, undoPhotos } from './actions';
+import { goHref, onDisplay, report, siteHref, webProducts, type WebProduct } from './data';
 import { ago, LinkBadge, PendingBadge, ProductBadge, shortUrl } from './helpers';
+import { PhotoImg, PhotosDialog } from './PhotosDialog';
 
-type Filter = 'all' | 'current' | 'discontinued' | 'hidden' | 'attention' | 'pending';
+type Filter = 'all' | 'current' | 'discontinued' | 'hidden' | 'attention' | 'pending' | 'nophotos';
 
 const categoryName = (slug: string) => categories.find((c) => c.slug === slug)?.name ?? slug;
 const failing = (p: WebProduct) => !!p.link && ['dead', 'wrong-page', 'soft-404'].includes(p.link.status);
+/** On the showroom floor, with a public page, but no photos yet */
+const needsPhotos = (p: WebProduct) => !!p.page && p.status === 'current' && onDisplay(p) && p.photos.length === 0;
 
 function EditDialog({ p, onClose }: { p: WebProduct; onClose: () => void }) {
   const [status, setStatus] = useState<ProductStatus>(p.status);
@@ -83,6 +86,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [editing, setEditing] = useState<WebProduct | null>(null);
+  const [photosFor, setPhotosFor] = useState<string | null>(null);
   const list = webProducts.value;
   const checked = report.value.state === 'ready' ? report.value.data.generatedAt : null;
 
@@ -94,6 +98,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
       hidden: list.filter((p) => p.status === 'hidden').length,
       attention: list.filter(failing).length,
       pending: list.filter((p) => p.pending).length,
+      nophotos: list.filter(needsPhotos).length,
     }),
     [list],
   );
@@ -103,6 +108,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
     if (term && !`${p.brandName} ${p.model} ${p.type} ${p.id}`.toLowerCase().includes(term)) return false;
     if (filter === 'attention') return failing(p);
     if (filter === 'pending') return p.pending;
+    if (filter === 'nophotos') return needsPhotos(p);
     if (filter !== 'all') return p.status === filter;
     return true;
   });
@@ -165,6 +171,30 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
       ),
     },
     {
+      key: 'photos',
+      label: 'Photos',
+      hide: 'sm',
+      sortValue: (p) => p.photos.length,
+      render: (p) =>
+        !p.page ? (
+          <span class="cell-sub">—</span>
+        ) : p.photos.length ? (
+          <button type="button" class="web-photos" onClick={() => setPhotosFor(p.id)}>
+            <PhotoImg id={p.photos[0].id} alt="" class="web-photos__img" />
+            <span>
+              {plural(p.photos.length, 'photo')}
+              <span class="sr-only"> of {p.model}: manage</span>
+            </span>
+          </button>
+        ) : needsPhotos(p) ? (
+          <Button size="sm" icon="camera" onClick={() => setPhotosFor(p.id)}>
+            Add photos<span class="sr-only"> of {p.model}</span>
+          </Button>
+        ) : (
+          <span class="cell-sub">None</span>
+        ),
+    },
+    {
       key: 'display',
       label: 'On display at',
       hide: 'md',
@@ -191,6 +221,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
             size="sm"
             items={[
               { label: 'Edit status or link…', icon: 'edit', onSelect: () => setEditing(p) },
+              ...(p.page ? [{ label: 'Photos…', icon: 'camera' as const, onSelect: () => setPhotosFor(p.id) }] : []),
               ...(p.page ? [{ label: 'Print showroom tag', icon: 'printer' as const, onSelect: () => onTag(p.id) }] : []),
               ...(p.slug ? [{ label: 'Open the /go/ link', icon: 'link' as const, onSelect: () => window.open(goHref(p.slug!), '_blank', 'noopener') }] : []),
               ...(p.pending
@@ -202,6 +233,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
                       onSelect: () => {
                         undoEdit(p.id);
                         if (p.product) undoLinkUrl(p.product.slug);
+                        if (p.photosPending) undoPhotos(p.id);
                         toast('Pending change undone');
                       },
                     },
@@ -233,6 +265,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
               { key: 'hidden', label: 'Hidden', count: counts.hidden },
               { key: 'attention', label: 'Link failing', count: counts.attention },
               { key: 'pending', label: 'Pending', count: counts.pending },
+              { key: 'nophotos', label: 'On display, no photos', count: counts.nophotos },
             ]}
           />
         </div>
@@ -248,12 +281,13 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
         />
       </Card>
       <p class="demo-footnote">
-        Displays come from Inventory (the same counts the public “On display at” shows).{' '}
+        Displays come from Inventory (the same counts the public “On display at” shows). Photos you add stay in this browser: after a publish (simulated), its model pages show them as a preview.{' '}
         <button type="button" class="link-btn" onClick={() => setParams({ tab: 'health' })}>
           See link health
         </button>
       </p>
       {editing && <EditDialog p={editing} onClose={() => setEditing(null)} />}
+      {photosFor && <PhotosDialog id={photosFor} onClose={() => setPhotosFor(null)} />}
     </div>
   );
 }

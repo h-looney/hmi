@@ -71,8 +71,6 @@ export interface Product {
   display: Record<StoreSlug, number>;
   /** One or two sentences of HMI's own copy */
   summary: string;
-  /** Key of a photo HMI owns (src/data/productPhotos.ts). Without one the page shows a labelled placeholder. */
-  photo?: string;
 }
 
 /** How the weekly sitemap watcher finds a brand's product pages */

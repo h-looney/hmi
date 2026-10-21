@@ -1,9 +1,10 @@
 /**
- * Hand-off from the public website to HMI mode.
+ * Hand-off between the public website and HMI mode.
  *
  * There's no backend in this concept, so a submitted quote or service form is queued in
- * localStorage and a BroadcastChannel ping tells any open HMI mode tab to pick it up. The
- * public pages import only this small file.
+ * localStorage and a BroadcastChannel ping tells any open HMI mode tab to pick it up. The other
+ * way round, model photos published from HMI mode (simulated) are read from this browser's
+ * IndexedDB. The public pages import only this small file.
  */
 
 export const QUEUE_KEY = 'hmi-office-queue';
@@ -129,4 +130,73 @@ export function recordClick(click: Omit<GoClick, 'at'>) {
   } catch {
     /* other tabs will see it on their next load */
   }
+}
+
+/* ---------- Model photos published from HMI mode ---------- */
+
+/**
+ * Photos added in HMI mode stay in this browser, in the IndexedDB database HMI mode saves to: each image under
+ * `photo:<id>`, and the set last published (simulated) under `site-photos`. Model pages and cards read that set to
+ * preview a publish in this browser. In production a publish would put the photos in the site itself.
+ */
+export const OFFICE_DB = 'hmi-office';
+export const OFFICE_STORE = 'state';
+export const SITE_PHOTOS_KEY = 'site-photos';
+export const photoKey = (id: string) => `photo:${id}`;
+
+export interface SitePhoto {
+  id: string;
+  alt: string;
+  caption?: string;
+  width: number;
+  height: number;
+}
+
+/** Open HMI mode's database to read it — without creating it when nothing has been saved in this browser. */
+function openOfficeDb(): Promise<IDBDatabase | null> {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(OFFICE_DB, 1);
+      req.onupgradeneeded = () => req.transaction?.abort();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+      req.onblocked = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function read<T>(conn: IDBDatabase, key: string): Promise<T | undefined> {
+  return new Promise((resolve) => {
+    try {
+      const req = conn.transaction(OFFICE_STORE).objectStore(OFFICE_STORE).get(key);
+      req.onsuccess = () => resolve(req.result as T | undefined);
+      req.onerror = () => resolve(undefined);
+    } catch {
+      resolve(undefined);
+    }
+  });
+}
+
+/** Photos published from HMI mode in this browser, for the given product ids — each with an object URL. */
+export async function readPublishedPhotos(productIds: string[]): Promise<Map<string, (SitePhoto & { url: string })[]>> {
+  const out = new Map<string, (SitePhoto & { url: string })[]>();
+  if (!productIds.length || typeof indexedDB === 'undefined') return out;
+  const conn = await openOfficeDb();
+  if (!conn) return out;
+  try {
+    const site = await read<Record<string, SitePhoto[]>>(conn, SITE_PHOTOS_KEY);
+    for (const id of productIds) {
+      const list: (SitePhoto & { url: string })[] = [];
+      for (const photo of site?.[id] ?? []) {
+        const blob = await read<Blob>(conn, photoKey(photo.id));
+        if (blob instanceof Blob) list.push({ ...photo, url: URL.createObjectURL(blob) });
+      }
+      if (list.length) out.set(id, list);
+    }
+  } finally {
+    conn.close();
+  }
+  return out;
 }

@@ -1,10 +1,10 @@
 ---
 /**
- * A model's photo: HMI's own photo when there is one (src/data/productPhotos.ts), otherwise the labelled placeholder.
+ * A model's photo on a card: its first photo (src/data/productPhotos.ts), otherwise the labelled placeholder.
  */
 import Photo from './Photo.astro';
 import { brands } from '../data/brands';
-import { productPhotos } from '../data/productPhotos';
+import { photosFor } from '../data/productPhotos';
 import { brandSites, productPath, type Product } from '../data/products';
 import { withBase } from '../scripts/url';
 
@@ -17,7 +17,7 @@ interface Props {
 
 const { product: p, sizes = '(min-width: 960px) 520px, 100vw', loading = 'lazy', class: className } = Astro.props;
 const brand = brandSites[p.brand]?.name ?? brands.find((b) => b.id === p.brand)?.name ?? p.brand;
-const photo = p.photo ? productPhotos[p.photo] : undefined;
+const photo = photosFor(p)[0];
 ---
 
 {

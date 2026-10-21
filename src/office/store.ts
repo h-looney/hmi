@@ -6,7 +6,7 @@
  * the public pages (see bridge.ts) arrive as new inbox requests — live, if a tab is open.
  */
 import { batch, computed, effect, signal } from '@preact/signals';
-import { CHANNEL, QUEUE_KEY, clearQueue, readQueue, type QueuedSubmission } from './bridge';
+import { CHANNEL, OFFICE_DB, OFFICE_STORE, QUEUE_KEY, SITE_PHOTOS_KEY, clearQueue, photoKey, readQueue, type QueuedSubmission, type SitePhoto } from './bridge';
 import { profiles } from './data/people';
 import { createDemo, DB_VERSION, demoClock } from './data/seed';
 import type { DB, History, Lead, Section, StoreId, UIState } from './data/types';
@@ -113,8 +113,8 @@ let idb: Promise<IDBDatabase | null> | null = null;
 function openIdb(): Promise<IDBDatabase | null> {
   idb ??= new Promise((resolve) => {
     try {
-      const req = indexedDB.open('hmi-office', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('state');
+      const req = indexedDB.open(OFFICE_DB, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(OFFICE_STORE);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => resolve(null);
       req.onblocked = () => resolve(null);
@@ -130,7 +130,7 @@ async function idbGet<T>(key: string): Promise<T | undefined> {
   if (!conn) return undefined;
   return new Promise((resolve) => {
     try {
-      const req = conn.transaction('state').objectStore('state').get(key);
+      const req = conn.transaction(OFFICE_STORE).objectStore(OFFICE_STORE).get(key);
       req.onsuccess = () => resolve(req.result as T | undefined);
       req.onerror = () => resolve(undefined);
     } catch {
@@ -144,8 +144,8 @@ async function idbSet(key: string, value: unknown): Promise<void> {
   if (!conn) return;
   return new Promise((resolve) => {
     try {
-      const tx = conn.transaction('state', 'readwrite');
-      tx.objectStore('state').put(value, key);
+      const tx = conn.transaction(OFFICE_STORE, 'readwrite');
+      tx.objectStore(OFFICE_STORE).put(value, key);
       tx.oncomplete = () => resolve();
       tx.onerror = () => resolve();
       tx.onabort = () => resolve();
@@ -153,6 +153,56 @@ async function idbSet(key: string, value: unknown): Promise<void> {
       resolve();
     }
   });
+}
+
+async function idbDelete(key: string | IDBKeyRange): Promise<void> {
+  const conn = await openIdb();
+  if (!conn) return;
+  return new Promise((resolve) => {
+    try {
+      const tx = conn.transaction(OFFICE_STORE, 'readwrite');
+      tx.objectStore(OFFICE_STORE).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+      tx.onabort = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
+/* ---------- Model photos: one key per image, outside the main document (which is saved on every change) ---------- */
+
+const photoCache = new Map<string, Blob>();
+
+export async function putPhoto(id: string, blob: Blob) {
+  photoCache.set(id, blob);
+  await idbSet(photoKey(id), blob);
+}
+
+export async function getPhoto(id: string): Promise<Blob | undefined> {
+  const cached = photoCache.get(id);
+  if (cached) return cached;
+  const blob = await idbGet<Blob>(photoKey(id));
+  if (blob instanceof Blob) photoCache.set(id, blob);
+  return blob instanceof Blob ? blob : undefined;
+}
+
+export async function deletePhotos(ids: string[]) {
+  for (const id of ids) {
+    photoCache.delete(id);
+    await idbDelete(photoKey(id));
+  }
+}
+
+/** The set the public pages preview after a publish (simulated) — see readPublishedPhotos() in bridge.ts */
+export const setSitePhotos = (value: Record<string, SitePhoto[]>) => idbSet(SITE_PHOTOS_KEY, value);
+
+/** Forget every photo, when the demo data starts over */
+async function clearPhotos() {
+  photoCache.clear();
+  await idbDelete(IDBKeyRange.bound(photoKey(''), photoKey('\uffff')));
+  await idbDelete(SITE_PHOTOS_KEY);
 }
 
 /* ---------- Load, save, sync ---------- */
@@ -190,6 +240,7 @@ export async function initStore() {
     const demo = createDemo(t, demoClock());
     stored = demo.db;
     hist = demo.history;
+    void clearPhotos();
     void idbSet('history', hist);
     void idbSet('db', stored);
   } else {
@@ -256,7 +307,7 @@ export async function resetDemo() {
     db.value = demo.db;
     history.value = demo.history;
   });
-  await Promise.all([idbSet('db', demo.db), idbSet('history', demo.history)]);
+  await Promise.all([idbSet('db', demo.db), idbSet('history', demo.history), clearPhotos()]);
   channel?.postMessage({ type: 'reset', from: TAB });
   setUI({ tried: [], welcomeDismissed: false });
 }

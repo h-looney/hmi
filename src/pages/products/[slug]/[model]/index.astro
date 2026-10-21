@@ -5,10 +5,11 @@
  * notice, the replacement (when the manufacturer names one) and service & parts help.
  */
 import type { GetStaticPaths } from 'astro';
+import { getImage } from 'astro:assets';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
 import Icon from '../../../../components/Icon.astro';
-import ProductImage from '../../../../components/ProductImage.astro';
+import ProductGallery from '../../../../components/ProductGallery.astro';
 import ProductCard from '../../../../components/ProductCard.astro';
 import SectionHeading from '../../../../components/SectionHeading.astro';
 import CtaBand from '../../../../components/CtaBand.astro';
@@ -16,6 +17,7 @@ import { brands } from '../../../../data/brands';
 import { getCategory, groups, fuelLabels } from '../../../../data/categories';
 import { goPath } from '../../../../data/links';
 import { linkStatus } from '../../../../data/linkHealth';
+import { photosFor } from '../../../../data/productPhotos';
 import { brandSites, productById, productPath, productsIn, publicProducts, type Product } from '../../../../data/products';
 import { locations, tel, prettyPhone } from '../../../../data/site';
 import { withBase } from '../../../../scripts/url';
@@ -56,12 +58,15 @@ const others = productsIn(p.category)
   .slice(0, 3);
 
 const canonical = new URL(withBase(productPath(p)), Astro.site).toString();
+// The first photo, when the model has one, is also its image in structured data and link previews
+const lead = photosFor(p)[0];
+const leadImage = lead ? await getImage({ src: lead.src, width: Math.min(1200, lead.src.width), format: 'jpg' }) : undefined;
 const productLd = {
   '@type': 'Product',
   name: fullName,
   brand: { '@type': 'Brand', name: brand },
   model: p.model,
-  image: new URL(withBase(`${productPath(p)}photo.svg`), Astro.site).toString(),
+  image: new URL(leadImage?.src ?? withBase(`${productPath(p)}photo.svg`), Astro.site).toString(),
   description: p.summary,
   category: c.name,
   url: canonical,
@@ -73,7 +78,7 @@ const description = discontinued
   : `${p.summary}${shownAt.length ? ` On display at HMI Fireplace Shops in ${shownAt.join(' and ')}, MO.` : ' Ask HMI Fireplace Shops in Osage Beach or Nixa, MO.'}`;
 ---
 
-<BaseLayout title={`${fullName} ${p.type}`} description={description} schema={[productLd]}>
+<BaseLayout title={`${fullName} ${p.type}`} description={description} image={leadImage?.src} schema={[productLd]}>
   <section class="mhero on-dark">
     <div class="container mhero__inner">
       <div class="mhero__text">
@@ -115,9 +120,13 @@ const description = discontinued
           }
         </div>
       </div>
-      <div class="mhero__media">
-        <ProductImage product={p} loading="eager" />
-      </div>
+      <ProductGallery
+        product={p}
+        name={fullName}
+        brand={brand}
+        outbound={discontinued || linkDown ? undefined : go}
+        stores={discontinued ? [] : stores.filter((s) => s.count > 0).map((s) => ({ name: s.shortName, href: withBase(`/locations/${s.slug}/`) }))}
+      />
     </div>
   </section>
 
@@ -246,7 +255,7 @@ const description = discontinued
               All {c.name.toLowerCase()} <Icon name="arrow-right" size={16} />
             </a>
           </SectionHeading>
-          <div class="grid grid--3">
+          <div class="grid grid--models">
             {others.map((o) => (
               <ProductCard product={o} />
             ))}
@@ -332,20 +341,6 @@ const description = discontinued
   .mhero__actions .btn {
     white-space: normal;
     text-align: left;
-  }
-
-  .mhero__media {
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: 0 30px 60px -25px rgb(0 0 0 / 0.7);
-    aspect-ratio: 4 / 3;
-    background: #efe5d6;
-  }
-
-  .mhero__media :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
   }
 
   .notice-band {

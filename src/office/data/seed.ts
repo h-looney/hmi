@@ -54,10 +54,13 @@ import type {
   WebsiteState,
 } from './types';
 
-export const DB_VERSION = 7;
+export const DB_VERSION = 8;
 
-/** The Website section starts with nothing pending; the weekly summary goes to Gabe (the Nixa store manager). */
-export const defaultWebsite = (): WebsiteState => ({ edits: {}, linkUrls: {}, drafts: [], dismissed: [], digestTo: 'gabe', publishes: [] });
+/**
+ * The Website section starts with nothing pending and no model photos (staff add their own); the weekly summary goes
+ * to Gabe (the Nixa store manager).
+ */
+export const defaultWebsite = (): WebsiteState => ({ edits: {}, linkUrls: {}, drafts: [], dismissed: [], digestTo: 'gabe', publishes: [], photos: {}, photosLive: {} });
 /** Detailed records cover this many days before today */
 export const WINDOW_DAYS = 35;
 const HISTORY_DAYS = 455;
