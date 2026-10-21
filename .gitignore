@@ -12,3 +12,6 @@ node_modules/
 # logs & OS files
 npm-debug.log*
 .DS_Store
+
+# link checker output (published with the site, never committed)
+.link-health/

@@ -21,6 +21,7 @@ import Jobs from './pages/jobs/Jobs';
 import MyDay from './pages/myday/MyDay';
 import Settings from './pages/settings/Settings';
 import Warranty from './pages/warranty/Warranty';
+import Website from './pages/website/Website';
 
 const pages: Record<Section, FunctionComponent> = {
   dashboard: Dashboard,
@@ -32,6 +33,7 @@ const pages: Record<Section, FunctionComponent> = {
   inventory: Inventory,
   accounting: Accounting,
   analytics: Analytics,
+  website: Website,
   settings: Settings,
 };
 

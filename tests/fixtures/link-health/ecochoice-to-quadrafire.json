@@ -1,0 +1,24 @@
+{
+ "capturedAt": "2026-10-21T19:00:20.024Z",
+ "url": "http://www.heatilatorecochoice.com/",
+ "status": 200,
+ "finalUrl": "https://forgenflame.com/pages/quadra-fire",
+ "chain": [
+  {
+   "url": "http://www.heatilatorecochoice.com/",
+   "status": 301
+  },
+  {
+   "url": "https://forgenflame.com/pages/quadra-fire",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=utf-8",
+ "headers": {
+  "server": "cloudflare",
+  "cf-ray": "a4e281279c593171-DFW"
+ },
+ "body": "<html><head><title> Quadra-Fire Stoves &amp; Fireplace Inserts &ndash; Forge &amp; Flame</title><meta property=\"og:site_name\" content=\"Forge &amp; Flame\" ><meta property=\"og:title\" content=\"Quadra-Fire Stoves &amp; Fireplace Inserts\" ><link rel=\"canonical\" href=\"https://forgenflame.com/pages/quadra-fire\" ></head><body>\n\n<p>Stoves Fireplace Inserts Plan Your Stove Blog Request a Quote Where to Buy US Canada (USD) United States (USD) All Stoves Wood Stoves Pellet Stoves Gas Stoves Electric Stoves Wood · Choose a tier All Wood Stoves WSX Series Premium craftsmanship with our most advanced features, superior materials, customizable options, refined detailing with expert installation. Shop Aspen Aspen Encore Encore Defia</p></body></html>",
+ "via": "fetch",
+ "ms": 761
+}

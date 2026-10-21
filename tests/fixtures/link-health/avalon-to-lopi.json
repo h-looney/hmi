@@ -1,0 +1,23 @@
+{
+ "capturedAt": "2026-10-21T19:00:20.418Z",
+ "url": "http://www.avalonproduct.com",
+ "status": 200,
+ "finalUrl": "https://www.lopistoves.com/",
+ "chain": [
+  {
+   "url": "http://www.avalonproduct.com",
+   "status": 301
+  },
+  {
+   "url": "https://www.lopistoves.com/",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=UTF-8",
+ "headers": {
+  "server": "Apache"
+ },
+ "body": "<html><head><title>Stoves | Wood | Gas | Pellet | Lopi Stoves®</title><meta name=\"robots\" content=\"max-image-preview:large\" /><link rel=\"canonical\" href=\"https://www.lopistoves.com/\" /></head><body><h1 style=\"text-align: center;\">NORTH AMERICA&#8217;S FAVORITE FIRE</h1>\n<h1 style=\"text-align: center;\">WHICH PRODUCT  IS RIGHT FOR ME?</h1>\n<h1 style=\"text-align: center;\">WHICH PRODUCT  IS RIGHT FOR ME?</h1>\n<h1 style=\"text-align: center;\">Please Consider Our Other Distinguished Brands</h1>\n<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type\":\"BreadcrumbList\",\"@id\":\"https://www.lopistoves.com/#breadcrumblist\",\"itemListElement\":[{\"@type\":\"ListItem\",\"@id\":\"https://www.lopistoves.com/#listItem\",\"position\":1,\"name\":\"Home\"}]},{\"@type\":\"Organization\",\"@id\":\"https://www.lopistoves.com/#organization\",\"name\":\"Lopi Stoves\",\"description\":\"Made in USA\",\"url\":\"https://www.lopistoves.com/\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"https://www.lopistoves.com/wp-content/uploads/Lopi_Logo-Big.png\",\"@id\":\"https://www.lopistoves.com/#organizationLogo\",\"width\":260,\"height\":180},\"image\":{\"@id\":\"https://www.lopistoves.com/#organizationLogo\"}},{\"@type\":\"WebPage\",\"@id\":\"https://www.lopistoves.com/#webpage\",\"url\":\"https://www.lopistoves.com/\",\"name\":\"Stoves | Wood | Gas | Pellet | Lopi Stoves®\",\"description\":\"Lopi® wood stoves have been North America’s favorite choice in fire for over 40 years.\",\"inLanguage\":\"en-US\",\"isPartOf\":{\"@id\":\"https://www.lopistoves.com/#website\"},\"breadcrumb\":{\"@id\":\"https://www.lopistoves.com/#breadcrumblist\"},\"datePublished\":\"2014-05-22T11:34:37-07:00\",\"dateModified\":\"2026-09-21T05:50:58-07:00\"},{\"@type\":\"WebSite\",\"@id\":\"https://www.lopistoves.com/#website\",\"url\":\"https://www.lopistoves.com/\",\"name\":\"Lopi Stoves®\",\"description\":\"Made in USA\",\"inLanguage\":\"en-US\",\"publisher\":{\"@id\":\"https://www.lopistoves.com/#organization\"}}]}</script>\n<p>NORTH AMERICA&#8217;S FAVORITE FIRE WHICH PRODUCT IS RIGHT FOR ME? WHICH PRODUCT IS RIGHT FOR ME? Please Consider Our Other Distinguished Brands Imagine It. Build It. Love It. Start customizing your dream fire with FireBuilder now. Skip to content Design My Fire Take A Factory Tour Home Our Story Who We Are Specialty Hearth Retailers Products Which Product is Right for Me? Radiant Plus vs. Premium</p></body></html>",
+ "via": "fetch",
+ "ms": 770
+}

@@ -13,7 +13,7 @@ export function SignIn() {
     <div class="signin">
       <aside class="signin__art" aria-label="About HMI mode">
         <div class="signin__art-inner">
-          <img src={logo} alt="HMI Fireplace Shops" width={200} height={40} class="signin__logo" />
+          <img src={logo} alt="HMI Fireplace Shops" width={202} height={26} class="signin__logo" />
           <p class="signin__kicker">HMI mode</p>
           <p class="signin__headline">Everything behind the counter, in one place.</p>
           <ul class="signin__points" role="list">

@@ -18,7 +18,8 @@ import {
   storeName,
   warrantyState,
 } from '../../selectors';
-import { db, history, me, setUI, ui } from '../../store';
+import { can, db, history, me, setUI, ui } from '../../store';
+import { actionableSuggestions, failingLinks, movedLinks } from '../website/data';
 import { BarChart, ChartFrame, Sparkline } from '../../ui/charts';
 import { AvatarStack, Badge, Card, EmptyState, Link, LinkButton, Meter, PageHeader, Stat } from '../../ui/core';
 import { Icon, type IconName } from '../../ui/Icon';
@@ -146,6 +147,14 @@ export default function Dashboard() {
   if (unregistered) attention.push({ icon: 'shield', tone: 'violet', label: `${plural(unregistered, 'install')} not registered for warranty`, to: '/office/warranty/?filter=unregistered' });
   const staleEstimates = d.invoices.filter((i) => i.kind === 'estimate' && invoiceStatus(i) === 'sent' && diffDays(t, i.issuedOn) >= 3 && matchStore(store, i.store)).length;
   if (staleEstimates) attention.push({ icon: 'file', tone: 'ember', label: `${plural(staleEstimates, 'estimate')} waiting on a reply for 3+ days`, to: '/office/accounting/?tab=estimates' });
+  if (can('website')) {
+    const failing = failingLinks.value;
+    if (failing.length) attention.push({ icon: 'link', tone: 'red', label: `${plural(failing.length, 'manufacturer link')} failing — fallback in effect`, detail: failing.slice(0, 2).map((l) => l.label).join(', '), to: '/office/website/?tab=health' });
+    const moved = movedLinks.value.length;
+    if (moved) attention.push({ icon: 'link', tone: 'blue', label: `${plural(moved, 'stored URL')} to update`, detail: 'The right page, at a new address', to: '/office/website/?tab=health' });
+    const suggestions = actionableSuggestions.value.length;
+    if (suggestions) attention.push({ icon: 'sparkle', tone: 'violet', label: `${plural(suggestions, 'sitemap suggestion')} to review`, detail: 'New and possibly discontinued models', to: '/office/website/?tab=suggestions' });
+  }
 
   const hour = +now().slice(11, 13);
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';

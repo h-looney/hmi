@@ -24,8 +24,9 @@ export function UserMenu({ user }: { user: Staff }) {
   const [open, setOpen] = useState<'menu' | 'switch' | 'reset' | null>(null);
   return (
     <div class="menu">
-      <button type="button" class="user-btn" aria-haspopup="dialog" aria-label={`Account: ${user.name}`} onClick={() => setOpen('switch')}>
+      <button type="button" class="user-btn" aria-haspopup="dialog" onClick={() => setOpen('switch')}>
         <Avatar person={user} size={32} />
+        <span class="sr-only">Account: </span>
         <span class="user-btn__text">
           <span class="user-btn__name">{user.name.split(' ')[0]}</span>
           <span class="user-btn__role">{roleLabels[user.role]}</span>

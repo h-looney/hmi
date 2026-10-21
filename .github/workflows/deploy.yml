@@ -1,16 +1,36 @@
-# Publishes the site to GitHub Pages on every push to main.
+# Builds and publishes the site to GitHub Pages — on every push to main, every night, and on demand.
 # One-time setup: repo Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#
+# Every run checks the outbound manufacturer links before building (scripts/link-health/), so each /go/<slug>/ page
+# points at what works tonight: the stored URL, its new address, or a safe fallback. Mondays also read the
+# manufacturers' sitemaps (as does the first run). State between runs (first-failed dates, the sitemap snapshot) comes from the JSON the
+# previous run published with the site — nothing is committed back to main.
+#
+#   push      fails on internal problems (a model page or /go/ slug that doesn't exist…) and on outbound links
+#             added or changed in that push that don't work. Links that break on the manufacturer's side never
+#             block a deploy — they get the fallback.
+#   schedule  nightly check → rebuild → redeploy, in this same workflow (a push made with GITHUB_TOKEN wouldn't
+#             trigger another workflow, so nothing is committed).
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+  schedule:
+    # 08:17 UTC — about 3 AM in Missouri
+    - cron: '17 8 * * *'
   workflow_dispatch:
+    inputs:
+      sitemaps:
+        description: 'Also read the manufacturers’ sitemaps (normally Mondays only)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: pages
@@ -21,6 +41,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history, so a push can compare its link list with the previous commit's if the live report is missing
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -28,14 +51,74 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v6
       - run: npm ci
+
+      - name: Unit tests (link classifier, sitemaps, report)
+        run: npm test
+
+      - name: Fetch last run's results from the live site
+        id: prev
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          mkdir -p .link-health/previous
+          for f in link-health sitemap-watch sitemap-snapshot; do
+            curl -fsSL --retry 2 "$PAGES_URL/data/$f.json" -o ".link-health/previous/$f.json" || rm -f ".link-health/previous/$f.json"
+          done
+          ls -l .link-health/previous
+          # A real snapshot (not the "none yet" placeholder) means the sitemap watcher has run before
+          echo "snapshot=$(grep -qs '"version":1' .link-health/previous/sitemap-snapshot.json && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Check every outbound link (headless Chrome retries bot checks)
+        env:
+          TRIGGER: ${{ github.event_name == 'push' && 'push' || github.event_name == 'schedule' && 'nightly' || 'manual' }}
+          GIT_BASE: ${{ github.event.before }}
+          CHROME_PATH: /usr/bin/google-chrome
+        run: npm run links:check -- --trigger "$TRIGGER" --baseline .link-health/previous/link-health.json --git-base "$GIT_BASE"
+
+      # Sitemaps are read on Mondays, on request, and on the very first run (so there's real data right away)
+      - id: plan
+        env:
+          MANUAL: ${{ inputs.sitemaps }}
+          EVENT: ${{ github.event_name }}
+          HAVE_SNAPSHOT: ${{ steps.prev.outputs.snapshot }}
+        run: |
+          monday=$([ "$(date -u +%u)" = 1 ] && echo true || echo false)
+          if { [ "$EVENT" = schedule ] && [ "$monday" = true ]; } || [ "$MANUAL" = true ] || [ "$HAVE_SNAPSHOT" != true ]; then
+            echo "sitemaps=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sitemaps=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Read the manufacturers' sitemaps
+        if: steps.plan.outputs.sitemaps == 'true'
+        run: npm run links:sitemaps -- --previous .link-health/previous/sitemap-snapshot.json
+
+      - name: Keep last week's sitemap results (other days)
+        if: steps.plan.outputs.sitemaps != 'true'
+        run: |
+          for f in sitemap-watch sitemap-snapshot; do
+            [ -f ".link-health/previous/$f.json" ] && cp ".link-health/previous/$f.json" ".link-health/$f.json" || true
+          done
+
       # Build for the Pages address, e.g. https://<user>.github.io/<repo>/
       - run: npm run build -- --site "$PAGES_ORIGIN" --base "$PAGES_BASE"
         env:
           PAGES_ORIGIN: ${{ steps.pages.outputs.origin }}
           PAGES_BASE: ${{ steps.pages.outputs.base_path || '/' }}
+
+      - name: Check the built site (no direct manufacturer links; every /go/ and model page exists)
+        run: npm run test:site
+
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+
+      - name: Open, update or close the link-health issue
+        if: always() && hashFiles('.link-health/report.json') != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+        run: npm run links:issue
 
   deploy:
     needs: build

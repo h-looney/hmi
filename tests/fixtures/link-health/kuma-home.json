@@ -1,0 +1,19 @@
+{
+ "capturedAt": "2026-10-21T19:00:20.111Z",
+ "url": "https://www.kumastoves.com/",
+ "status": 200,
+ "finalUrl": "https://www.kumastoves.com/",
+ "chain": [
+  {
+   "url": "https://www.kumastoves.com/",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=utf-8",
+ "headers": {
+  "server": "Microsoft-IIS/10.0"
+ },
+ "body": "<html><head><title>Wood Stoves and Wood Stove Inserts - Kuma Stoves</title></head><body><h1>Applewood Cook Stove</h1>\n<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type\":\"Organization\",\"@id\":\"https://www.kumastoves.com/#organization\",\"name\":\"Kuma Stoves\",\"url\":\"https://www.kumastoves.com/\",\"legalName\":\"Kuma Stoves Inc.\",\"foundingDate\":\"1981\",\"description\":\"Kuma Stoves manufactures high-efficiency wood stoves, wood inserts, cook stoves and related hearth products in the US…\",\"telephone\":[\"tel:208-762-8002\",\"tel:888-714-5294\"],\"contactPoint\":[{\"@type\":\"ContactPoint\",\"telephone\":\"tel:208-762-8002\",\"contactType\":\"customer service\",\"areaServed\":\"US\",\"availableLanguage\":\"English\"},{\"@type\":\"ContactPoint\",\"telephone\":\"tel:888-714-5294\",\"contactType\":\"sales\",\"areaServed\":\"US\",\"availableLanguage\":\"English\"}],\"memberOf\":{\"@type\":\"Organization\",\"name\":\"Nationwide Dealer Network\",\"description\":\"Kuma stoves and inserts are available through a nationwide network of over 200 retail dealers.\"}},{\"@type\":\"WebSite\",\"@id\":\"https://www.kumastoves.com/#website\",\"url\":\"https://www.kumastoves.com/\",\"name\":\"Kuma Stoves\",\"publisher\":{\"@id\":\"https://www.kumastoves.com/#organization\"},\"potentialAction\":{\"@type\":\"SearchAction\",\"target\":\"https://www.kumastoves.com/?s={search_term_string}\",\"query-input\":\"required name=search_term_string\"}},{\"@type\":\"LocalBusiness\",\"@id\":\"https://www.kumastoves.com/#localbusiness\",\"name\":\"Kuma Stoves\",\"url\":\"https://www.kumastoves.com/\",\"telephone\":\"tel:208-762-8002\",\"description\":\"Manufacturer of wood stoves, wood inserts, cook stoves and hearth accessories.\",\"address\":\"##\",\"openingHoursSpecification\":[{\"@type\":\"OpeningHoursSpecification\",\"dayOfWeek\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"],\"opens\":\"08:00\",\"closes\":\"17:00\",\"validFrom\":\"2025-01-01\"}],\"areaServed\":\"US\",\"sameAs\":[]}]}</script>\n<p>Applewood Cook Stove Toggle navigation Warranty &nbsp; | &nbsp; Dealer Locator Monday-Friday 8:00-5:00 Pacific 208-762-8002 888-714-5294 Home Products Wood Stoves Wood Inserts Wood Cook Stove Snow Destroyer Order Parts Cook Stove Accessories Find a Store Support Contact Us Manuals Warranty Info Register your Warranty Order Parts 2023-2032&nbsp;Biomass Tax Credit Download 2021-2023 Biomass Tax Cred</p></body></html>",
+ "via": "fetch",
+ "ms": 619
+}

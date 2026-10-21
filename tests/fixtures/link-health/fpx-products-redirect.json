@@ -1,0 +1,27 @@
+{
+ "capturedAt": "2026-10-21T19:00:35.686Z",
+ "url": "http://www.fireplacex.com/Support/ProductInformation.aspx",
+ "status": 200,
+ "finalUrl": "https://www.fireplacex.com/products/",
+ "chain": [
+  {
+   "url": "http://www.fireplacex.com/Support/ProductInformation.aspx",
+   "status": 301
+  },
+  {
+   "url": "https://www.fireplacex.com/Support/ProductInformation.aspx",
+   "status": 301
+  },
+  {
+   "url": "https://www.fireplacex.com/products/",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=UTF-8",
+ "headers": {
+  "server": "Apache"
+ },
+ "body": "<html><head><title>Products | Fireplace Xtrordinair | Made in America</title><meta name=\"robots\" content=\"max-image-preview:large\" /><link rel=\"canonical\" href=\"https://www.fireplacex.com/products/\" /></head><body><h1 id=\"awb-ptb-heading\" class=\"entry-title\">Products</h1>\n<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type\":\"BreadcrumbList\",\"@id\":\"https://www.fireplacex.com/products/#breadcrumblist\",\"itemListElement\":[{\"@type\":\"ListItem\",\"@id\":\"https://www.fireplacex.com/#listItem\",\"position\":1,\"name\":\"Home\",\"item\":\"https://www.fireplacex.com/\",\"nextItem\":{\"@type\":\"ListItem\",\"@id\":\"https://www.fireplacex.com/products/#listItem\",\"name\":\"Products\"}},{\"@type\":\"ListItem\",\"@id\":\"https://www.fireplacex.com/products/#listItem\",\"position\":2,\"name\":\"Products\",\"previousItem\":{\"@type\":\"ListItem\",\"@id\":\"https://www.fireplacex.com/#listItem\",\"name\":\"Home\"}}]},{\"@type\":\"Organization\",\"@id\":\"https://www.fireplacex.com/#organization\",\"name\":\"Fireplace Xtrordinair\",\"description\":\"Made in America\",\"url\":\"https://www.fireplacex.com/\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"https://www.fireplacex.com/wp-content/uploads/logo-footer.png\",\"@id\":\"https://www.fireplacex.com/products/#organizationLogo\",\"width\":268,\"height\":142},\"image\":{\"@id\":\"https://www.fireplacex.com/products/#organizationLogo\"},\"sameAs\":[\"https://www.facebook.com/FireplaceXtrordinair\",\"https://www.instagram.com/fireplacextrordinair/\"]},{\"@type\":\"WebPage\",\"@id\":\"https://www.fireplacex.com/products/#webpage\",\"url\":\"https://www.fireplacex.com/products/\",\"name\":\"Products | Fireplace Xtrordinair | Made in America\",\"description\":\"Whether you’re building from scratch or remodeling an existing space, adding a fire – the inevitable focal point of a…\",\"inLanguage\":\"en-US\",\"isPartOf\":{\"@id\":\"https://www.fireplacex.com/#website\"},\"breadcrumb\":{\"@id\":\"https://www.fireplacex.com/products/#breadcrumblist\"},\"datePublished\":\"2014-06-12T17:15:20-07:00\",\"dateModified\":\"2019-09-28T14:34:56-07:00\"},{\"@type\":\"WebSite\",\"@id\":\"https://www.fireplacex.com/#website\",\"url\":\"https://www.fireplacex.com/\",\"name\":\"Fireplace Xtrordinair\",\"description\":\"Made in America\",\"inLanguage\":\"en-US\",\"publisher\":{\"@id\":\"https://www.fireplacex.com/#organization\"}}]}</script>\n<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Home\",\"item\":\"https://www.fireplacex.com\"}]}</script>\n<p>Products &nbsp; Imagine It. Build It. Love It. Start customizing your fireplace with FireBuilder now. Skip to content Design My Fire Take A Factory Tour Home Our Story Who We Are Specialty Hearth Retailers Take A Factory Tour Products Which Product is Right for Me? Why choose a fireplace? Why choose a fireplace insert? Electric Fireplaces 31 GreenSmart Electric Gas Fireplaces Traditional Premium G</p></body></html>",
+ "via": "fetch",
+ "ms": 1657
+}

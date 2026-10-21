@@ -10,7 +10,14 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "node --test \"tests/unit/*.test.ts\"",
+    "test:site": "node --test \"tests/site/*.test.ts\"",
+    "test:browser": "node tests/browser/run.ts",
+    "links:check": "node scripts/link-health/check.ts",
+    "links:sitemaps": "node scripts/link-health/sitemaps-watch.ts",
+    "links:smoke": "node scripts/link-health/smoke.ts",
+    "links:issue": "node scripts/link-health/issue.ts"
   },
   "dependencies": {
     "@astrojs/preact": "6.0.6",
@@ -18,10 +25,14 @@
     "@fontsource-variable/inter": "5.3.0",
     "@preact/signals": "2.11.3",
     "astro": "7.3.5",
-    "preact": "10.29.8"
+    "preact": "10.29.8",
+    "qrcode-generator": "2.0.4"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "@types/node": "22.20.5",
+    "axe-core": "4.14.0",
+    "puppeteer-core": "25.12.0",
     "typescript": "6.0.3"
   }
 }

@@ -2,5 +2,7 @@ User-agent: *
 Allow: /
 # HMI mode (staff app)
 Disallow: /office/
+# Outbound-link redirect pages (/go/<slug>/ → manufacturer sites)
+Disallow: /go/
 
 Sitemap: https://www.hmifireplaceshop.com/sitemap.xml

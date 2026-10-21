@@ -2,10 +2,13 @@
 /**
  * Three-step quote request. Interests can be pre-selected via
  * ?interest=gas-fireplaces,wood-stoves (used by product pages and the
- * Fireplace Finder). Front-end only — see src/scripts/forms.ts.
+ * Fireplace Finder), and a model page adds ?model=<SKU> ("Get a quote on this
+ * model"). Front-end only — see src/scripts/forms.ts.
  */
 import Icon from './Icon.astro';
+import { brands } from '../data/brands';
 import { categories } from '../data/categories';
+import { brandSites, publicProducts } from '../data/products';
 import { locations } from '../data/site';
 import { withBase } from '../scripts/url';
 
@@ -16,9 +19,15 @@ const interests = [
 ];
 
 const steps = ['Interests', 'Project', 'Contact'];
+
+// Model names for ?model=<SKU>, so the form can say which model the request is about
+const modelNames = Object.fromEntries(
+  publicProducts().map((p) => [p.id, `${brandSites[p.brand]?.name ?? brands.find((b) => b.id === p.brand)?.name ?? p.brand} ${p.model}`]),
+);
 ---
 
 <div class="quote" data-quote>
+  <script is:inline type="application/json" data-model-names set:html={JSON.stringify(modelNames)} />
   <ol class="quote__steps" role="list" aria-label="Form progress">
     {
       steps.map((s, i) => (
@@ -34,6 +43,12 @@ const steps = ['Interests', 'Project', 'Contact'];
     <!-- Step 1 -->
     <fieldset class="quote__panel" data-panel="0">
       <legend class="quote__legend">What are you interested in?</legend>
+      <div class="quote__model" data-model-note hidden>
+        <Icon name="tag" size={18} />
+        <p>You’re asking about the <strong data-model-name></strong>.</p>
+        <button type="button" class="quote__model-clear" data-model-clear>Remove<span class="visually-hidden"> this model from the request</span></button>
+        <input type="hidden" name="model" value="" data-model-input />
+      </div>
       <p class="quote__hint">Choose as many as you like.</p>
       <div class="option-grid quote__interests" data-required-group data-msg-required="Pick at least one so we know where to start.">
         {
@@ -413,6 +428,45 @@ const steps = ['Interests', 'Project', 'Contact'];
   .quote__summary :global(dt) {
     color: var(--c-text-muted);
   }
+
+  .quote__model {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin: var(--space-4) 0 var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid #f2d3c3;
+    border-radius: var(--radius);
+    background: var(--c-ember-50);
+    color: var(--c-ember-700);
+    font-size: var(--fs-sm);
+  }
+
+  .quote__model[hidden] {
+    display: none;
+  }
+
+  .quote__model p {
+    flex: 1;
+    min-width: 12rem;
+  }
+
+  .quote__model-clear {
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    border: 1px solid #e4b9a3;
+    border-radius: var(--radius-pill);
+    background: #fff;
+    color: var(--c-ember-700);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .quote__model-clear:hover {
+    border-color: var(--c-ember);
+  }
 </style>
 
 <script>
@@ -460,6 +514,26 @@ const steps = ['Interests', 'Project', 'Contact'];
         const box = form.querySelector<HTMLInputElement>(`input[name="interests"][value="${CSS.escape(v.trim())}"]`);
         if (box) box.checked = true;
       });
+    // ?model=<SKU> from a model page: say which model, and send it with the request
+    const modelNote = root.querySelector<HTMLElement>('[data-model-note]');
+    const modelInput = root.querySelector<HTMLInputElement>('[data-model-input]');
+    let names: Record<string, string> = {};
+    try {
+      names = JSON.parse(root.querySelector('[data-model-names]')?.textContent ?? '{}');
+    } catch {
+      /* no names */
+    }
+    const modelName = names[params.get('model') ?? ''];
+    if (modelName && modelNote && modelInput) {
+      modelInput.value = modelName;
+      modelNote.querySelector('[data-model-name]')!.textContent = modelName;
+      modelNote.hidden = false;
+      modelNote.querySelector<HTMLButtonElement>('[data-model-clear]')!.addEventListener('click', () => {
+        modelInput.value = '';
+        modelNote.hidden = true;
+        form.querySelector<HTMLInputElement>('input[name="interests"]')?.focus();
+      });
+    }
     const store = params.get('store');
     const storeSelect = form.elements.namedItem('store') as HTMLSelectElement | null;
     if (store && storeSelect && [...storeSelect.options].some((o) => o.value === store)) storeSelect.value = store;
@@ -487,6 +561,7 @@ const steps = ['Interests', 'Project', 'Contact'];
           return el?.selectedOptions[0]?.textContent ?? '';
         };
         const rows: [string, string][] = [
+          ['Model', String(data.get('model') ?? '')],
           ['Interested in', labels('interests')],
           ['Project', labels('project')],
           ['Timeline', select('timeline')],

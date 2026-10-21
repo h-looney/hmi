@@ -1,0 +1,24 @@
+{
+ "capturedAt": "2026-10-21T19:00:33.598Z",
+ "url": "https://forgenflame.com/collections/quadra-fire-wood-stoves",
+ "status": 200,
+ "finalUrl": "https://forgenflame.com/collections/wood-stoves",
+ "chain": [
+  {
+   "url": "https://forgenflame.com/collections/quadra-fire-wood-stoves",
+   "status": 301
+  },
+  {
+   "url": "https://forgenflame.com/collections/wood-stoves",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=utf-8",
+ "headers": {
+  "server": "cloudflare",
+  "cf-ray": "a4e2817cd975db47-DFW"
+ },
+ "body": "<html><head><title> All Wood Burning Stoves | Forge &amp; Flame\r</title><meta property=\"og:site_name\" content=\"Forge &amp; Flame\" ><meta property=\"og:title\" content=\"All Wood Burning Stoves | Forge &amp; Flame\" ><link rel=\"canonical\" href=\"https://forgenflame.com/collections/wood-stoves\" ></head><body><h1 class=\"collection-banner__title\">Wood Stoves</h1>\n<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Home\",\"item\":\"https://forgenflame.com/\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Stoves\",\"item\":\"https://forgenflame.com/collections/stoves\"},{\"@type\":\"ListItem\",\"position\":3,\"name\":\"Wood Stoves\",\"item\":\"https://forgenflame.com/collections/wood-stoves\"}]}</script>\n<p>Wood Stoves Stoves Fireplace Inserts Plan Your Stove Blog Request a Quote Where to Buy US Canada (USD) United States (USD) All Stoves Wood Stoves Pellet Stoves Gas Stoves Electric Stoves Wood · Choose a tier All Wood Stoves WSX Series Premium craftsmanship with our most advanced features, superior materials, customizable options, refined detailing with expert installation. Shop Aspen Aspen Encore </p></body></html>",
+ "via": "fetch",
+ "ms": 651
+}

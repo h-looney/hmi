@@ -9,6 +9,8 @@ import CtaBand from '../components/CtaBand.astro';
 import { videos } from '../data/videos';
 import { faqs } from '../data/faqs';
 import { brands } from '../data/brands';
+import { goPath } from '../data/links';
+import { brandSites } from '../data/products';
 import { site } from '../data/site';
 import panoMinimal from '../assets/photos/pano-gas-minimal.jpg';
 import panoLounge from '../assets/photos/pano-gas-lounge.jpg';
@@ -23,13 +25,15 @@ const quickLinks: { href: string; icon: IconName; label: string; text: string }[
   { href: '#faq', icon: 'chat', label: 'FAQ', text: 'Answers to common questions' },
 ];
 
+// Each brand's owner-manuals page when it has one (checked nightly, like every outbound link), else its site
 const supportBrands = brands
   .filter(
     (b) =>
-      b.url &&
+      brandSites[b.id] &&
       !b.categories.includes('Accessories') &&
       b.categories.some((c) => ['Fireplaces', 'Inserts', 'Stoves', 'Gas logs', 'Electric', 'Outdoor'].includes(c)),
   )
+  .map((b) => ({ ...b, href: withBase(goPath(brandSites[b.id].support ? `${b.id}-support` : b.id)), manuals: !!brandSites[b.id].support }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
 const safety = [
@@ -114,10 +118,10 @@ const topics = ['Buying', 'Installation', 'Service & safety', 'Visiting'] as con
         {
           supportBrands.map((b) => (
             <li>
-              <a href={b.url} target="_blank" rel="noopener" class="mfr__link">
+              <a href={b.href} target="_blank" rel="noopener" class="mfr__link">
                 <span class="mfr__name">{b.name}</span>
                 <span class="mfr__cta">
-                  Manuals &amp; support <Icon name="arrow-up-right" size={14} />
+                  {b.manuals ? 'Manuals & support' : 'Visit site'} <Icon name="arrow-up-right" size={14} />
                 </span>
                 <span class="visually-hidden">(opens in a new tab)</span>
               </a>
@@ -163,7 +167,7 @@ const topics = ['Buying', 'Installation', 'Service & safety', 'Visiting'] as con
           <p class="muted small">Compare the cost of heat from gas, propane, wood, pellets and electricity.</p>
           <span class="link-arrow">Run the numbers <Icon name="arrow-right" size={16} /></span>
         </a>
-        <a href={site.links.fireBuilder} class="tool" target="_blank" rel="noopener" data-reveal style="--reveal-delay: 160ms">
+        <a href={withBase(goPath('travis-firebuilder'))} class="tool" target="_blank" rel="noopener" data-reveal style="--reveal-delay: 160ms">
           <span class="icon-tile"><Icon name="layers" size={24} /></span>
           <h3>FireBuilder</h3>
           <p class="muted small">Design a Lopi, Fireplace Xtrordinair or DaVinci fireplace with Travis Industries’ online builder.</p>

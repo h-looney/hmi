@@ -1,0 +1,23 @@
+{
+ "capturedAt": "2026-10-21T19:00:19.972Z",
+ "url": "http://www.fireplaces.com/Syndicated/Catalog/Browse.aspx?did=0013000000MqUbdAAF&type=fireplace&fuel=wood&brand=hng",
+ "status": 404,
+ "finalUrl": "https://www.fireplaces.com/Syndicated/Catalog/Browse.aspx?did=0013000000MqUbdAAF&type=fireplace&fuel=wood&brand=hng",
+ "chain": [
+  {
+   "url": "http://www.fireplaces.com/Syndicated/Catalog/Browse.aspx?did=0013000000MqUbdAAF&type=fireplace&fuel=wood&brand=hng",
+   "status": 308
+  },
+  {
+   "url": "https://www.fireplaces.com/Syndicated/Catalog/Browse.aspx?did=0013000000MqUbdAAF&type=fireplace&fuel=wood&brand=hng",
+   "status": 404
+  }
+ ],
+ "contentType": "text/html; charset=utf-8",
+ "headers": {
+  "server": "Vercel"
+ },
+ "body": "<!DOCTYPE html><html data-dpl-id=\"dpl_CaKUosrApuchdwkjg2Xw1nQcchyB\" id=\"__next_error__\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/immutable/chunks/13vc00yf1u5hs.js\"/><meta name=\"robots\" content=\"noindex\"/></head>\n<body>\n\n\n</head><body><div hidden=\"\"></div></body></html>\n</body>",
+ "via": "fetch",
+ "ms": 811
+}

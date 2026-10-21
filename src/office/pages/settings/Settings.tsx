@@ -40,6 +40,7 @@ const sectionLabels: Record<Section, string> = {
   inventory: 'Inventory',
   accounting: 'Accounting',
   analytics: 'Analytics',
+  website: 'Website',
   settings: 'Settings',
 };
 

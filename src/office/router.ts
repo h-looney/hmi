@@ -10,7 +10,7 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 export const OFFICE = `${BASE}/office`;
 export const PUBLIC_HOME = `${BASE}/`;
 
-export const sections: Section[] = ['dashboard', 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'settings'];
+export const sections: Section[] = ['dashboard', 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'website', 'settings'];
 
 export interface Route {
   section: Section;

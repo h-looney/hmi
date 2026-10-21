@@ -1,0 +1,563 @@
+---
+/**
+ * A model page — HMI's own page for every model it carries, so the link a customer has can't go dead. The
+ * manufacturer's page is a secondary "Full specs" link through /go/. Discontinued models keep their page, with a
+ * notice, the replacement (when the manufacturer names one) and service & parts help.
+ */
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
+import Icon from '../../../../components/Icon.astro';
+import ProductImage from '../../../../components/ProductImage.astro';
+import ProductCard from '../../../../components/ProductCard.astro';
+import SectionHeading from '../../../../components/SectionHeading.astro';
+import CtaBand from '../../../../components/CtaBand.astro';
+import { brands } from '../../../../data/brands';
+import { getCategory, groups, fuelLabels } from '../../../../data/categories';
+import { goPath } from '../../../../data/links';
+import { linkStatus } from '../../../../data/linkHealth';
+import { brandSites, productById, productPath, productsIn, publicProducts, type Product } from '../../../../data/products';
+import { locations, tel, prettyPhone } from '../../../../data/site';
+import { withBase } from '../../../../scripts/url';
+
+export const getStaticPaths = (() => publicProducts().map((p) => ({ params: { slug: p.category, model: p.slug }, props: { product: p } }))) satisfies GetStaticPaths;
+
+interface Props {
+  product: Product;
+}
+
+const { product: p } = Astro.props;
+const c = getCategory(p.category);
+const group = groups.find((g) => g.id === c.group)!;
+const brand = brandSites[p.brand]?.name ?? brands.find((b) => b.id === p.brand)?.name ?? p.brand;
+const fullName = `${brand} ${p.model}`;
+const discontinued = p.status === 'discontinued';
+const replacement = p.replacement?.id ? productById(p.replacement.id) : undefined;
+
+// The latest check decides whether the manufacturer link is worth showing; /go/ handles it either way
+const health = linkStatus(p.slug);
+const linkDown = health?.target.mode === 'fallback';
+const go = withBase(goPath(p.slug));
+const linkText = p.linkLabel ? `${p.linkLabel} from ${brand}` : discontinued ? `Owner resources at ${brand}` : `Full specs at ${brand}`;
+
+const host = (u: string) => new URL(u).hostname.replace(/^www\./, '');
+const checkedOn = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${p.verified.on}T12:00:00Z`));
+
+const quoteHref = withBase(`/contact/?interest=${p.category}&model=${encodeURIComponent(p.id)}`);
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const serviceHref = withBase(`/service-request/?brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(p.model)}`);
+
+const stores = locations.map((l) => ({ ...l, count: p.display[l.slug as keyof typeof p.display] ?? 0 }));
+const shownAt = stores.filter((s) => s.count > 0).map((s) => s.shortName);
+
+const others = productsIn(p.category)
+  .filter((x) => x.id !== p.id)
+  .sort((a, b) => Number(a.status === 'discontinued') - Number(b.status === 'discontinued'))
+  .slice(0, 3);
+
+const canonical = new URL(withBase(productPath(p)), Astro.site).toString();
+const productLd = {
+  '@type': 'Product',
+  name: fullName,
+  brand: { '@type': 'Brand', name: brand },
+  model: p.model,
+  image: new URL(withBase(`${productPath(p)}photo.svg`), Astro.site).toString(),
+  description: p.summary,
+  category: c.name,
+  url: canonical,
+  ...(p.specs.length ? { additionalProperty: p.specs.map((s) => ({ '@type': 'PropertyValue', name: s.label, value: s.value })) } : {}),
+};
+
+const description = discontinued
+  ? `${fullName}: no longer made. HMI Fireplace Shops services ${p.model} ${p.type.toLowerCase()}s in Osage Beach and Nixa, MO.`
+  : `${p.summary}${shownAt.length ? ` On display at HMI Fireplace Shops in ${shownAt.join(' and ')}, MO.` : ' Ask HMI Fireplace Shops in Osage Beach or Nixa, MO.'}`;
+---
+
+<BaseLayout title={`${fullName} ${p.type}`} description={description} schema={[productLd]}>
+  <section class="mhero on-dark">
+    <div class="container mhero__inner">
+      <div class="mhero__text">
+        <Breadcrumbs
+          items={[
+            { label: 'Products', href: withBase('/products/') },
+            { label: c.name, href: withBase(`/products/${c.slug}/`) },
+            { label: p.model },
+          ]}
+          class="mhero__crumbs"
+        />
+        <p class="eyebrow">{brand}</p>
+        <h1>{fullName}</h1>
+        <p class="lead">{p.summary}</p>
+        <ul class="cluster mhero__chips" role="list">
+          <li class="chip">{fuelLabels[p.fuel]}</li>
+          <li class="chip">{p.type}</li>
+          {discontinued && <li class="chip mhero__chip--gone">No longer made</li>}
+        </ul>
+        <div class="mhero__actions">
+          {
+            discontinued ? (
+              <a href={serviceHref} class="btn btn--primary btn--lg">
+                Ask us about service and parts <Icon name="arrow-right" size={18} class="icon-arrow" />
+              </a>
+            ) : (
+              <a href={quoteHref} class="btn btn--primary btn--lg">
+                Get a quote on this model <Icon name="arrow-right" size={18} class="icon-arrow" />
+              </a>
+            )
+          }
+          {
+            !linkDown && (
+              <a href={go} class="btn btn--ghost-light btn--lg" target="_blank" rel="noopener" data-outbound>
+                {linkText} <Icon name="arrow-up-right" size={18} />
+                <span class="visually-hidden">(opens in a new tab)</span>
+              </a>
+            )
+          }
+        </div>
+      </div>
+      <div class="mhero__media">
+        <ProductImage product={p} loading="eager" />
+      </div>
+    </div>
+  </section>
+
+  {
+    discontinued && (
+      <section class="notice-band" aria-labelledby="gone-title">
+        <div class="container notice">
+          <span class="notice__icon">
+            <Icon name="info" size={22} />
+          </span>
+          <div class="notice__body">
+            <h2 id="gone-title" class="notice__title">
+              {brand} no longer makes the {p.model}
+            </h2>
+            <p>
+              {replacement ? (
+                <>
+                  {brand} names the <a href={withBase(productPath(replacement))}>{replacement.model}</a> as its replacement.{' '}
+                </>
+              ) : p.replacement ? (
+                <>{brand} names the {p.replacement.name} as its replacement. </>
+              ) : (
+                <>
+                  {brand} hasn’t named a replacement. See the <a href={withBase(`/products/${c.slug}/#models`)}>{c.name.toLowerCase()} we carry now</a>.{' '}
+                </>
+              )}
+              If you have one at home, we still service it and can track down parts.
+            </p>
+            <a href={serviceHref} class="link-arrow">
+              Ask us about service and parts <Icon name="arrow-right" size={16} />
+            </a>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <div class="container specs-gone" data-specs-notice hidden>
+    <p role="status">
+      <Icon name="info" size={18} />
+      <span>{brand}’s page for this model isn’t available right now, so we brought you back here. Call either showroom for the full spec sheet.</span>
+    </p>
+  </div>
+
+  <section class="section">
+    <div class="container mgrid">
+      <div class="mspecs" id="specs">
+        <h2 class="mspecs__title">{discontinued ? 'What we know about it' : 'Key specs'}</h2>
+        {
+          p.specs.length ? (
+            <dl class="specs">
+              <div>
+                <dt>Fuel</dt>
+                <dd>{fuelLabels[p.fuel]}</dd>
+              </div>
+              {p.specs.map((s) => (
+                <div>
+                  <dt>{s.label}</dt>
+                  <dd>{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p class="muted">{brand} no longer publishes specs for the {p.model}. We keep service notes and parts lists for it — give us a call.</p>
+          )
+        }
+        <p class="mspecs__source">
+          <Icon name="check" size={16} />
+          <span>
+            Checked against {host(p.verified.url)} on <time datetime={p.verified.on}>{checkedOn}</time>. Manufacturers update their specs, so we’ll confirm the details for
+            your home before you buy.
+          </span>
+        </p>
+        {
+          linkDown ? (
+            <p class="mspecs__down">
+              {brand}’s page for this model isn’t available right now. Ask us for the full spec sheet.
+            </p>
+          ) : (
+            <a href={go} class="link-arrow" target="_blank" rel="noopener" data-outbound>
+              {linkText} <Icon name="arrow-up-right" size={16} />
+              <span class="visually-hidden">(opens in a new tab)</span>
+            </a>
+          )
+        }
+      </div>
+
+      <aside class="mdisplay" aria-labelledby="display-title">
+        <h2 id="display-title" class="mdisplay__title">On display at</h2>
+        <ul role="list" class="mdisplay__list">
+          {
+            stores.map((s) => (
+              <li class:list={['store-row', { 'is-on': s.count > 0 }]}>
+                <span class="store-row__icon">
+                  <Icon name={s.count > 0 ? 'check' : 'pin'} size={18} />
+                </span>
+                <span class="store-row__main">
+                  <a href={withBase(`/locations/${s.slug}/`)} class="store-row__name">
+                    {s.shortName}
+                  </a>
+                  <span class="store-row__state">
+                    {s.count > 0 ? (s.count > 1 ? `${s.count} on the showroom floor` : 'On the showroom floor') : discontinued ? 'No longer on display' : 'Not on display — we can order one'}
+                  </span>
+                  <span class="store-row__meta">
+                    {s.street}, {s.city} ·{' '}
+                    <a href={tel(s.phone)} class="tabular">
+                      {prettyPhone(s.phone)}
+                    </a>
+                  </span>
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="mdisplay__note">Displays change — call ahead to make sure it’s on the floor. (In this concept, display counts come from HMI mode’s sample inventory.)</p>
+      </aside>
+    </div>
+  </section>
+
+  {
+    others.length > 0 && (
+      <section class="section section--linen">
+        <div class="container">
+          <SectionHeading eyebrow={group.name} title={`More ${c.name.toLowerCase()}`} align="split">
+            <a href={withBase(`/products/${c.slug}/#models`)} class="link-arrow">
+              All {c.name.toLowerCase()} <Icon name="arrow-right" size={16} />
+            </a>
+          </SectionHeading>
+          <div class="grid grid--3">
+            {others.map((o) => (
+              <ProductCard product={o} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <CtaBand
+    title={discontinued ? `Need help with a <em>${esc(p.model)}?</em>` : `Interested in the <em>${esc(p.model)}?</em>`}
+    text={discontinued ? 'Tell us what it’s doing and we’ll take it from there — repairs, parts and annual service.' : 'Tell us about your room and we’ll put together a clear quote, with certified installation.'}
+    quoteHref={discontinued ? undefined : quoteHref}
+    serviceHref={serviceHref}
+  />
+</BaseLayout>
+
+<script>
+  // Back from /go/ because the manufacturer's page failed its check: say so
+  if (new URLSearchParams(location.search).get('specs') === 'unavailable') {
+    const n = document.querySelector<HTMLElement>('[data-specs-notice]');
+    if (n) n.hidden = false;
+  }
+</script>
+
+<style>
+  .mhero {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 70% 90% at 90% 110%, rgb(185 71 27 / 0.22), transparent 60%),
+      radial-gradient(ellipse 50% 60% at 0% 0%, rgb(240 160 75 / 0.06), transparent 60%),
+      var(--c-ink);
+  }
+
+  .mhero__inner {
+    display: grid;
+    align-items: center;
+    gap: var(--space-7);
+    padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) clamp(3rem, 2rem + 4vw, 5.5rem);
+  }
+
+  @media (min-width: 960px) {
+    .mhero__inner {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+  }
+
+  .mhero__text {
+    display: grid;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+
+  .mhero__text :global(.mhero__crumbs) {
+    margin-bottom: var(--space-3);
+  }
+
+  .mhero h1 {
+    font-size: var(--fs-3xl);
+    font-weight: 450;
+    overflow-wrap: anywhere;
+  }
+
+  .mhero__chips {
+    padding: 0;
+    list-style: none;
+    --cluster-gap: 0.4rem;
+  }
+
+  .mhero__chip--gone {
+    border-color: var(--c-flame) !important;
+    color: var(--c-flame) !important;
+  }
+
+  .mhero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  .mhero__actions .btn {
+    white-space: normal;
+    text-align: left;
+  }
+
+  .mhero__media {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 30px 60px -25px rgb(0 0 0 / 0.7);
+    aspect-ratio: 4 / 3;
+    background: #efe5d6;
+  }
+
+  .mhero__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .notice-band {
+    background: var(--c-ember-50);
+    border-bottom: 1px solid #f2d3c3;
+  }
+
+  .notice {
+    display: flex;
+    gap: var(--space-4);
+    padding-block: var(--space-6);
+  }
+
+  .notice__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--c-ember);
+    color: #fff;
+  }
+
+  .notice__body {
+    display: grid;
+    gap: var(--space-2);
+    max-width: 70ch;
+  }
+
+  .notice__title {
+    font-size: var(--fs-lg);
+  }
+
+  .notice__body a:not(.link-arrow) {
+    color: var(--c-ember-700);
+    font-weight: 600;
+  }
+
+  .specs-gone p {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    margin-top: var(--space-5);
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid #f2d3c3;
+    border-radius: var(--radius);
+    background: var(--c-ember-50);
+    color: var(--c-ember-700);
+    font-size: var(--fs-sm);
+    font-weight: 550;
+  }
+
+  .specs-gone :global(svg) {
+    flex: none;
+    margin-top: 0.15em;
+  }
+
+  .mgrid {
+    display: grid;
+    gap: var(--space-7);
+    align-items: start;
+  }
+
+  @media (min-width: 960px) {
+    .mgrid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    }
+  }
+
+  .mspecs {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+
+  .mspecs__title,
+  .mdisplay__title {
+    font-size: var(--fs-2xl);
+  }
+
+  .specs {
+    display: grid;
+    margin: 0;
+    border-top: 1px solid var(--c-stone);
+  }
+
+  .specs > div {
+    display: grid;
+    gap: var(--space-1) var(--space-5);
+    padding-block: var(--space-3);
+    border-bottom: 1px solid var(--c-stone);
+  }
+
+  @media (min-width: 560px) {
+    .specs > div {
+      grid-template-columns: 11rem minmax(0, 1fr);
+    }
+  }
+
+  .specs dt {
+    font-size: var(--fs-sm);
+    font-weight: 650;
+    color: var(--c-text-muted);
+  }
+
+  .specs dd {
+    margin: 0;
+    font-size: var(--fs-base);
+    overflow-wrap: anywhere;
+  }
+
+  .mspecs__source {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  .mspecs__source :global(svg) {
+    flex: none;
+    margin-top: 0.2em;
+    color: var(--c-ember);
+  }
+
+  .mspecs__down {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-ember-700);
+  }
+
+  .mdisplay {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .mdisplay__list {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .store-row {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius);
+    background: #fff;
+  }
+
+  .store-row.is-on {
+    border-color: #f2d3c3;
+    background: var(--c-ember-50);
+  }
+
+  .store-row__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--c-linen);
+    color: var(--c-text-muted);
+  }
+
+  .store-row.is-on .store-row__icon {
+    background: var(--c-ember);
+    color: #fff;
+  }
+
+  .store-row__main {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .store-row__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    color: var(--c-text);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  .store-row__state {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .store-row.is-on .store-row__state {
+    color: var(--c-ember-700);
+  }
+
+  .store-row__meta {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+
+  .store-row__meta a {
+    color: inherit;
+  }
+
+  .mdisplay__note {
+    font-size: var(--fs-xs);
+    color: var(--c-text-muted);
+  }
+</style>

@@ -108,6 +108,7 @@ export async function submit(form: HTMLFormElement): Promise<string | undefined>
 /** Labels HMI mode shows for each form field, per form (`data-office="quote|service"`). */
 const officeFields: Record<'quote' | 'service', [name: string, label: string][]> = {
   quote: [
+    ['model', 'Model'],
     ['interests', 'Interested in'],
     ['project', 'Project'],
     ['timeline', 'Timeline'],

@@ -1,9 +1,13 @@
 /**
  * Sample catalog, vendors and service reference data for HMI mode.
  *
- * Brands and model names are products HMI carries (see src/data/brands.ts) so the demo feels
- * familiar. Costs, prices, stock and every performance figure built on them are invented.
+ * Appliance models come from the product list (src/data/products.ts): names, brands and showroom display counts are
+ * read from there, so HMI mode and the public model pages always agree. The commercial data below — costs, prices,
+ * stock on hand, reorder points and warranty terms — is invented, as is every performance figure built on it.
+ * Parts, venting and accessories are catalog-only items.
  */
+import { brands } from '../../data/brands.ts';
+import { products, type Product } from '../../data/products.ts';
 import type { Fuel, Item, ItemCategory, JobType, StoreId, Vendor } from './types';
 
 type Stock = [onHand: number, display: number];
@@ -35,59 +39,117 @@ const W = {
   basic: { partsYears: 1, laborYears: 1, fireboxLifetime: false },
 } satisfies Record<string, NonNullable<Item['warranty']>>;
 
-const entries: CatalogEntry[] = [
+/** Invented commercial data for each model on the product list (keyed by HMI SKU = product id). */
+interface UnitEntry {
+  category: ItemCategory;
+  cost: number;
+  price: number;
+  reorder: [point: number, qty: number];
+  vendorId: string;
+  /** Units in stock at each store, showroom displays included (displays themselves come from the product list) */
+  onHand: Record<StoreId, number>;
+  warranty: NonNullable<Item['warranty']>;
+}
+
+const u = (category: ItemCategory, cost: number, price: number, reorder: [number, number], vendorId: string, osageBeach: number, nixa: number, warranty: NonNullable<Item['warranty']>): UnitEntry => ({
+  category,
+  cost,
+  price,
+  reorder,
+  vendorId,
+  onHand: { 'osage-beach': osageBeach, nixa },
+  warranty,
+});
+
+const units: Record<string, UnitEntry> = {
   // Gas fireplaces
-  { id: 'HG-6000C', brand: 'Heat & Glo', name: '6000C Clean Face Gas Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 2650, price: 4290, reorder: [2, 2], vendorId: 'v-hht', stock: { 'osage-beach': [3, 1], nixa: [2, 1] }, warranty: W.hht },
-  { id: 'HG-SL750', brand: 'Heat & Glo', name: 'SL-750TRS-IPI Gas Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 1890, price: 3150, reorder: [2, 2], vendorId: 'v-hht', stock: { 'osage-beach': [3, 0], nixa: [2, 0] }, warranty: W.hht },
-  { id: 'HG-MEZZO48', brand: 'Heat & Glo', name: 'Mezzo 48 Linear Gas Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 3890, price: 6290, reorder: [1, 1], vendorId: 'v-hht', stock: { 'osage-beach': [2, 1], nixa: [1, 1] }, warranty: W.hht },
-  { id: 'HTL-CNXT36', brand: 'Heatilator', name: 'Caliber nXt 36 Gas Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 1420, price: 2390, reorder: [3, 3], vendorId: 'v-hht', stock: { 'osage-beach': [4, 0], nixa: [3, 0] }, warranty: W.hht },
-  { id: 'FPX-564TRV', brand: 'Fireplace Xtrordinair', name: '564 TRV 31K Deluxe Gas Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 3350, price: 5490, reorder: [1, 2], vendorId: 'v-travis', stock: { 'osage-beach': [3, 1], nixa: [1, 1] }, warranty: W.premium },
-  { id: 'FPX-PB42', brand: 'Fireplace Xtrordinair', name: 'ProBuilder 42 Linear GSR2', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 2210, price: 3690, reorder: [2, 2], vendorId: 'v-travis', stock: { 'osage-beach': [2, 0], nixa: [2, 0] }, warranty: W.premium },
-  { id: 'KH-CHASKA34', brand: 'Kozy Heat', name: 'Chaska 34 Gas Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 2080, price: 3450, reorder: [1, 2], vendorId: 'v-kozy', stock: { 'osage-beach': [1, 0], nixa: [2, 1] }, warranty: W.standard },
-  { id: 'KH-CALLAWAY50', brand: 'Kozy Heat', name: 'Callaway 50 Linear Gas Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 3120, price: 5150, reorder: [1, 1], vendorId: 'v-kozy', stock: { 'osage-beach': [0, 0], nixa: [1, 1] }, warranty: W.standard },
-  { id: 'EMP-TAHOE36', brand: 'Empire', name: 'Tahoe Premium 36 Direct-Vent Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 1750, price: 2890, reorder: [1, 2], vendorId: 'v-empire', stock: { 'osage-beach': [2, 0], nixa: [1, 0] }, warranty: W.standard },
-  { id: 'EMP-BLVD48', brand: 'Empire', name: 'Boulevard 48 Linear Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 2380, price: 3950, reorder: [1, 1], vendorId: 'v-empire', stock: { 'osage-beach': [1, 1], nixa: [1, 0] }, warranty: W.standard },
-  { id: 'MON-ART42', brand: 'Monessen', name: 'Artisan 42 Vent-Free Fireplace', category: 'Gas fireplaces', kind: 'unit', fuel: 'Gas', cost: 1580, price: 2650, reorder: [1, 1], vendorId: 'v-monessen', stock: { 'osage-beach': [1, 1], nixa: [0, 0] }, warranty: W.standard },
+  'HG-MEZZO48': u('Gas fireplaces', 3890, 6290, [1, 1], 'v-hht', 2, 1, W.hht),
+  'FPX-PB42': u('Gas fireplaces', 2210, 3690, [2, 2], 'v-travis', 2, 2, W.premium),
+  'KH-CALLAWAY50': u('Gas fireplaces', 3120, 5150, [1, 1], 'v-kozy', 0, 1, W.standard),
+  'EMP-TAHOE36': u('Gas fireplaces', 1750, 2890, [1, 2], 'v-empire', 2, 1, W.standard),
+  'EMP-BLVD48': u('Gas fireplaces', 2380, 3950, [1, 1], 'v-empire', 1, 1, W.standard),
+  'MON-ART42': u('Gas fireplaces', 1580, 2650, [1, 1], 'v-monessen', 1, 0, W.standard),
+  // Discontinued: still in customers' homes, no longer stocked
+  'HG-6000C': u('Gas fireplaces', 2650, 4290, [0, 0], 'v-hht', 0, 0, W.hht),
+  'HG-SL750': u('Gas fireplaces', 1890, 3150, [0, 0], 'v-hht', 0, 0, W.hht),
+  'HTL-CNXT36': u('Gas fireplaces', 1420, 2390, [0, 0], 'v-hht', 0, 0, W.hht),
 
   // Wood fireplaces
-  { id: 'HTL-ICON100', brand: 'Heatilator', name: 'Icon 100 Wood Fireplace', category: 'Wood fireplaces', kind: 'unit', fuel: 'Wood', cost: 2450, price: 3990, reorder: [1, 1], vendorId: 'v-hht', stock: { 'osage-beach': [1, 0], nixa: [1, 0] }, warranty: W.hht },
-  { id: 'FPX-42APEX', brand: 'Fireplace Xtrordinair', name: '42 Apex Clean-Face Wood Fireplace', category: 'Wood fireplaces', kind: 'unit', fuel: 'Wood', cost: 3980, price: 6450, reorder: [1, 1], vendorId: 'v-travis', stock: { 'osage-beach': [1, 1], nixa: [0, 0] }, warranty: W.premium },
-  { id: 'ML-36', brand: 'Mason-Lite', name: '36 Precast Masonry Fireplace Kit', category: 'Wood fireplaces', kind: 'unit', fuel: 'Wood', cost: 2900, price: 4750, reorder: [0, 1], vendorId: 'v-ozark', stock: { 'osage-beach': [0, 0], nixa: [1, 0] }, warranty: W.standard },
+  'HTL-ICON100': u('Wood fireplaces', 2450, 3990, [1, 1], 'v-hht', 1, 1, W.hht),
+  'FPX-42APEX': u('Wood fireplaces', 3980, 6450, [1, 1], 'v-travis', 1, 0, W.premium),
 
   // Electric
-  { id: 'DIM-RBF42', brand: 'Dimplex', name: 'Revillusion 42 Built-in Firebox', category: 'Electric fireplaces', kind: 'unit', fuel: 'Electric', cost: 980, price: 1690, reorder: [2, 3], vendorId: 'v-dimplex', stock: { 'osage-beach': [3, 1], nixa: [2, 1] }, warranty: W.electric },
-  { id: 'DIM-XLF60', brand: 'Dimplex', name: 'IgniteXL 60 Linear Electric Fireplace', category: 'Electric fireplaces', kind: 'unit', fuel: 'Electric', cost: 760, price: 1299, reorder: [2, 4], vendorId: 'v-dimplex', stock: { 'osage-beach': [2, 0], nixa: [4, 1] }, warranty: W.electric },
-  { id: 'DIM-OMC1000', brand: 'Dimplex', name: 'Opti-myst Pro 1000 Cassette', category: 'Electric fireplaces', kind: 'unit', fuel: 'Electric', cost: 1050, price: 1850, reorder: [1, 2], vendorId: 'v-dimplex', stock: { 'osage-beach': [1, 1], nixa: [1, 0] }, warranty: W.electric },
+  'DIM-RBF42': u('Electric fireplaces', 980, 1690, [2, 3], 'v-dimplex', 3, 2, W.electric),
+  'DIM-XLF60': u('Electric fireplaces', 760, 1299, [2, 4], 'v-dimplex', 2, 4, W.electric),
+  'DIM-OMC1000': u('Electric fireplaces', 1050, 1850, [1, 2], 'v-dimplex', 1, 1, W.electric),
 
   // Inserts
-  { id: 'HG-ESC-I35', brand: 'Heat & Glo', name: 'Escape-I35 Gas Insert', category: 'Inserts', kind: 'unit', fuel: 'Gas', cost: 2050, price: 3390, reorder: [2, 2], vendorId: 'v-hht', stock: { 'osage-beach': [2, 1], nixa: [2, 0] }, warranty: W.hht },
-  { id: 'LOPI-DVL', brand: 'Lopi', name: 'DVL GS2 Gas Insert', category: 'Inserts', kind: 'unit', fuel: 'Gas', cost: 2290, price: 3790, reorder: [2, 2], vendorId: 'v-travis', stock: { 'osage-beach': [1, 0], nixa: [3, 1] }, warranty: W.premium },
-  { id: 'LOPI-REVERE', brand: 'Lopi', name: 'Revere NexGen-Fyre Wood Insert', category: 'Inserts', kind: 'unit', fuel: 'Wood', cost: 2380, price: 3890, reorder: [1, 2], vendorId: 'v-travis', stock: { 'osage-beach': [1, 0], nixa: [2, 1] }, warranty: W.premium },
-  { id: 'FPX-616GSR2', brand: 'Fireplace Xtrordinair', name: '616 GSR2 Grand Deluxe Gas Insert', category: 'Inserts', kind: 'unit', fuel: 'Gas', cost: 2780, price: 4590, reorder: [1, 1], vendorId: 'v-travis', stock: { 'osage-beach': [1, 1], nixa: [1, 0] }, warranty: W.premium },
-  { id: 'KH-SPRING22', brand: 'Kozy Heat', name: 'Springfield 22 Gas Insert', category: 'Inserts', kind: 'unit', fuel: 'Gas', cost: 1690, price: 2790, reorder: [1, 2], vendorId: 'v-kozy', stock: { 'osage-beach': [0, 0], nixa: [2, 0] }, warranty: W.standard },
-  { id: 'HAR-ACC52I', brand: 'Harman', name: 'Accentra52i Pellet Insert', category: 'Inserts', kind: 'unit', fuel: 'Pellet', cost: 2950, price: 4890, reorder: [1, 1], vendorId: 'v-ff', stock: { 'osage-beach': [1, 0], nixa: [1, 1] }, warranty: W.pellet },
-  { id: 'QF-CASTILE', brand: 'Quadra-Fire', name: 'Castile Pellet Insert', category: 'Inserts', kind: 'unit', fuel: 'Pellet', cost: 2380, price: 3950, reorder: [1, 1], vendorId: 'v-ff', stock: { 'osage-beach': [1, 0], nixa: [0, 0] }, warranty: W.pellet },
-  { id: 'HS-CLYDESDALE', brand: 'Hearthstone', name: 'Clydesdale Wood Insert', category: 'Inserts', kind: 'unit', fuel: 'Wood', cost: 2160, price: 3550, reorder: [0, 1], vendorId: 'v-hearthstone', stock: { 'osage-beach': [0, 0], nixa: [1, 0] }, warranty: W.stove },
+  'HG-ESC-I35': u('Inserts', 2050, 3390, [2, 2], 'v-hht', 2, 2, W.hht),
+  'LOPI-DVL': u('Inserts', 2290, 3790, [2, 2], 'v-travis', 1, 3, W.premium),
+  'FPX-616GSR2': u('Inserts', 2780, 4590, [1, 1], 'v-travis', 1, 1, W.premium),
+  'KH-CHASKA34': u('Inserts', 2080, 3450, [1, 2], 'v-kozy', 1, 2, W.standard),
+  'HAR-ACC52I': u('Inserts', 2950, 4890, [1, 1], 'v-ff', 1, 1, W.pellet),
+  'HS-CLYDESDALE': u('Inserts', 2160, 3550, [0, 1], 'v-hearthstone', 0, 1, W.stove),
+  'QF-CASTILE': u('Inserts', 2380, 3950, [0, 0], 'v-ff', 0, 0, W.pellet),
 
   // Stoves
-  { id: 'VC-DEFIANT', brand: 'Vermont Castings', name: 'Defiant Wood Stove', category: 'Stoves', kind: 'unit', fuel: 'Wood', cost: 2280, price: 3790, reorder: [1, 2], vendorId: 'v-ff', stock: { 'osage-beach': [2, 1], nixa: [2, 1] }, warranty: W.stove },
-  { id: 'VC-RADIANCE', brand: 'Vermont Castings', name: 'Radiance Gas Stove', category: 'Stoves', kind: 'unit', fuel: 'Gas', cost: 1890, price: 3150, reorder: [1, 1], vendorId: 'v-ff', stock: { 'osage-beach': [1, 1], nixa: [1, 0] }, warranty: W.stove },
-  { id: 'QF-3100M', brand: 'Quadra-Fire', name: '3100 Millennium Wood Stove', category: 'Stoves', kind: 'unit', fuel: 'Wood', cost: 1750, price: 2890, reorder: [2, 2], vendorId: 'v-ff', stock: { 'osage-beach': [2, 0], nixa: [1, 0] }, warranty: W.stove },
-  { id: 'HAR-P43', brand: 'Harman', name: 'P43 Pellet Stove', category: 'Stoves', kind: 'unit', fuel: 'Pellet', cost: 2050, price: 3390, reorder: [1, 2], vendorId: 'v-ff', stock: { 'osage-beach': [1, 1], nixa: [2, 1] }, warranty: W.pellet },
-  { id: 'LOPI-ANSWER', brand: 'Lopi', name: 'Answer NexGen-Fyre Wood Stove', category: 'Stoves', kind: 'unit', fuel: 'Wood', cost: 1490, price: 2490, reorder: [2, 2], vendorId: 'v-travis', stock: { 'osage-beach': [2, 0], nixa: [2, 1] }, warranty: W.premium },
-  { id: 'LOPI-NORTHFIELD', brand: 'Lopi', name: 'Northfield GS2 Gas Stove', category: 'Stoves', kind: 'unit', fuel: 'Gas', cost: 1840, price: 3050, reorder: [1, 1], vendorId: 'v-travis', stock: { 'osage-beach': [1, 0], nixa: [1, 1] }, warranty: W.premium },
-  { id: 'HS-CASTLETON', brand: 'Hearthstone', name: 'Castleton 8030 Soapstone Wood Stove', category: 'Stoves', kind: 'unit', fuel: 'Wood', cost: 1990, price: 3290, reorder: [1, 1], vendorId: 'v-hearthstone', stock: { 'osage-beach': [1, 1], nixa: [0, 0] }, warranty: W.stove },
-  { id: 'KUMA-ASPEN', brand: 'Kuma Stoves', name: 'Aspen LE Wood Stove', category: 'Stoves', kind: 'unit', fuel: 'Wood', cost: 1520, price: 2550, reorder: [0, 1], vendorId: 'v-kuma', stock: { 'osage-beach': [0, 0], nixa: [1, 1] }, warranty: W.stove },
+  'VC-DEFIANT': u('Stoves', 2280, 3790, [1, 2], 'v-ff', 2, 2, W.stove),
+  'VC-RADIANCE': u('Stoves', 1890, 3150, [1, 1], 'v-ff', 1, 1, W.stove),
+  'QF-3100M': u('Stoves', 1750, 2890, [2, 2], 'v-ff', 2, 1, W.stove),
+  'HAR-P43': u('Stoves', 2050, 3390, [1, 2], 'v-ff', 1, 2, W.pellet),
+  'LOPI-ANSWER': u('Stoves', 1490, 2490, [2, 2], 'v-travis', 2, 2, W.premium),
+  'LOPI-NORTHFIELD': u('Stoves', 1840, 3050, [1, 1], 'v-travis', 1, 1, W.premium),
+  'HS-CASTLETON': u('Stoves', 1990, 3290, [1, 1], 'v-hearthstone', 1, 0, W.stove),
+  'KUMA-ASPEN': u('Stoves', 1520, 2550, [0, 1], 'v-kuma', 0, 1, W.stove),
 
   // Gas logs
-  { id: 'HRG-OAK24', brand: 'Hargrove', name: 'Classic Oak 24 in. Vented Log Set', category: 'Gas logs', kind: 'unit', fuel: 'Gas', cost: 520, price: 890, reorder: [3, 4], vendorId: 'v-ozark', stock: { 'osage-beach': [5, 1], nixa: [3, 1] }, warranty: W.basic },
-  { id: 'EMP-VFL30', brand: 'Empire', name: 'Rustic Oak 30 in. Vent-Free Log Set', category: 'Gas logs', kind: 'unit', fuel: 'Gas', cost: 610, price: 1050, reorder: [2, 3], vendorId: 'v-empire', stock: { 'osage-beach': [2, 0], nixa: [2, 1] }, warranty: W.basic },
+  'HRG-OAK24': u('Gas logs', 520, 890, [3, 4], 'v-ozark', 5, 3, W.basic),
 
   // Outdoor
-  { id: 'EMP-CRO42', brand: 'Empire', name: 'Carol Rose 42 Outdoor Fireplace', category: 'Outdoor', kind: 'unit', fuel: 'Gas', cost: 2650, price: 4390, reorder: [1, 1], vendorId: 'v-empire', stock: { 'osage-beach': [1, 1], nixa: [1, 0] }, warranty: W.standard },
-  { id: 'HPC-FP30', brand: 'HPC Fire', name: '30 in. Fire Pit Insert, Match-Lit', category: 'Outdoor', kind: 'unit', fuel: 'Gas', cost: 640, price: 1090, reorder: [2, 3], vendorId: 'v-hpc', stock: { 'osage-beach': [3, 1], nixa: [2, 0] }, warranty: W.basic },
-  { id: 'HG-TWILIGHT', brand: 'Heat & Glo', name: 'Twilight Modern Indoor/Outdoor', category: 'Outdoor', kind: 'unit', fuel: 'Gas', cost: 3580, price: 5890, reorder: [0, 1], vendorId: 'v-hht', stock: { 'osage-beach': [1, 0], nixa: [0, 0] }, warranty: W.hht },
+  'EMP-CRO42': u('Outdoor', 2650, 4390, [1, 1], 'v-empire', 1, 1, W.standard),
+  'HPC-FP30': u('Outdoor', 640, 1090, [2, 3], 'v-hpc', 3, 2, W.basic),
+  'HG-TWILIGHT': u('Outdoor', 3580, 5890, [0, 1], 'v-hht', 1, 0, W.hht),
+};
 
+/** HMI SKUs of every appliance model — must match the product list one-for-one (checked by the link checker). */
+export const unitIds = () => Object.keys(units);
+
+const brandName = (id: string) => brands.find((b) => b.id === id)?.name ?? id;
+const fuelOf: Record<Product['fuel'], NonNullable<Item['fuel']>> = { gas: 'Gas', wood: 'Wood', pellet: 'Pellet', electric: 'Electric' };
+const SMALL = new Set(['and', 'or', 'of', 'the', 'a', 'with']);
+const titleCase = (s: string) => s.replace(/[A-Za-z][^\s/-]*/g, (w, i) => (i > 0 && SMALL.has(w) ? w : w[0].toUpperCase() + w.slice(1)));
+
+/** "Mezzo 48" + "Linear gas fireplace" → "Mezzo 48 Linear Gas Fireplace" */
+export const unitName = (p: Pick<Product, 'model' | 'type'>) => `${p.model} ${titleCase(p.type)}`;
+
+function unitItems(): Item[] {
+  return products.map((p) => {
+    const e = units[p.id];
+    if (!e) throw new Error(`No catalog data for ${p.id} — add it to units in src/office/data/catalog.ts`);
+    const level = (store: StoreId) => ({ onHand: Math.max(e.onHand[store], p.display[store]), reserved: 0, display: p.display[store] });
+    return {
+      id: p.id,
+      name: unitName(p),
+      model: p.model,
+      brand: brandName(p.brand),
+      category: e.category,
+      kind: 'unit',
+      fuel: fuelOf[p.fuel],
+      uom: 'ea',
+      cost: e.cost,
+      price: e.price,
+      reorderPoint: e.reorder[0],
+      reorderQty: e.reorder[1],
+      vendorId: e.vendorId,
+      stock: { 'osage-beach': level('osage-beach'), nixa: level('nixa') },
+      warranty: e.warranty,
+      photo: photoFor[e.category],
+      productStatus: p.status,
+    } satisfies Item;
+  });
+}
+
+const entries: CatalogEntry[] = [
   // Doors & screens
   { id: 'STOLL-BF36', brand: 'Stoll', name: 'Bi-Fold Fireplace Door 36 in., Matte Black', category: 'Doors & screens', kind: 'accessory', cost: 610, price: 1050, reorder: [1, 2], vendorId: 'v-ozark', stock: { 'osage-beach': [1, 1], nixa: [1, 0] } },
   { id: 'DS-TEMPCO', brand: 'Design Specialties', name: 'Tempco Glass Fireplace Door', category: 'Doors & screens', kind: 'accessory', cost: 420, price: 740, reorder: [1, 2], vendorId: 'v-ozark', stock: { 'osage-beach': [2, 0], nixa: [1, 0] } },
@@ -144,7 +206,7 @@ const photoFor: Partial<Record<ItemCategory, string>> = {
 };
 
 export function buildItems(): Item[] {
-  return entries.map((e) => ({
+  const others: Item[] = entries.map((e) => ({
     id: e.id,
     name: e.name,
     brand: e.brand,
@@ -165,6 +227,7 @@ export function buildItems(): Item[] {
     photo: e.id === 'ACC-RUTLAND' ? 'care' : photoFor[e.category],
     specialOrder: e.specialOrder,
   }));
+  return [...unitItems(), ...others];
 }
 
 export const vendors: Vendor[] = [

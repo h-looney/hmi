@@ -1,0 +1,24 @@
+{
+ "capturedAt": "2026-10-21T19:00:21.161Z",
+ "url": "https://www.thermo-rite.com",
+ "status": 200,
+ "finalUrl": "https://tkfireside.com/",
+ "chain": [
+  {
+   "url": "https://www.thermo-rite.com",
+   "status": 301
+  },
+  {
+   "url": "https://tkfireside.com/",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=utf-8",
+ "headers": {
+  "server": "cloudflare",
+  "cf-ray": "a4e2812ac92a74d7-DFW"
+ },
+ "body": "<html><head><title>TK Fireside | The Original Glass Fireplace Enclosure</title><meta property=\"og:site_name\" content=\"TK Fireside\"/><meta property=\"og:title\" content=\"TK Fireside | The Original Glass Fireplace Enclosure\"/></head><body><h1 class=\"font-serif text-4xl leading-[1.05] text-white md:text-5xl lg:text-6xl\" style=\"text-shadow:0 1px 12px rgba(0,0,0,0.35)\">The Original Glass Fireplace Enclosure.Since 1942.</h1>\n\n<p>The Original Glass Fireplace Enclosure. Since 1942. Home Fireplace Doors Luxury Line Door Visualizer History Information Contact Find Your Dealer Custom-crafted masonry, zero-clearance, and luxury enclosures - built to the exact specifications of your fireplace, sold through dealers who know it best. Explore Our Doors Find Your Dealer Invented the fireplace enclosure First U.S. Patent holder Made </p></body></html>",
+ "via": "fetch",
+ "ms": 1788
+}

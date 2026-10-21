@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { categories } from '../data/categories';
+import { productPath, publicProducts } from '../data/products';
 import { locations } from '../data/site';
 import { withBase } from '../scripts/url';
 
@@ -9,6 +10,8 @@ export const GET: APIRoute = ({ site }) => {
     '/',
     '/products/',
     ...categories.map((c) => `/products/${c.slug}/`),
+    // Model pages (discontinued ones too — they stay up). /go/ redirect pages are never listed.
+    ...publicProducts().map(productPath),
     '/fireplace-finder/',
     '/services/',
     '/service-request/',

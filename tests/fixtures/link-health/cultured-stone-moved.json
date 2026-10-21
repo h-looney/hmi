@@ -1,0 +1,27 @@
+{
+ "capturedAt": "2026-10-21T19:00:20.247Z",
+ "url": "https://www.culturedstone.com",
+ "status": 200,
+ "finalUrl": "https://www.westlakeroyalbuildingproducts.com/stone/cultured-stone",
+ "chain": [
+  {
+   "url": "https://www.culturedstone.com",
+   "status": 301
+  },
+  {
+   "url": "https://www.westlakeroyalbuildingproducts.com/stone/cultured-stone/",
+   "status": 301
+  },
+  {
+   "url": "https://www.westlakeroyalbuildingproducts.com/stone/cultured-stone",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=UTF-8",
+ "headers": {
+  "server": "Apache/2.4.69 (Ubuntu)"
+ },
+ "body": "<html><head><title>Exterior Stone Veneer &amp; Brick | Cultured Stone Veneer</title><link rel=\"canonical\" href=\"https://www.westlakeroyalbuildingproducts.com/stone/cultured-stone\" /></head><body><h1 class=\"heading heading--h2 slide-header__heading superscript-entities\"> Cultured Stone Veneer </h1>\n\n<p>Cultured Stone Veneer Skip to main content Favorites English Westlake Royal Building Products Products Back Products Stone &amp; Brick Stone & Brick Accents &amp; Accessories Accents & Accessories Browse by Style Ashlar Brick Irregular Large Format Ledge Browse by Color Black Brown Gray Red White &amp; Cream Inspiration Back Inspiration Gallery Explore Blog Explore Design Tool Try It Out Opens an </p></body></html>",
+ "via": "fetch",
+ "ms": 708
+}

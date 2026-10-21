@@ -1,26 +1,31 @@
 ---
 import Icon from './Icon.astro';
 import type { Brand } from '../data/brands';
+import { goPath } from '../data/links';
+import { brandSites } from '../data/products';
+import { withBase } from '../scripts/url';
 
 interface Props {
   brands: Brand[];
   /** Show the category labels on each brand */
   showCategories?: boolean;
   headingLevel?: 'h3' | 'h4';
+  /** Give each brand an id (#brand-<id>) — the brand directory is where failing brand links fall back to */
+  anchors?: boolean;
 }
 
-const { brands, showCategories = false, headingLevel: H = 'h3' } = Astro.props;
+const { brands, showCategories = false, headingLevel: H = 'h3', anchors = false } = Astro.props;
 ---
 
 <ul class="brand-grid" role="list">
   {
     brands.map((b) => (
-      <li class="brand" data-brand-categories={b.categories.join('|')} data-brand-name={b.name.toLowerCase()}>
+      <li class="brand" id={anchors ? `brand-${b.id}` : undefined} data-brand-categories={b.categories.join('|')} data-brand-name={b.name.toLowerCase()}>
         <H class="brand__name">{b.name}</H>
         <p class="brand__blurb">{b.blurb}</p>
         {showCategories && <p class="brand__cats">{b.categories.join(' · ')}</p>}
-        {b.url && (
-          <a href={b.url} class="brand__link" target="_blank" rel="noopener">
+        {brandSites[b.id] && (
+          <a href={withBase(goPath(b.id))} class="brand__link" target="_blank" rel="noopener">
             Visit site <Icon name="arrow-up-right" size={14} />
             <span class="visually-hidden">for {b.name} (opens in a new tab)</span>
           </a>
@@ -57,6 +62,11 @@ const { brands, showCategories = false, headingLevel: H = 'h3' } = Astro.props;
 
   .brand[hidden] {
     display: none;
+  }
+
+  .brand:target {
+    border-color: var(--c-ember);
+    box-shadow: 0 0 0 3px var(--c-ember-50);
   }
 
   .brand__name {

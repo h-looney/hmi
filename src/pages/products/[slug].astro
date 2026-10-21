@@ -9,10 +9,12 @@ import BrandGrid from '../../components/BrandGrid.astro';
 import CategoryCard from '../../components/CategoryCard.astro';
 import FaqList from '../../components/FaqList.astro';
 import CtaBand from '../../components/CtaBand.astro';
+import ProductCard from '../../components/ProductCard.astro';
 
 import { categories, groups, getCategory, type Category } from '../../data/categories';
-import { getBrands } from '../../data/brands';
+import { brands as brandDirectory, getBrands } from '../../data/brands';
 import { getFaqs } from '../../data/faqs';
+import { brandSites, productPath, productsIn } from '../../data/products';
 import { locations, tel, prettyPhone } from '../../data/site';
 import { withBase } from '../../scripts/url';
 
@@ -29,6 +31,10 @@ const brands = getBrands(c.brands);
 const faqs = c.faqs ? getFaqs(c.faqs) : [];
 const related = c.related.map(getCategory);
 const heroImage = c.hero ?? c.card;
+const models = productsIn(c.slug as Parameters<typeof productsIn>[0]);
+const current = models.filter((m) => m.status === 'current');
+const retired = models.filter((m) => m.status === 'discontinued');
+const brandOf = (id: string) => brandSites[id]?.name ?? brandDirectory.find((b) => b.id === id)?.name ?? id;
 const variant = c.hero ? 'pano' : 'split';
 ---
 
@@ -47,7 +53,13 @@ const variant = c.hero ? 'pano' : 'split';
     <a href={withBase(`/contact/?interest=${c.slug}`)} class="btn btn--primary btn--lg">
       Request a quote <Icon name="arrow-right" size={18} class="icon-arrow" />
     </a>
-    <a href="#brands" class="btn btn--ghost-light btn--lg">Brands we carry</a>
+    {
+      models.length > 0 ? (
+        <a href="#models" class="btn btn--ghost-light btn--lg">Models we carry</a>
+      ) : (
+        <a href="#brands" class="btn btn--ghost-light btn--lg">Brands we carry</a>
+      )
+    }
   </PageHero>
 
   <!-- Overview -->
@@ -96,10 +108,48 @@ const variant = c.hero ? 'pano' : 'split';
     )
   }
 
+  <!-- Models we carry -->
+  {
+    models.length > 0 && (
+      <section class="section section--linen" id="models">
+        <div class="container">
+          <SectionHeading
+            eyebrow="Models we carry"
+            title={`${c.name} at <em>HMI.</em>`}
+            lead="Every model has its own page with checked specs and which showroom has it on display. Don’t see what you’re after? We can order from each brand’s full line."
+            align="split"
+          />
+          {current.length > 0 && (
+            <div class="grid grid--3 models">
+              {current.map((m) => (
+                <ProductCard product={m} />
+              ))}
+            </div>
+          )}
+          {retired.length > 0 && (
+            <div class="retired">
+              <h3 class="retired__title">No longer made — we still service them</h3>
+              <ul role="list" class="retired__list">
+                {retired.map((m) => (
+                  <li>
+                    <a href={withBase(productPath(m))}>
+                      {brandOf(m.brand)} {m.model}
+                    </a>
+                    <span class="muted"> · {m.type}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
   <!-- Subtypes (e.g. wood / gas / pellet inserts) -->
   {
     c.subtypes && (
-      <section class="section section--linen">
+      <section class:list={['section', { 'section--linen': models.length === 0 }]}>
         <div class="container">
           <SectionHeading
             eyebrow="Choose your fuel"
@@ -126,7 +176,7 @@ const variant = c.hero ? 'pano' : 'split';
   }
 
   <!-- Brands -->
-  <section class:list={['section', { 'section--linen': !c.subtypes }]} id="brands">
+  <section class:list={['section', { 'section--linen': c.subtypes ? models.length > 0 : models.length === 0 }]} id="brands">
     <div class="container">
       <SectionHeading
         eyebrow="Brands we carry"
@@ -428,5 +478,35 @@ const variant = c.hero ? 'pano' : 'split';
 
   .related > div {
     display: grid;
+  }
+
+  .models {
+    align-items: stretch;
+  }
+
+  .retired {
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    border: 1px dashed var(--c-stone-2);
+    border-radius: var(--radius-lg);
+    background: var(--c-paper);
+  }
+
+  .retired__title {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-md);
+  }
+
+  .retired__list {
+    display: grid;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-sm);
+  }
+
+  .retired__list a {
+    color: var(--c-ember-700);
+    font-weight: 600;
   }
 </style>

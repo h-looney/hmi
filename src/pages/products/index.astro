@@ -132,7 +132,7 @@ const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
         </div>
       </div>
       <p class="filters__count" aria-live="polite" data-brand-count>{sortedBrands.length} brands</p>
-      <BrandGrid brands={sortedBrands} showCategories />
+      <BrandGrid brands={sortedBrands} showCategories anchors />
     </div>
   </section>
 

@@ -64,7 +64,7 @@ export const site = {
   links: {
     // Existing Wufoo forms on the current site — kept until a backend exists.
     employmentApplication: 'https://mswinteractive.wufoo.com/forms/z1g36t8q05jggf5/',
-    fireBuilder: 'https://firebuilder.travisindustries.com/embed/oH4CL2-I/#/',
+    // FireBuilder (Travis Industries) is a manufacturer link, so it lives in src/data/products.ts → tools
   },
 } as const;
 

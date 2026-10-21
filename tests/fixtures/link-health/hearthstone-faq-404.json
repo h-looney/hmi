@@ -1,0 +1,19 @@
+{
+ "capturedAt": "2026-10-21T19:00:20.006Z",
+ "url": "https://www.hearthstonestoves.com/hearthstone/en/FAQ",
+ "status": 404,
+ "finalUrl": "https://www.hearthstonestoves.com/hearthstone/en/FAQ",
+ "chain": [
+  {
+   "url": "https://www.hearthstonestoves.com/hearthstone/en/FAQ",
+   "status": 404
+  }
+ ],
+ "contentType": "text/html; charset=UTF-8",
+ "headers": {
+  "server": "nginx"
+ },
+ "body": "<html><head><title>Page not found - HearthStone Stoves</title><meta name='robots' content='noindex, follow' /><meta property=\"og:title\" content=\"Page not found - HearthStone Stoves\" /><meta property=\"og:site_name\" content=\"HearthStone Stoves\" /></head><body><h1 class=\"has-text-color wp-block-heading\" style=\"color:#ffffff\">Page Not Found</h1>\n<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type\":\"WebSite\",\"@id\":\"https://www.hearthstonestoves.com/#website\",\"url\":\"https://www.hearthstonestoves.com/\",\"name\":\"HearthStone Stoves\",\"description\":\"Quality Home Heating Products\",\"publisher\":{\"@id\":\"https://www.hearthstonestoves.com/#organization\"},\"potentialAction\":[{\"@type\":\"SearchAction\",\"target\":{\"@type\":\"EntryPoint\",\"urlTemplate\":\"https://www.hearthstonestoves.com/?s={search_term_string}\"},\"query-input\":{\"@type\":\"PropertyValueSpecification\",\"valueRequired\":true,\"valueName\":\"search_term_string\"}}],\"inLanguage\":\"en-US\"},{\"@type\":\"Organization\",\"@id\":\"https://www.hearthstonestoves.com/#organization\",\"name\":\"HearthStone Stoves\",\"url\":\"https://www.hearthstonestoves.com/\",\"logo\":{\"@type\":\"ImageObject\",\"inLanguage\":\"en-US\",\"@id\":\"https://www.hearthstonestoves.com/#/schema/logo/image/\",\"url\":\"https://www.hearthstonestoves.com/wp-content/uploads/2020/06/HearthStone-Logo.svg\",\"contentUrl\":\"https://www.hearthstonestoves.com/wp-content/uploads/2020/06/HearthStone-Logo.svg\",\"width\":318,\"height\":55,\"caption\":\"HearthStone Stoves\"},\"image\":{\"@id\":\"https://www.hearthstonestoves.com/#/schema/logo/image/\"}}]}</script>\n<p>Page Not Found Skip to content HearthStone Cookware HearthStone Outdoor 25C Tax Credit Information Dealer Resources Wood All Products Wood Burning Stoves Wood Fireplaces Wood Fireplace Inserts Wood Cook Stoves Gas Our Company About HearthStone The Most Comfortable The Most Efficient TruHybrid Combustion Technology Contact Where to Buy Request a Quote Search Modal Site Navigation Modal Search Modal</p></body></html>",
+ "via": "fetch",
+ "ms": 375
+}

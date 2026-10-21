@@ -22,7 +22,7 @@ export const ready = signal(false);
 const UI_KEY = 'hmi-office-ui';
 const defaultUI: UIState = {
   signedIn: false,
-  userId: 'charlie',
+  userId: 'cheryl',
   store: 'all',
   jobsView: 'board',
   range: '90d',
@@ -280,7 +280,7 @@ function leadFrom(d: DB, s: QueuedSubmission): Lead {
   const id = nextId(d, 'lead', 'R');
   const summary =
     s.kind === 'quote'
-      ? [field(s, 'Interested in'), field(s, 'Project')].filter(Boolean).join(' · ')
+      ? [field(s, 'Model') ?? field(s, 'Interested in'), field(s, 'Project')].filter(Boolean).join(' · ')
       : [field(s, 'What do you need?'), field(s, 'Brand')].filter(Boolean).join(' · ');
   const lead: Lead = {
     id,

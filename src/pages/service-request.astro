@@ -635,6 +635,15 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     liveClear(form);
 
+    // Pre-fill from a model page ("Ask us about service and parts"): ?brand=Heat%20%26%20Glo&model=6000C
+    const params = new URLSearchParams(location.search);
+    const brandSelect = form.elements.namedItem('brand') as HTMLSelectElement | null;
+    const brand = params.get('brand');
+    if (brand && brandSelect && [...brandSelect.options].some((o) => o.text === brand)) brandSelect.value = [...brandSelect.options].find((o) => o.text === brand)!.value;
+    const modelInput = form.elements.namedItem('model') as HTMLInputElement | null;
+    const model = params.get('model');
+    if (model && modelInput) modelInput.value = model.slice(0, 80);
+
     /* ----- Photo previews (stay in the browser) ----- */
     const sync = () => {
       const dt = new DataTransfer();

@@ -1,0 +1,19 @@
+{
+ "capturedAt": "2026-10-21T19:00:38.873Z",
+ "url": "https://www.heatnglo.com/fireplaces/gas/indoor/mezzo-gas-fireplace",
+ "status": 200,
+ "finalUrl": "https://www.heatnglo.com/fireplaces/gas/indoor/mezzo-gas-fireplace",
+ "chain": [
+  {
+   "url": "https://www.heatnglo.com/fireplaces/gas/indoor/mezzo-gas-fireplace",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=utf-8",
+ "headers": {
+  "server": "Vercel"
+ },
+ "body": "<html><head></head><body><h1 class=\"static400 m-0\">Mezzo Linear Indoor Gas Fireplace</h1>\n\n<p>Mezzo Linear Indoor Gas Fireplace Contact: 888-427-3973 Follow us on Facebook Follow us on Instagram Follow us on LinkedIn Fireplace Safety Global Products Recall Notices Careers Site Map Do not sell/share my information Where to Buy EPA Certification Parts &amp; Support Press &amp; Media Cookie Notice Privacy Policy Website Terms of Use Online Sales Policy Disclaimer Cookie Settings © 2026 Heat &</p></body></html>",
+ "via": "fetch",
+ "ms": 727
+}

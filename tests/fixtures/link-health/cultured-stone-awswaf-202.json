@@ -1,0 +1,19 @@
+{
+ "capturedAt": "2026-10-21T20:29:59.477Z",
+ "url": "https://www.culturedstone.com",
+ "status": 202,
+ "finalUrl": "https://www.culturedstone.com",
+ "chain": [
+  {
+   "url": "https://www.culturedstone.com",
+   "status": 202
+  }
+ ],
+ "contentType": "text/html; charset=UTF-8",
+ "headers": {
+  "server": "awselb/2.0"
+ },
+ "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <title></title>\n    <style>\n        body {\n            font-family: \"Arial\";\n        }\n    </style>\n    <script type=\"text/javascript\">\n    window.awsWafCookieDomainList = [];\n    window.gokuProps = {\n\"key\":\"AQIDAHjcYu/GjX+QlghicBgQ/7bFaQZ+m5FKCMDnO+vTbNg96AECAczK9Zz+XdGMgGmYCeSdAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMDlyKpg0nk1dRPM/RAgEQgDtOm9UbT7gO4hD4KMBmqRmYfWkLf6fqcU3f3zRhP49cOOk99zvx8BDfKoac/7W3d42MmottMVvv7FNfcA==\",\n          \"iv\":\"CgAGxDKZmQAAAOV8\",\n          \"context\":\"xmZ7ZFIE/l8aMrSQaTzwt9+K/8VwzzTJ9xeBq3REXw/yrFuAz3WMQGKmfGgOGRIkaSdkJk04Mu/1fux4rj86nleY63GHBc6eDxm4Ial9482MSFAJkiAeZYfV6qI20wfPJcuRX/hO3P1x2qpg1ibr8qjvFQLdlFiY1eM7fjttqUqifXwGbJUQAi1zFmHWf8GjE7LvJdw20/5tXLtK8K1sSMQYtYW8sTR9//Wwx5MoCzqqYD6aN4TPTzbUzJhj4/WNuC/UPnERJdjVTCDisUq9nNtQ8WupUa91BGSEgNL49WAr3D8Qi0MqdMoESbObZTEnayMmrH2CbdzXuj7DA2RioqaN7ziBGnGmmY8G5Xeu6MW3x8QkOycJzrInO8QzytVLGCkc0GhpzR33C9noEGfMra5OTLQgsEvYLg31rLebRvzKlcro7YTa85GcgZ2Hdlz4/djK/6Q8jJvidQMtxdxKVx9/PGOfDCddoBjLYwcYVqv+EwG5ee0G2cD+vIheQISPQhbagivMQBaE2aeasaq+4q5mfpGdln0ylpjpuNO3U3T//Xnd0c/yVH6xDISZE1AfujsPa7pn9wONka9l+rTGWm/V6s4YeHts9CklS3rLbJWudAgGyxic/7+vnIqfoD/a4UAj6AGJj1bHdJQxynhEHFtd0P9YwtHzGo8E4/bLyNpl/8GvH0riq6yaC97BmplgplYpEy3fzMGV8mptuCOJ35L/VkcTbs/NR3/jsLfeKZB631Qxi5tQbApDjV5qnjL6CyCYmkK3Dc8Ibti4QAw28ZQUFnqy9gXhxmdMpDU3HAGldI2p\"\n};\n    </script>\n    <script src=\"https://814c5b869731.91aee08b.us-east-1.token.awswaf.com/814c5b869731/5ff53ba12df4/cfa0466e9daf/challenge.js\"></script>\n</head>\n<body>\n    <div id=\"challenge-container\"></div>\n    <script type=\"text/javascript\">\n        AwsWafIntegration.saveReferrer();\n        AwsWafIntegration.checkForceRefresh().then((forceRefresh) => {\n            if (forceRefresh) {\n                AwsWafIntegration.forceRefreshToken().then(() => {\n                    window.location.reload(true);\n                });\n            } else {\n                AwsWafIntegration.getToken().then(() => {\n                    window.location.reload(true);\n                });\n            }\n        });\n    </script>\n    <noscript>\n        <h1>JavaScript is disabled</h1>\n        In order to continue, we need to verify that you're not a robot.\n        This requires JavaScript. Enable JavaScript and then reload the page.\n    </noscript>\n</body>\n</html>",
+ "via": "fetch",
+ "ms": 260
+}

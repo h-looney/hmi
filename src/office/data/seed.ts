@@ -51,9 +51,13 @@ import type {
   StoreId,
   Unit,
   WarrantyClaim,
+  WebsiteState,
 } from './types';
 
-export const DB_VERSION = 6;
+export const DB_VERSION = 7;
+
+/** The Website section starts with nothing pending; the weekly summary goes to Gabe (the Nixa store manager). */
+export const defaultWebsite = (): WebsiteState => ({ edits: {}, linkUrls: {}, drafts: [], dismissed: [], digestTo: 'gabe', publishes: [] });
 /** Detailed records cover this many days before today */
 export const WINDOW_DAYS = 35;
 const HISTORY_DAYS = 455;
@@ -80,8 +84,8 @@ const COUNTER = [1.6, 1.4, 1.1, 1.0, 1.0, 0.9, 0.9, 1.3, 2.2, 2.8, 2.9, 2.6];
 const QUOTE_LEADS = [0.9, 0.8, 0.9, 1.0, 1.0, 0.9, 0.9, 1.1, 1.4, 1.6, 1.5, 1.1];
 
 const TOP_SELLERS: Record<string, number> = {
-  'HTL-CNXT36': 2.2, 'HG-6000C': 1.8, 'LOPI-DVL': 1.7, 'DIM-XLF60': 1.9, 'HRG-OAK24': 2.0, 'HG-ESC-I35': 1.5,
-  'QF-3100M': 1.4, 'LOPI-ANSWER': 1.5, 'HPC-FP30': 1.3, 'FPX-564TRV': 1.2, 'VC-DEFIANT': 1.2,
+  'LOPI-DVL': 1.7, 'DIM-XLF60': 1.9, 'HRG-OAK24': 2.0, 'HG-ESC-I35': 1.5,
+  'QF-3100M': 1.4, 'LOPI-ANSWER': 1.5, 'HPC-FP30': 1.3, 'VC-DEFIANT': 1.2,
 };
 
 const INTERESTS: { label: string; category: ItemCategory; noun: string; fuel?: string }[] = [
@@ -140,6 +144,8 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
   const items = buildItems();
   const itemById = new Map(items.map((i) => [i.id, i]));
   const unitModels = items.filter((i) => i.kind === 'unit');
+  /** Models still made — discontinued ones appear only in older customers' homes, never in recent sales */
+  const currentModels = unitModels.filter((i) => i.productStatus !== 'discontinued');
 
   const counters: Record<string, number> = { customer: 1001, unit: 2001, lead: 3001, job: 41001, invoice: 10001, estimate: 1201, claim: 501, po: 3101, bill: 7001, x: 1, hist: 1 };
   const nextId = (key: string, prefix: string) => `${prefix}-${counters[key]++}`;
@@ -239,8 +245,9 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
 
   function pickModel(store: StoreId, day: string, category?: ItemCategory, fuel?: string): Item {
     const cat = category ?? rng.weighted(categoryWeights(store, month(day)));
-    let pool = unitModels.filter((i) => i.category === cat && (!fuel || i.fuel === fuel || (fuel === 'Gas' && i.fuel === 'Gas')));
-    if (!pool.length) pool = unitModels.filter((i) => i.category === cat);
+    const models = day >= historyStart ? currentModels : unitModels;
+    let pool = models.filter((i) => i.category === cat && (!fuel || i.fuel === fuel || (fuel === 'Gas' && i.fuel === 'Gas')));
+    if (!pool.length) pool = models.filter((i) => i.category === cat);
     return rng.weighted(pool.map((i) => [i, popularity.get(i.id)!] as const));
   }
 
@@ -265,7 +272,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
       const catTotal = cats.reduce((sum, [, w]) => sum + w, 0);
       const weights: [string, number][] = [];
       for (const [cat, cw] of cats) {
-        const models = unitModels.filter((i) => i.category === cat);
+        const models = currentModels.filter((i) => i.category === cat);
         const popTotal = models.reduce((sum, i) => sum + popularity.get(i.id)!, 0);
         for (const i of models) weights.push([i.id, (cw / catTotal) * (popularity.get(i.id)! / popTotal)]);
       }
@@ -412,7 +419,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
     for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
     return `REG-${1_000_000 + (Math.abs(h) % 9_000_000)}`;
   }
-  const shortModel = (u: Unit) => (u.brand === 'Other' ? u.model : `${u.brand} ${u.model.replace(/ (Gas|Wood|Pellet) (Fireplace|Insert|Stove)$/, '')}`);
+  const shortModel = (u: Unit) => (u.brand === 'Other' ? u.model : `${u.brand} ${(u.itemId && itemById.get(u.itemId)?.model) || u.model.replace(/ (Gas|Wood|Pellet) (Fireplace|Insert|Stove)$/, '')}`);
 
   /* ---------- Installed base: customers from before the history window ---------- */
 
@@ -704,7 +711,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
 
   const COUNTER_ITEMS: [string, number][] = [
     ['ACC-RUTLAND', 30], ['ACC-PELLETS', 18], ['ACC-TOOLSET', 6], ['ACC-LOGRACK', 6], ['UNI-SCREEN3', 7], ['P-BATT-BACKUP', 8],
-    ['HRG-OAK24', 4], ['EMP-VFL30', 2], ['ACC-HEARTHPAD', 3], ['P-GASKET34', 5], ['DIM-XLF60', 2], ['HPC-FP30', 1],
+    ['HRG-OAK24', 6], ['ACC-HEARTHPAD', 3], ['P-GASKET34', 5], ['DIM-XLF60', 2], ['HPC-FP30', 1],
     ['STOLL-BF36', 1], ['DS-TEMPCO', 1], ['P-PROFLAME2', 3], ['HYC-CAP13', 2],
   ];
 
@@ -1578,7 +1585,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
 
     const glendaCustomer = newCustomer('osage-beach', addDays(T, -2200), { first: 'Glenda', last: 'Ortiz', name: 'Glenda Ortiz', address: { street: '1187 Harbor Point Dr', city: 'Osage Beach', state: 'MO', zip: '65065' }, servicePlan: true, contactPref: 'phone' });
     customerById.set(glendaCustomer.id, glendaCustomer);
-    const glendaUnit = newUnit(glendaCustomer, addDays(T, -1500), { itemId: 'FPX-564TRV' });
+    const glendaUnit = newUnit(glendaCustomer, addDays(T, -1500), { itemId: 'FPX-PB42' });
     glendaUnit.lastServiceOn = addDays(T, -330);
     const glenda: Lead = {
       id: nextId('lead', 'R'),
@@ -1736,7 +1743,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
   // Story jobs first, so their times are fixed.
   const todayInstallOB = recordInstall(T, 'osage-beach', {
     customer: newCustomer('osage-beach', addDays(T, -30), { first: 'Greg', last: 'Whitaker', name: 'Greg & Ann Whitaker', address: { street: '2741 Woodland Bay Dr', city: 'Lake Ozark', state: 'MO', zip: '65049' }, servicePlan: false, tags: ['Lake home'] }),
-    itemId: 'FPX-564TRV',
+    itemId: 'FPX-PB42',
     status: 'in-progress',
     start: `${T}T08:00`,
     depositOn: addDays(T, -19),
@@ -1933,7 +1940,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
   });
 
   const pos: PurchaseOrder[] = [
-    po('v-hht', 'osage-beach', 'received', 27, [['HG-6000C', 2, 2], ['HTL-CNXT36', 3, 3], ['P-BATT-BACKUP', 8, 8]], { receivedOn: addDays(T, -22), expectedOn: addDays(T, -22) }),
+    po('v-hht', 'osage-beach', 'received', 27, [['HG-ESC-I35', 2, 2], ['HG-TWILIGHT', 1, 1], ['P-BATT-BACKUP', 8, 8]], { receivedOn: addDays(T, -22), expectedOn: addDays(T, -22) }),
     po('v-travis', 'nixa', 'received', 21, [['LOPI-DVL', 2, 2], ['LOPI-ANSWER', 2, 2], ['FPX-PB42', 1, 1]], { receivedOn: addDays(T, -15), expectedOn: addDays(T, -16) }),
     po('v-ozark', 'osage-beach', 'received', 12, [['P-THERMOCPL', 12, 12], ['ACC-RUTLAND', 24, 24], ['HRG-OAK24', 4, 4]], { receivedOn: addDays(T, -9), expectedOn: addDays(T, -9) }),
     po('v-ff', 'nixa', 'partial', 12, [['HAR-P43', 2, 1], ['VC-DEFIANT', 2, 2], ['P-IGNITER', 4, 0]], { expectedOn: addDays(T, 2), notes: 'Backordered: 1× P43 and igniters ship next week.' }),
@@ -2155,6 +2162,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
     notices,
     settings,
     reminders: [],
+    website: defaultWebsite(),
   };
 
   const history: History = { from: historyStart, to: addDays(windowStart, -1), jobs: jobFacts, sales: saleFacts, leads: leadFacts, months, base };

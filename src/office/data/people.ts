@@ -30,8 +30,8 @@ export const staff: Staff[] = [
 
 /** Demo sign-in profiles */
 export const profiles: { id: string; blurb: string }[] = [
-  { id: 'charlie', blurb: 'Everything: requests, jobs, inventory, books, reports and settings.' },
-  { id: 'gabe', blurb: 'Runs the Nixa store: its requests, schedule, stock, sales and reports. Opens on Nixa.' },
+  { id: 'cheryl', blurb: 'Everything: requests, jobs, inventory, books, reports, the website and settings.' },
+  { id: 'gabe', blurb: 'Runs the Nixa store: its requests, schedule, stock, sales, reports and the website. Opens on Nixa.' },
   { id: 'amanda', blurb: 'Scheduling and dispatch, service requests, warranty claims and parts.' },
   { id: 'melanie', blurb: 'Invoices, bills, banking, QuickBooks and customer accounts.' },
   { id: 'luis', blurb: 'A phone-friendly day view: today’s calls, checklists, parts and signatures.' },
@@ -55,11 +55,11 @@ export const techProfiles: Record<string, { speed: number; onTime: number; callb
   eli: { speed: 1.24, onTime: 0.85, callback: 0.05 },
 };
 
-export const allSections: Section[] = ['dashboard', 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'settings'];
+export const allSections: Section[] = ['dashboard', 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'website', 'settings'];
 
 export const defaultPermissions: Record<Role, Section[]> = {
   owner: allSections,
-  manager: ['dashboard', 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics'],
+  manager: ['dashboard', 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'website'],
   coordinator: ['dashboard', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'analytics'],
   office: ['dashboard', 'inbox', 'customers', 'accounting', 'analytics'],
   sales: ['dashboard', 'my-day', 'inbox', 'jobs', 'customers', 'inventory'],

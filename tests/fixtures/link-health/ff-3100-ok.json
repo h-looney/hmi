@@ -1,0 +1,20 @@
+{
+ "capturedAt": "2026-10-21T19:00:37.685Z",
+ "url": "https://forgenflame.com/products/quadra-fire-3100-millennium-wood-stove",
+ "status": 200,
+ "finalUrl": "https://forgenflame.com/products/quadra-fire-3100-millennium-wood-stove",
+ "chain": [
+  {
+   "url": "https://forgenflame.com/products/quadra-fire-3100-millennium-wood-stove",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=utf-8",
+ "headers": {
+  "server": "cloudflare",
+  "cf-ray": "a4e281962b28be38-DFW"
+ },
+ "body": "<html><head><title> 3100 Millennium Wood Stove &ndash; Forge &amp; Flame</title><meta property=\"og:site_name\" content=\"Forge &amp; Flame\" ><meta property=\"og:title\" content=\"3100 Millennium Wood Stove\" ><link rel=\"canonical\" href=\"https://forgenflame.com/products/quadra-fire-3100-millennium-wood-stove\" ></head><body><h1 class=\"buy-box__title buy-box__title--long\">3100 Millennium Wood Stove</h1>\n<script type=\"application/ld+json\">{\"@context\":\"http://schema.org/\",\"@id\":\"/products/quadra-fire-3100-millennium-wood-stove#product\",\"@type\":\"Product\",\"brand\":{\"@type\":\"Brand\",\"name\":\"Quadra-Fire\"},\"category\":\"Wood Stoves\",\"description\":\"The 3100 Millennium long-burning wood stove delivers powerful everyday performance and clean burns. Automatic Combust…\",\"gtin\":\"652174872305\",\"image\":\"https://forgenflame.com/cdn/shop/files/3100MillenniumWoodStove.jpg?v=1690292827&width=1920\",\"name\":\"3100 Millennium Wood Stove\",\"offers\":{\"@id\":\"/products/quadra-fire-3100-millennium-wood-stove?variant=44609072136424#offer\",\"@type\":\"Offer\",\"availability\":\"http://schema.org/InStock\",\"price\":\"2399.00\",\"priceCurrency\":\"USD\",\"url\":\"https://forgenflame.com/products/quadra-fire-3100-millennium-wood-stove?variant=44609072136424\"},\"url\":\"https://forgenflame.com/products/quadra-fire-3100-millennium-wood-stove\"}</script>\n<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Home\",\"item\":\"https://forgenflame.com/\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Stoves\",\"item\":\"https://forgenflame.com/collections/stoves\"},{\"@type\":\"ListItem\",\"position\":3,\"name\":\"Wood Stoves\",\"item\":\"https://forgenflame.com/collections/wood-stoves\"},{\"@type\":\"ListItem\",\"position\":4,\"name\":\"WS Series\",\"item\":\"https://forgenflame.com/collections/ws-series\"},{\"@type\":\"ListItem\",\"position\":5,\"name\":\"3100\",\"item\":\"https://forgenflame.com/products/quadra-fire-3100-millennium-wood-stove\"}]}</script>\n<p>3100 Millennium Wood Stove Stoves Fireplace Inserts Plan Your Stove Blog Request a Quote Where to Buy US Canada (USD) United States (USD) All Stoves Wood Stoves Pellet Stoves Gas Stoves Electric Stoves Wood · Choose a tier All Wood Stoves WSX Series Premium craftsmanship with our most advanced features, superior materials, customizable options, refined detailing with expert installation. Shop Aspe</p></body></html>",
+ "via": "fetch",
+ "ms": 367
+}

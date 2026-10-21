@@ -33,6 +33,7 @@ const sectionIcons: Record<Section, IconName> = {
   inventory: 'box',
   accounting: 'bank',
   analytics: 'chart',
+  website: 'globe',
   settings: 'sliders',
 };
 

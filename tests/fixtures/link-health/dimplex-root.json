@@ -1,0 +1,27 @@
+{
+ "capturedAt": "2026-10-21T19:00:20.718Z",
+ "url": "https://www.dimplex.com",
+ "status": 200,
+ "finalUrl": "https://www.dimplex.com/en-us",
+ "chain": [
+  {
+   "url": "https://www.dimplex.com",
+   "status": 302
+  },
+  {
+   "url": "https://www.dimplex.com/en-us/",
+   "status": 301
+  },
+  {
+   "url": "https://www.dimplex.com/en-us",
+   "status": 200
+  }
+ ],
+ "contentType": "text/html; charset=UTF-8",
+ "headers": {
+  "server": "nginx"
+ },
+ "body": "<html><head><title>Electric Fireplace &amp; Heating Solutions | Dimplex</title><meta property=\"og:site_name\" content=\"Dimplex\" /><meta property=\"og:title\" content=\"Electric Fireplace &amp; Heating Solutions | Dimplex\" /><link rel=\"canonical\" href=\"https://www.dimplex.com/en-us\" /></head><body>\n\n<p>Skip to content Menu Home Products ELECTRIC FIREPLACE STYLES Linear Fireplaces Firebox Inserts Stoves Accessories ELECTRIC FIREPLACE STYLES Linear Fireplaces Firebox Inserts Stoves Accessories ELECTRIC FIREPLACE SERIES Ignite Electric Fireplaces Optimyst Water Vapor Fireplaces Revillusion Electric Fireplaces Vital Electric Fireplaces View All ELECTRIC FIREPLACE SERIES Ignite Electric Fireplaces Op</p></body></html>",
+ "via": "fetch",
+ "ms": 1577
+}

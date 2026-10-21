@@ -1,0 +1,15 @@
+{
+ "capturedAt": "2026-10-21T19:00:30.066Z",
+ "url": "http://www.boralamerica.com/stone/cultured-stone",
+ "status": 0,
+ "finalUrl": "http://www.boralamerica.com/stone/cultured-stone",
+ "chain": [],
+ "contentType": "",
+ "body": "</head>\n<body>\n\n\n\n</body>",
+ "error": {
+  "code": "UND_ERR_CONNECT_TIMEOUT",
+  "message": "Connect Timeout Error (attempted address: www.boralamerica.com:80, timeout: 10000ms)"
+ },
+ "via": "fetch",
+ "ms": 10562
+}

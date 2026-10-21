@@ -197,6 +197,8 @@ const ratingRows = fuelProfiles[0].ratings.map((r) => r.label);
   }
 
   .compare {
+    /* Positioned, so the visually-hidden rating text inside is clipped by this scroller instead of widening the page */
+    position: relative;
     overflow-x: auto;
     background: var(--c-paper);
     border: 1px solid var(--c-stone);

@@ -314,7 +314,7 @@ main:focus {
 }
 
 .signin__logo {
-  width: 230px;
+  width: 233px;
   height: auto;
   margin-bottom: 40px;
 }
@@ -529,7 +529,7 @@ main:focus {
 }
 
 .sidebar__logo img {
-  width: 150px;
+  width: 152px;
   height: auto;
 }
 
@@ -829,8 +829,17 @@ main:focus {
     display: inline-flex !important;
   }
 
+  /* Hidden visually but still the button's name for screen readers */
   .user-btn__text {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
   }
 }
 

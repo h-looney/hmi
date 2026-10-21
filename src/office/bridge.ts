@@ -71,3 +71,62 @@ export function queueSubmission(submission: Omit<QueuedSubmission, 'ref' | 'at'>
   }
   return ref;
 }
+
+/* ---------- Outbound clicks from /go/ pages ---------- */
+
+/**
+ * Every /go/<slug>/ visit in this browser, so HMI mode can show clicks per product. A real deployment would count
+ * these server-side (analytics or the redirect service); this concept keeps them in localStorage.
+ */
+export const CLICKS_KEY = 'hmi-go-clicks';
+const MAX_CLICKS = 500;
+
+export interface GoClick {
+  slug: string;
+  kind: 'model' | 'brand' | 'support' | 'tool';
+  brand: string;
+  productId?: string;
+  label: string;
+  /** Where the visitor was sent: the stored URL, its new address, or a fallback */
+  mode: 'direct' | 'moved' | 'fallback' | 'unchecked';
+  to: string;
+  /** Path of the page the link was on */
+  from?: string;
+  /** Local datetime, YYYY-MM-DDTHH:mm */
+  at: string;
+}
+
+export function readClicks(): GoClick[] {
+  try {
+    const list = JSON.parse(localStorage.getItem(CLICKS_KEY) ?? '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+export function clearClicks() {
+  try {
+    localStorage.removeItem(CLICKS_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/** Record a click on an outbound link. Never throws — the redirect must happen regardless. */
+export function recordClick(click: Omit<GoClick, 'at'>) {
+  try {
+    const list = readClicks();
+    list.push({ ...click, at: localNow() });
+    localStorage.setItem(CLICKS_KEY, JSON.stringify(list.slice(-MAX_CLICKS)));
+  } catch {
+    return;
+  }
+  try {
+    const channel = new BroadcastChannel(CHANNEL);
+    channel.postMessage({ type: 'clicks' });
+    channel.close();
+  } catch {
+    /* other tabs will see it on their next load */
+  }
+}

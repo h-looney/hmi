@@ -8,11 +8,16 @@ import { withBase } from '../scripts/url';
 interface Props {
   title?: string;
   text?: string;
+  /** Where "Request a quote" and "Schedule service" go (model pages pass prefilled links) */
+  quoteHref?: string;
+  serviceHref?: string;
 }
 
 const {
   title = 'Let’s find the <em>perfect fire</em> for your home.',
   text = 'Stop by either showroom, give us a call, or tell us about your project online. A member of our team will be glad to help — no pressure, just good advice.',
+  quoteHref = withBase('/contact/'),
+  serviceHref = withBase('/service-request/'),
 } = Astro.props;
 ---
 
@@ -23,10 +28,10 @@ const {
       <h2 set:html={title} />
       <p class="lead">{text}</p>
       <div class="cta-band__actions">
-        <a href={withBase('/contact/')} class="btn btn--primary btn--lg">
+        <a href={quoteHref} class="btn btn--primary btn--lg">
           Request a quote <Icon name="arrow-right" size={18} class="icon-arrow" />
         </a>
-        <a href={withBase('/service-request/')} class="btn btn--ghost-light btn--lg">
+        <a href={serviceHref} class="btn btn--ghost-light btn--lg">
           <Icon name="wrench" size={18} /> Schedule service
         </a>
       </div>

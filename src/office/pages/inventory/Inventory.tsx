@@ -27,9 +27,12 @@ type Sub =
 
 const kindOf: Record<Exclude<Kind, 'all'>, Item['kind']> = { units: 'unit', parts: 'part', accessories: 'accessory' };
 const orderAsNeeded = { label: 'Order as needed', tone: 'neutral' as const, icon: 'truck' as const };
+const discontinued = { label: 'Discontinued', tone: 'neutral' as const, icon: 'archive' as const };
 
 /** Stock badge; items with no reorder point and nothing free read "Order as needed" rather than "In stock". */
 function statusMeta(it: Item, store: StoreFilter) {
+  // Models the manufacturer no longer makes (src/data/products.ts) can't be reordered
+  if (it.productStatus === 'discontinued' && (store === 'all' ? STORES : [store]).every((st) => available(it, st) <= 0)) return discontinued;
   const s = stockStatus(it, store);
   if (s === 'ok' && it.reorderPoint === 0 && (store === 'all' ? STORES : [store]).every((st) => available(it, st) <= 0)) return orderAsNeeded;
   return stockMeta[s];

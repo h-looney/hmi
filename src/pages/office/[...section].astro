@@ -29,7 +29,7 @@ import { team } from '../../data/team';
 import { withBase } from '../../scripts/url';
 
 export function getStaticPaths() {
-  return [undefined, 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'settings'].map((section) => ({
+  return [undefined, 'my-day', 'inbox', 'jobs', 'customers', 'warranty', 'inventory', 'accounting', 'analytics', 'website', 'settings'].map((section) => ({
     params: { section },
   }));
 }

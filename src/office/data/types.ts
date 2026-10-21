@@ -20,6 +20,7 @@ export type Section =
   | 'inventory'
   | 'accounting'
   | 'analytics'
+  | 'website'
   | 'settings';
 
 export interface Staff {
@@ -258,6 +259,10 @@ export interface Item {
   /** Key into the thumbnail images passed in from Astro */
   photo?: string;
   specialOrder?: boolean;
+  /** Appliance models: the model name on the product list (src/data/products.ts), e.g. "Mezzo 48" */
+  model?: string;
+  /** Appliance models: current, discontinued (no longer made) or hidden from the public site */
+  productStatus?: 'current' | 'discontinued' | 'hidden';
 }
 
 export interface StockMove {
@@ -434,6 +439,54 @@ export interface Settings {
   business?: { displayName: string; email: string; phone: string; website: string; licenseNo: string };
 }
 
+/* ---------- Website: the product list and its outbound links ---------- */
+
+/** A change to a model on the product list, made in HMI mode. It goes live on the next publish (simulated). */
+export interface ProductEdit {
+  status?: 'current' | 'discontinued' | 'hidden';
+  /** Product id of the replacement, for discontinued models */
+  replacement?: string;
+  by: string;
+  at: string;
+  publishedAt?: string;
+}
+
+/** A model added from the sitemap watcher's suggestions — a draft until it's published (simulated). */
+export interface DraftProduct {
+  id: string;
+  brand: string;
+  model: string;
+  url: string;
+  category?: string;
+  suggestionId?: string;
+  by: string;
+  at: string;
+  publishedAt?: string;
+}
+
+/** A new stored URL for an outbound link — typed in, or an accepted "moved" suggestion from the link check */
+export interface LinkUrlEdit {
+  url: string;
+  by: string;
+  at: string;
+  publishedAt?: string;
+}
+
+export interface WebsiteState {
+  /** Pending and published edits, by product id */
+  edits: Record<string, ProductEdit>;
+  /** New stored URLs, by /go/ slug (models, brand sites, support pages and tools) */
+  linkUrls: Record<string, LinkUrlEdit>;
+  drafts: DraftProduct[];
+  /** Sitemap suggestions someone dismissed */
+  dismissed: string[];
+  /** Who gets the Monday summary (staff id) */
+  digestTo: string;
+  digestSentAt?: string;
+  /** Simulated publishes */
+  publishes: { id: string; at: string; by: string; changes: number }[];
+}
+
 /** Everything HMI mode keeps — saved to localStorage as one document. */
 export interface DB {
   version: number;
@@ -461,6 +514,8 @@ export interface DB {
   settings: Settings;
   /** Annual-service reminders sent */
   reminders: { unitId: string; at: string; by: string }[];
+  /** The Website section: product list edits, suggestions handled, the weekly summary */
+  website: WebsiteState;
 }
 
 /* ---------- Analytics history ----------

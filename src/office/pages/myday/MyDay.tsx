@@ -135,7 +135,7 @@ function TeamDay({ day }: { day: string }) {
         {people.map((p) => (
           <Card
             key={p.id}
-            level={3}
+            level={2}
             title={
               <span class="team-day__who">
                 <Avatar person={p} size={28} /> {p.name}

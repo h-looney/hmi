@@ -1,0 +1,37 @@
+---
+/**
+ * A model's photo: HMI's own photo when there is one (src/data/productPhotos.ts), otherwise the labelled placeholder.
+ */
+import Photo from './Photo.astro';
+import { brands } from '../data/brands';
+import { productPhotos } from '../data/productPhotos';
+import { brandSites, productPath, type Product } from '../data/products';
+import { withBase } from '../scripts/url';
+
+interface Props {
+  product: Product;
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+  class?: string;
+}
+
+const { product: p, sizes = '(min-width: 960px) 520px, 100vw', loading = 'lazy', class: className } = Astro.props;
+const brand = brandSites[p.brand]?.name ?? brands.find((b) => b.id === p.brand)?.name ?? p.brand;
+const photo = p.photo ? productPhotos[p.photo] : undefined;
+---
+
+{
+  photo ? (
+    <Photo src={photo.src} alt={photo.alt} sizes={sizes} loading={loading} class={className} />
+  ) : (
+    <img
+      src={withBase(`${productPath(p)}photo.svg`)}
+      alt={`Photo coming soon: ${brand} ${p.model}`}
+      width="800"
+      height="600"
+      loading={loading}
+      decoding="async"
+      class:list={['product-image', className]}
+    />
+  )
+}

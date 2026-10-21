@@ -6,6 +6,7 @@ import type { Section, StoreFilter } from '../data/types';
 import { activeDialog, openDialog } from '../dialogs';
 import { PUBLIC_HOME, route, sectionPath } from '../router';
 import { lowStock } from '../selectors';
+import { loadWebsiteData, websiteAttention } from '../pages/website/data';
 import { can, db, me, setUI, ui } from '../store';
 import { cx, Link, Menu } from '../ui/core';
 import { Icon, type IconName } from '../ui/Icon';
@@ -69,6 +70,15 @@ const groups: { label: string; items: NavItem[] }[] = [
     items: [
       { section: 'accounting', label: 'Accounting', icon: 'bank' },
       { section: 'analytics', label: 'Analytics', icon: 'chart' },
+      {
+        section: 'website',
+        label: 'Website',
+        icon: 'globe',
+        badge: () => {
+          const n = websiteAttention.value;
+          return n ? { count: n, label: `${n} to review` } : null;
+        },
+      },
       { section: 'settings', label: 'Settings', icon: 'sliders' },
     ],
   },
@@ -84,6 +94,7 @@ export const sectionTitles: Record<Section, string> = {
   inventory: 'Inventory',
   accounting: 'Accounting',
   analytics: 'Analytics',
+  website: 'Website',
   settings: 'Settings',
 };
 
@@ -94,7 +105,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     <aside class={cx('sidebar', open && 'is-open')} aria-label="HMI mode">
       <div class="sidebar__brand">
         <Link to="/office/" class="sidebar__logo" aria-label="HMI Office — dashboard">
-          <img src={logo} alt="" width={150} height={30} />
+          <img src={logo} alt="" width={152} height={20} />
         </Link>
         <span class="sidebar__app">Office</span>
         <button type="button" class="btn btn--ghost btn--md btn--icon sidebar__close" aria-label="Close menu" onClick={onClose}>
@@ -195,7 +206,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
       <button type="button" class="btn btn--ghost btn--md btn--icon topbar__menu" aria-label="Open menu" onClick={onMenu}>
         <Icon name="menu" />
       </button>
-      <button type="button" class="topbar__search" aria-label="Search customers, jobs and invoices" onClick={() => (paletteOpen.value = true)} aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}>
+      <button type="button" class="topbar__search" aria-label={`Search customers, jobs, invoices… ${isMac ? '⌘K' : 'Ctrl K'}`} onClick={() => (paletteOpen.value = true)} aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}>
         <Icon name="search" size={16} />
         <span class="topbar__search-text">Search customers, jobs, invoices…</span>
         <kbd class="kbd">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
@@ -232,6 +243,11 @@ export function Shell({ children }: { children: ComponentChildren }) {
       /* storage unavailable */
     }
   }, [route.value]);
+
+  // The Website badge and the dashboard read the published link check and sitemap watch
+  useEffect(() => {
+    if (can('website') || can('dashboard')) loadWebsiteData();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
