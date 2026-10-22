@@ -701,7 +701,7 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const officeRef = await submit(form);
         const name = String(new FormData(form).get('name') ?? '').split(' ')[0];
         if (officeRef) {
-          root.querySelector<HTMLAnchorElement>('[data-office-link]')!.href = withBase(`/office/inbox/?ref=${officeRef}`);
+          root.querySelector<HTMLAnchorElement>('[data-office-link]')!.href = withBase(`/office/inbox/?ref=${officeRef}&signin`);
           root.querySelector<HTMLElement>('[data-office-note]')!.hidden = false;
         }
         root.querySelector('[data-done-title]')!.textContent = name ? `Thanks, ${name} — request received` : 'Request received';

@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { profiles, roleLabels } from '../data/people';
 import type { Staff } from '../data/types';
-import { navigate, sectionPath } from '../router';
+import { navigate, route, sectionPath } from '../router';
 import { storeName } from '../selectors';
 import { db, markTried, resetDemo, setUI } from '../store';
 import { toast } from '../toast';
@@ -9,14 +9,16 @@ import { Avatar } from '../ui/core';
 import { Confirm, Dialog } from '../ui/Dialog';
 import { Icon } from '../ui/Icon';
 
-export function switchProfile(id: string) {
+/** Sign in as a profile. From the sign-in screen it stays on the page that was asked for, when the profile has it. */
+export function switchProfile(id: string, opts: { keepPage?: boolean } = {}) {
   const person = db.value.staff.find((s) => s.id === id)!;
   // Store managers start on their own store; everyone else starts on both
   const store = person.role === 'manager' && person.store !== 'both' ? person.store : 'all';
   setUI({ userId: id, signedIn: true, store });
   if (person.role === 'tech') markTried('tech');
-  const home = db.value.settings.permissions[person.role].includes('dashboard') ? 'dashboard' : 'my-day';
-  navigate(sectionPath(home));
+  const sections = db.value.settings.permissions[person.role];
+  const home = sections.includes('dashboard') ? 'dashboard' : 'my-day';
+  if (!opts.keepPage || !sections.includes(route.value.section)) navigate(sectionPath(home));
   toast(`Signed in as ${person.name} (${roleLabels[person.role]})${store === 'all' ? '' : ` — showing ${storeName(store)}`}`);
 }
 
@@ -82,7 +84,7 @@ export function UserMenu({ user }: { user: Staff }) {
               class="btn btn--ghost btn--md"
               onClick={() => {
                 setOpen(null);
-                setUI({ signedIn: false });
+                setUI({ signedIn: false, lastUserId: user.id });
               }}
             >
               <Icon name="logout" size={16} />

@@ -11,6 +11,7 @@ import { profiles } from './data/people';
 import { createDemo, DB_VERSION, demoClock } from './data/seed';
 import type { DB, History, Lead, Section, StoreId, UIState } from './data/types';
 import { diffDays, now, shiftDates, today } from './lib/dates';
+import { signInRequested } from './router';
 import { toast } from './toast';
 
 /* ---------- Signals ---------- */
@@ -35,6 +36,8 @@ function loadUI(): UIState {
     const saved: UIState = { ...defaultUI, ...JSON.parse(localStorage.getItem(UI_KEY) ?? '{}') };
     // A profile the demo no longer offers (an earlier version's owner) becomes today's default
     if (!profiles.some((p) => p.id === saved.userId)) saved.userId = defaultUI.userId;
+    // Arriving from the public site: pick a profile again
+    if (signInRequested && saved.signedIn) return { ...saved, signedIn: false, lastUserId: saved.userId };
     return saved;
   } catch {
     return defaultUI;

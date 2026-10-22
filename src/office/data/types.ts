@@ -611,6 +611,8 @@ export interface History {
 export interface UIState {
   signedIn: boolean;
   userId: string;
+  /** Who signed out last in this browser: marked "Last used" on the sign-in screen */
+  lastUserId?: string;
   store: StoreFilter;
   jobsView: 'board' | 'list' | 'schedule';
   range: RangeKey;

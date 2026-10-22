@@ -26,6 +26,20 @@ function parse(): Route {
   };
 }
 
+/**
+ * Links from the public site into HMI mode end in ?signin: they open the sign-in screen (the demo's profile picker)
+ * rather than carrying on as whoever used HMI mode last in this browser. Read once, then dropped from the address so
+ * a reload stays signed in.
+ */
+export const signInRequested = (() => {
+  const params = new URLSearchParams(location.search);
+  if (!params.has('signin')) return false;
+  params.delete('signin');
+  const qs = params.toString();
+  window.history.replaceState(window.history.state, '', location.pathname + (qs ? `?${qs}` : '') + location.hash);
+  return true;
+})();
+
 export const route = signal<Route>(parse());
 
 /** Turn an office path ('/office/jobs/?id=…') into a real URL under the site's base path. */

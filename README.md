@@ -100,7 +100,10 @@ demo gets their own copy. **Reset demo data** (account menu or Settings → Demo
 
 **Sign-in profiles** show how roles change what people see: Cheryl as Owner (everything), Gabe as Store manager
 (opens on the Nixa store), a Service coordinator, Office & accounting, and a Technician with a phone-friendly day view.
-Owners can change each role's access under Settings → Team & permissions.
+Coming in from the public site (the mode switch, "Staff sign-in", or a form's "See it arrive in the HMI inbox") always
+opens the profile picker, with the last profile used marked, and then the page the link pointed to. Reloading or
+moving around inside HMI mode keeps you signed in, and the account menu switches profiles at any time. Owners can
+change each role's access under Settings → Team & permissions.
 
 | Section | What it does |
 | --- | --- |

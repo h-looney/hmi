@@ -15,6 +15,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
+import type { Page } from 'puppeteer-core';
 import { buildReport, type Checked } from '../../scripts/link-health/run.ts';
 import { outboundLinks } from '../../src/data/links.ts';
 import { productPath, products, productsIn, publicProducts } from '../../src/data/products.ts';
@@ -572,6 +573,59 @@ await test(`key public pages: axe at 1440 and 390 px, no sideways scroll (${keyP
       await axe(page, `${p} (${width} px)`);
     }
   }
+});
+
+/* ---------- HMI mode: signing in from the public site ---------- */
+console.log('\nHMI mode — sign-in');
+
+const pageTitle = (page: Page) => page.$eval('[data-page-title]', (h) => h.textContent?.trim());
+async function pickProfile(page: Page, name: string) {
+  for (const b of await page.$$('.profile-option')) if ((await b.$eval('.profile-option__name', (el) => el.textContent ?? '')).startsWith(name)) return void (await b.click());
+  throw new Error(`no profile called ${name}`);
+}
+const signedInAs = (page: Page) => page.waitForFunction(() => document.querySelector('.user-btn__name'), { polling: 100, timeout: 15_000 }).then(() => page.$eval('.user-btn__name', (n) => n.textContent?.trim()));
+
+await test('the public site’s “HMI mode” opens the profile picker (last one marked); the pick opens the page it pointed to', async () => {
+  const t = await open();
+  await signIn(t.page, REAL, 'gabe');
+  await goto(t.page, `${REAL}/hmi/office/inventory/`);
+  await officeReady(t.page);
+  await goto(t.page, `${REAL}/hmi/products/`);
+  const href = await t.page.$eval('[data-mode-hmi]', (a) => a.getAttribute('href'));
+  assert(href === '/hmi/office/inventory/?signin', `the switch points at ${href}`);
+  await Promise.all([t.page.waitForNavigation({ waitUntil: 'networkidle0' }), t.page.click('[data-mode-hmi]')]);
+  await officeReady(t.page);
+  const screen = await t.page.evaluate(() => ({
+    url: location.pathname + location.search,
+    last: [...document.querySelectorAll('.profile-option')].filter((b) => b.querySelector('.profile-option__last')).map((b) => b.querySelector('.profile-option__name')?.textContent ?? ''),
+  }));
+  assert((await pageTitle(t.page)) === 'Sign in to HMI Office', `shows “${await pageTitle(t.page)}”, not the sign-in screen`);
+  assert(screen.url === '/hmi/office/inventory/', `the address keeps the flag: ${screen.url}`);
+  assert(screen.last.length === 1 && screen.last[0].startsWith('Gabe Kurtz'), `marked as last used: ${screen.last.join(' | ') || 'none'}`);
+  await axe(t.page, 'sign-in screen, last profile marked');
+
+  await pickProfile(t.page, 'Cheryl');
+  assert((await signedInAs(t.page)) === 'Cheryl', 'not signed in as Cheryl');
+  assert((await pageTitle(t.page)) === 'Inventory', `opened “${await pageTitle(t.page)}” instead of Inventory`);
+  await t.page.reload({ waitUntil: 'networkidle0' });
+  await officeReady(t.page);
+  assert((await pageTitle(t.page)) === 'Inventory' && (await signedInAs(t.page)) === 'Cheryl', 'a reload signed out');
+});
+
+await test('“Staff sign-in” opens the picker too; a profile without the page it pointed to starts on its own (technician → My day)', async () => {
+  const t = await open({ width: 390 });
+  await signIn(t.page, REAL, 'cheryl');
+  await goto(t.page, `${REAL}/hmi/contact/`);
+  const href = await t.page.$eval('footer a[href*="/office/"]', (a) => a.getAttribute('href'));
+  assert(href === '/hmi/office/?signin', `“Staff sign-in” points at ${href}`);
+  await goto(t.page, `${REAL}/hmi/office/accounting/?signin`);
+  await officeReady(t.page);
+  assert((await pageTitle(t.page)) === 'Sign in to HMI Office', 'no sign-in screen');
+  await noSideScroll(t.page, 'sign-in screen at 390 px');
+  await axe(t.page, 'sign-in screen (390 px)');
+  await pickProfile(t.page, 'Luis');
+  assert((await signedInAs(t.page)) === 'Luis', 'not signed in as Luis');
+  await t.page.waitForFunction(() => location.pathname === '/hmi/office/my-day/', { polling: 100, timeout: 10_000 });
 });
 
 await test('HMI mode sections still load for the owner: axe at 1440 and 390 px, no sideways scroll', async () => {

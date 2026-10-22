@@ -2,8 +2,8 @@
 import { useAssets } from '../assets';
 import { profiles, roleLabels } from '../data/people';
 import { PUBLIC_HOME } from '../router';
-import { db } from '../store';
-import { Avatar } from '../ui/core';
+import { db, ui } from '../store';
+import { Avatar, Badge } from '../ui/core';
 import { Icon } from '../ui/Icon';
 import { switchProfile } from './UserMenu';
 
@@ -44,11 +44,19 @@ export function SignIn() {
               const person = db.value.staff.find((s) => s.id === p.id)!;
               return (
                 <li key={p.id}>
-                  <button type="button" class="profile-option profile-option--lg" onClick={() => switchProfile(person.id)}>
+                  <button type="button" class="profile-option profile-option--lg" onClick={() => switchProfile(person.id, { keepPage: true })}>
                     <Avatar person={person} size={44} />
                     <span>
                       <span class="profile-option__name">
                         {person.name} <span class="muted">· {roleLabels[person.role]}</span>
+                        {person.id === ui.value.lastUserId && (
+                          <>
+                            {' '}
+                            <Badge tone="ember" class="profile-option__last">
+                              Last used
+                            </Badge>
+                          </>
+                        )}
                       </span>
                       <span class="profile-option__blurb">{p.blurb}</span>
                     </span>

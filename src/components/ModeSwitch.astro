@@ -13,7 +13,7 @@ import { withBase } from '../scripts/url';
     <Icon name="home" size={15} />
     Public
   </span>
-  <a class="mode-switch__opt" href={withBase('/office/')} data-mode-hmi>
+  <a class="mode-switch__opt" href={withBase('/office/?signin')} data-mode-hmi>
     <Icon name="briefcase" size={15} />
     HMI mode
   </a>
@@ -21,12 +21,13 @@ import { withBase } from '../scripts/url';
 
 <script>
   // Remember where the visitor is, so "Public" in HMI mode brings them back here — and send
-  // "HMI mode" back to wherever they last were in the staff app.
+  // "HMI mode" back to wherever they last were in the staff app. ?signin opens the profile picker
+  // there first, so each visit to HMI mode starts by choosing who to be.
   try {
     localStorage.setItem('hmi-last-public', location.pathname + location.search + location.hash);
     const lastOffice = localStorage.getItem('hmi-last-office');
     const link = document.querySelector<HTMLAnchorElement>('[data-mode-hmi]');
-    if (link && lastOffice && lastOffice.startsWith(new URL(link.href).pathname)) link.href = lastOffice;
+    if (link && lastOffice && lastOffice.startsWith(new URL(link.href).pathname)) link.href = `${lastOffice}${lastOffice.includes('?') ? '&' : '?'}signin`;
   } catch {
     /* storage unavailable */
   }

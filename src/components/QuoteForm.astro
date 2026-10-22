@@ -584,7 +584,7 @@ const modelNames = Object.fromEntries(
         );
 
         if (officeRef) {
-          root.querySelector<HTMLAnchorElement>('[data-office-link]')!.href = withBase(`/office/inbox/?ref=${officeRef}`);
+          root.querySelector<HTMLAnchorElement>('[data-office-link]')!.href = withBase(`/office/inbox/?ref=${officeRef}&signin`);
           root.querySelector<HTMLElement>('[data-office-note]')!.hidden = false;
         }
 
