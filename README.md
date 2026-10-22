@@ -243,7 +243,7 @@ FireBuilder — run with `npm run links:check`. Its only dependency is `puppetee
   | dead | DNS, TLS, connection or timeout errors, or HTTP 4xx/5xx |
   | wrong page | Loads, but it’s another site, the homepage, a general list, or doesn’t mention the model |
   | soft 404 | Loads, but says “not found” / “no longer available”, or marks the product discontinued |
-  | unverified | A bot check (Cloudflare, Akamai, AWS WAF, Imperva, Vercel…) that a real browser couldn’t see past either. Never counted as dead; CAPTCHAs are never worked around |
+  | unverified | A bot check (Cloudflare, Akamai, AWS WAF, Imperva, Vercel, SiteGround…) that a real browser couldn’t see past either. Never counted as dead; CAPTCHAs are never worked around |
 
   “Right page” is decided by **fingerprint**: each link stores text its page must show in the `<title>`, an `<h1>` or a
   JSON-LD Product name (usually the model name). Brand-level links may also match the site’s own name. Known moves
@@ -251,7 +251,10 @@ FireBuilder — run with `npm run links:check`. Its only dependency is `puppetee
 - **Retries in a browser:** bot checks, and pages that render their headings with JavaScript, get the retry in headless
   Chrome (`CHROME_PATH`, or the usual install paths). A check that a browser passes on its own (Cloudflare’s “Just a
   moment…”, Vercel’s Security Checkpoint) gets up to 15 s to reload into the real page; anything still showing a check
-  after that is “unverified”.
+  after that is “unverified”. SiteGround, which hosts many manufacturers’ sites (Lopi, Fireplace Xtrordinair,
+  HearthStone, Empire, Montigo, Stoll, Mason-Lite…), sometimes shows GitHub’s runners its “One moment, please…” check
+  (`/.well-known/sgcaptcha`) for a whole run, as it did on 2026-10-22: those links come out unverified and keep their
+  stored URL — never “wrong page”, and never “moved” to the check’s address.
 - **Report:** `.link-health/report.json` (published as `/data/link-health.json`): for each link its status, reason,
   final URL, HTTP status, where /go/ now sends people, and first-failed / last-ok dates carried over from the previous
   report.

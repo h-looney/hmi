@@ -283,6 +283,31 @@ describe('firewall block pages count as bot checks (never dead)', () => {
     assert.equal(blocked(200, checkpoint('<h1>We’re verifying your browser</h1>')).status, 'blocked');
   });
 
+  // SiteGround, which hosts many manufacturers' sites, showed GitHub's runners this page on 2026-10-22
+  const sgPage = '<!DOCTYPE html><html><head><title>One moment, please...</title><meta http-equiv="refresh" content="0;/.well-known/sgcaptcha/?r=%2Fproduct%2Fbari-gas%2F"></head><body></body></html>';
+
+  it('SiteGround’s “One moment, please…” (202, sg-captcha: challenge)', () => {
+    const v = blocked(202, sgPage, { 'sg-captcha': 'challenge' });
+    assert.equal(v.status, 'blocked');
+    assert.match(v.reason, /SiteGround/);
+  });
+
+  it('the same check as a browser sees it (200, no header): still blocked, not a wrong page', () => {
+    assert.equal(blocked(200, sgPage).status, 'blocked');
+    // …even when all that's left of it is the title
+    assert.equal(blocked(200, '<html><head><title>One moment, please...</title></head><body><div id="sg-loader"></div></body></html>').status, 'blocked');
+  });
+
+  it('a redirect to SiteGround’s /.well-known/sgcaptcha is a bot check, never a move', () => {
+    const url = 'https://www.mason-lite.com/products/traditional/';
+    const to = 'https://www.mason-lite.com/.well-known/sgcaptcha/?r=%2Fproducts%2Ftraditional%2F';
+    const v = classify(
+      { kind: 'model', url, fingerprint: ['Traditional'], hosts: [] },
+      { url, status: 200, finalUrl: to, chain: [{ url, status: 302 }, { url: to, status: 200 }], contentType: 'text/html', headers: {}, body: '<html><head><title></title></head><body><script src="/.well-known/sgcaptcha/main.js"></script></body></html>', via: 'fetch', ms: 90 },
+    );
+    assert.equal(v.status, 'blocked');
+  });
+
   it('a normal page that only loads a firewall script is not a bot check', () => {
     const v = blocked(200, '<html><head><title>Aurora 36 | Example Hearth</title></head><body><h1>Aurora 36</h1><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></body></html>', { server: 'cloudflare' });
     assert.equal(v.status, 'ok');

@@ -93,6 +93,9 @@ export function botCheck(res: FetchResult, page: PageFacts): string | undefined 
   // Vercel's firewall sends traffic it doesn't trust (shared and datacenter networks, like CI runners) to a
   // "Security Checkpoint"; the mitigation header only appears on those answers
   if (h['x-vercel-mitigated'] || /Vercel Security Checkpoint|\/\.well-known\/vercel\/security\//i.test(head)) return 'Vercel Security Checkpoint';
+  // SiteGround (which hosts many manufacturers' sites) sends traffic it doesn't trust to a "One moment, please…" page
+  // and its /.well-known/sgcaptcha check — never the address to send visitors to, so it's never "moved" there
+  if (h['sg-captcha'] || /\/\.well-known\/sgcaptcha/i.test(head) || /\/\.well-known\/sgcaptcha/i.test(res.finalUrl) || /^\s*one moment, please\b/i.test(page.title)) return 'SiteGround bot check';
   if (/captcha-delivery\.com|geo\.captcha-delivery/i.test(head) || (blocking && h['x-datadome'])) return 'DataDome check';
   if (/_Incapsula_Resource|Incapsula incident ID|<title>\s*Pardon Our Interruption/i.test(head) || (blocking && h['x-iinfo'])) return 'Imperva check';
   if (/px-captcha|perimeterx|Press & Hold/i.test(head)) return 'PerimeterX check';

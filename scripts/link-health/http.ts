@@ -76,7 +76,7 @@ async function readCapped(res: Response, cap = MAX_BODY): Promise<string> {
   return new TextDecoder('utf-8', { fatal: false }).decode(Buffer.concat(chunks).subarray(0, cap));
 }
 
-const KEPT_HEADERS = ['server', 'cf-mitigated', 'cf-ray', 'x-datadome', 'x-iinfo', 'x-sucuri-id', 'x-vercel-mitigated', 'akamai-grn', 'retry-after'];
+const KEPT_HEADERS = ['server', 'cf-mitigated', 'cf-ray', 'x-datadome', 'x-iinfo', 'x-sucuri-id', 'x-vercel-mitigated', 'sg-captcha', 'akamai-grn', 'retry-after'];
 
 /** The headers worth keeping, from a fetch() response or a browser's (lower-cased) header record. */
 export function pickHeaders(h: Headers | Record<string, string>): Record<string, string> {
