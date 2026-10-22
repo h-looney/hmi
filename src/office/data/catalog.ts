@@ -48,7 +48,8 @@ interface UnitEntry {
   vendorId: string;
   /** Units in stock at each store, showroom displays included (displays themselves come from the product list) */
   onHand: Record<StoreId, number>;
-  warranty: NonNullable<Item['warranty']>;
+  warranty?: Item['warranty'];
+  uom?: Item['uom'];
 }
 
 const u = (category: ItemCategory, cost: number, price: number, reorder: [number, number], vendorId: string, osageBeach: number, nixa: number, warranty: NonNullable<Item['warranty']>): UnitEntry => ({
@@ -61,6 +62,17 @@ const u = (category: ItemCategory, cost: number, price: number, reorder: [number
   warranty,
 });
 
+/** Doors, mantels, stone and accessories on the product list: no appliance warranty; stone sells by the box */
+const a = (category: ItemCategory, cost: number, price: number, reorder: [number, number], vendorId: string, osageBeach: number, nixa: number, uom?: Item['uom']): UnitEntry => ({
+  category,
+  cost,
+  price,
+  reorder,
+  vendorId,
+  onHand: { 'osage-beach': osageBeach, nixa },
+  ...(uom ? { uom } : {}),
+});
+
 const units: Record<string, UnitEntry> = {
   // Gas fireplaces
   'HG-MEZZO48': u('Gas fireplaces', 3890, 6290, [1, 1], 'v-hht', 2, 1, W.hht),
@@ -69,19 +81,29 @@ const units: Record<string, UnitEntry> = {
   'EMP-TAHOE36': u('Gas fireplaces', 1750, 2890, [1, 2], 'v-empire', 2, 1, W.standard),
   'EMP-BLVD48': u('Gas fireplaces', 2380, 3950, [1, 1], 'v-empire', 1, 1, W.standard),
   'MON-ART42': u('Gas fireplaces', 1580, 2650, [1, 1], 'v-monessen', 1, 0, W.standard),
+  'MON-ARIA36': u('Gas fireplaces', 1480, 2490, [1, 1], 'v-monessen', 0, 1, W.standard),
+  'EMP-VAIL36': u('Gas fireplaces', 1290, 2190, [1, 1], 'v-empire', 1, 0, W.standard),
+  'EMP-SLIM30': u('Gas fireplaces', 890, 1490, [1, 2], 'v-empire', 1, 1, W.standard),
   // Discontinued: still in customers' homes, no longer stocked
   'HG-6000C': u('Gas fireplaces', 2650, 4290, [0, 0], 'v-hht', 0, 0, W.hht),
   'HG-SL750': u('Gas fireplaces', 1890, 3150, [0, 0], 'v-hht', 0, 0, W.hht),
+  'HTL-NOVUS36': u('Gas fireplaces', 1980, 3290, [1, 1], 'v-hht', 1, 0, W.hht),
+  'MTG-P42DF': u('Gas fireplaces', 3450, 5690, [0, 1], 'v-montigo', 0, 1, W.premium),
   'HTL-CNXT36': u('Gas fireplaces', 1420, 2390, [0, 0], 'v-hht', 0, 0, W.hht),
 
   // Wood fireplaces
   'HTL-ICON100': u('Wood fireplaces', 2450, 3990, [1, 1], 'v-hht', 1, 1, W.hht),
   'FPX-42APEX': u('Wood fireplaces', 3980, 6450, [1, 1], 'v-travis', 1, 0, W.premium),
+  'HG-PIONEER3': u('Wood fireplaces', 3150, 5190, [1, 1], 'v-hht', 1, 0, W.hht),
+  'HS-WFP100': u('Wood fireplaces', 3380, 5590, [0, 1], 'v-hearthstone', 0, 1, W.stove),
+  'MASON-MFP44': u('Wood fireplaces', 2400, 3990, [0, 0], 'v-stone', 0, 0, W.standard),
 
   // Electric
   'DIM-RBF42': u('Electric fireplaces', 980, 1690, [2, 3], 'v-dimplex', 3, 2, W.electric),
   'DIM-XLF60': u('Electric fireplaces', 760, 1299, [2, 4], 'v-dimplex', 2, 4, W.electric),
   'DIM-OMC1000': u('Electric fireplaces', 1050, 1850, [1, 2], 'v-dimplex', 1, 1, W.electric),
+  'DIM-PRISM50': u('Electric fireplaces', 690, 1190, [1, 2], 'v-dimplex', 2, 1, W.electric),
+  'DIM-NOVA33': u('Electric fireplaces', 240, 429, [2, 4], 'v-dimplex', 3, 2, W.electric),
 
   // Inserts
   'HG-ESC-I35': u('Inserts', 2050, 3390, [2, 2], 'v-hht', 2, 2, W.hht),
@@ -91,6 +113,7 @@ const units: Record<string, UnitEntry> = {
   'HAR-ACC52I': u('Inserts', 2950, 4890, [1, 1], 'v-ff', 1, 1, W.pellet),
   'HS-CLYDESDALE': u('Inserts', 2160, 3550, [0, 1], 'v-hearthstone', 0, 1, W.stove),
   'QF-CASTILE': u('Inserts', 2380, 3950, [0, 0], 'v-ff', 0, 0, W.pellet),
+  'QF-EXP2': u('Inserts', 2290, 3790, [1, 1], 'v-ff', 1, 0, W.stove),
 
   // Stoves
   'VC-DEFIANT': u('Stoves', 2280, 3790, [1, 2], 'v-ff', 2, 2, W.stove),
@@ -101,21 +124,48 @@ const units: Record<string, UnitEntry> = {
   'LOPI-NORTHFIELD': u('Stoves', 1840, 3050, [1, 1], 'v-travis', 1, 1, W.premium),
   'HS-CASTLETON': u('Stoves', 1990, 3290, [1, 1], 'v-hearthstone', 1, 0, W.stove),
   'KUMA-ASPEN': u('Stoves', 1520, 2550, [0, 1], 'v-kuma', 0, 1, W.stove),
+  'VC-ENCORE': u('Stoves', 2350, 3890, [1, 1], 'v-ff', 1, 1, W.stove),
+  'VC-RESOLUTE': u('Stoves', 1890, 3150, [0, 0], 'v-ff', 0, 0, W.stove),
+  'HS-BARI-GAS': u('Stoves', 1650, 2790, [1, 1], 'v-hearthstone', 1, 0, W.stove),
+  'EMP-SPIRIT-CI': u('Stoves', 1180, 1990, [1, 2], 'v-empire', 0, 1, W.standard),
+  'QF-OUTFITTER2': u('Stoves', 2150, 3590, [1, 1], 'v-ff', 1, 1, W.pellet),
+  'HAR-ABS43': u('Stoves', 2480, 4150, [1, 1], 'v-ff', 1, 0, W.pellet),
+  'LOPI-AGP': u('Stoves', 1690, 2850, [1, 1], 'v-travis', 0, 1, W.premium),
 
   // Gas logs
   'HRG-OAK24': u('Gas logs', 520, 890, [3, 4], 'v-ozark', 5, 3, W.basic),
+  'MON-BEACH24': u('Gas logs', 690, 1190, [1, 2], 'v-monessen', 1, 1, W.basic),
+  'HG-HERITAGE-OAK': u('Gas logs', 760, 1290, [1, 2], 'v-hht', 1, 1, W.hht),
+  'EMP-FLINT24': u('Gas logs', 560, 950, [1, 2], 'v-empire', 1, 1, W.basic),
 
   // Outdoor
   'EMP-CRO42': u('Outdoor', 2650, 4390, [1, 1], 'v-empire', 1, 1, W.standard),
   'HPC-FP30': u('Outdoor', 640, 1090, [2, 3], 'v-hpc', 3, 2, W.basic),
   'HG-TWILIGHT': u('Outdoor', 3580, 5890, [0, 1], 'v-hht', 1, 0, W.hht),
+  'MON-COTTAGE36': u('Outdoor', 2290, 3790, [0, 1], 'v-monessen', 0, 1, W.standard),
+  'MTG-PL42VO': u('Outdoor', 2890, 4790, [0, 1], 'v-montigo', 1, 0, W.premium),
+
+  // Mantels, doors, stone and accessories (several were catalog-only items before they joined the product list)
+  'MAG-MANTEL60': a('Mantels & stone', 380, 690, [1, 1], 'v-stone', 2, 1),
+  'MAG-NAT': a('Mantels & stone', 340, 620, [1, 1], 'v-stone', 1, 1),
+  'MAG-PBS': a('Mantels & stone', 980, 1690, [0, 1], 'v-stone', 1, 0),
+  'STOLL-BF36': a('Doors & screens', 610, 1050, [1, 1], 'v-ozark', 1, 1),
+  'DS-CAROLINA': a('Doors & screens', 420, 740, [1, 2], 'v-ozark', 2, 1),
+  'TR-HERITAGE': a('Doors & screens', 520, 890, [1, 1], 'v-ozark', 0, 1),
+  'CS-SLEDGE': a('Mantels & stone', 78, 135, [10, 20], 'v-stone', 24, 18, 'box'),
+  'CS-ALPINE': a('Mantels & stone', 82, 145, [10, 20], 'v-stone', 12, 16, 'box'),
+  'RS-SHADOW': a('Mantels & stone', 64, 112, [10, 20], 'v-stone', 20, 12, 'box'),
+  'ACC-HEARTHPAD': a('Accessories', 160, 289, [1, 2], 'v-ozark', 2, 2),
+  'ACC-LOGRACK': a('Accessories', 54, 99, [2, 4], 'v-venting', 5, 4),
+  'UNI-W1246': a('Accessories', 68, 129, [2, 4], 'v-ozark', 3, 2),
+  'IMP-KK0315': a('Accessories', 5.4, 12.99, [12, 24], 'v-ozark', 18, 14),
 };
 
 /** HMI SKUs of every appliance model — must match the product list one-for-one (checked by the link checker). */
 export const unitIds = () => Object.keys(units);
 
 const brandName = (id: string) => brands.find((b) => b.id === id)?.name ?? id;
-const fuelOf: Record<Product['fuel'], NonNullable<Item['fuel']>> = { gas: 'Gas', wood: 'Wood', pellet: 'Pellet', electric: 'Electric' };
+const fuelOf: Record<NonNullable<Product['fuel']>, NonNullable<Item['fuel']>> = { gas: 'Gas', wood: 'Wood', pellet: 'Pellet', electric: 'Electric' };
 const SMALL = new Set(['and', 'or', 'of', 'the', 'a', 'with']);
 const titleCase = (s: string) => s.replace(/[A-Za-z][^\s/-]*/g, (w, i) => (i > 0 && SMALL.has(w) ? w : w[0].toUpperCase() + w.slice(1)));
 
@@ -133,9 +183,10 @@ function unitItems(): Item[] {
       model: p.model,
       brand: brandName(p.brand),
       category: e.category,
-      kind: 'unit',
-      fuel: fuelOf[p.fuel],
-      uom: 'ea',
+      // Appliances are units (serial numbers, warranties, installs); doors, mantels, stone and accessories aren't
+      kind: p.fuel ? 'unit' : 'accessory',
+      fuel: p.fuel ? fuelOf[p.fuel] : undefined,
+      uom: e.uom ?? 'ea',
       cost: e.cost,
       price: e.price,
       reorderPoint: e.reorder[0],
@@ -151,15 +202,9 @@ function unitItems(): Item[] {
 
 const entries: CatalogEntry[] = [
   // Doors & screens
-  { id: 'STOLL-BF36', brand: 'Stoll', name: 'Bi-Fold Fireplace Door 36 in., Matte Black', category: 'Doors & screens', kind: 'accessory', cost: 610, price: 1050, reorder: [1, 2], vendorId: 'v-ozark', stock: { 'osage-beach': [1, 1], nixa: [1, 0] } },
-  { id: 'DS-TEMPCO', brand: 'Design Specialties', name: 'Tempco Glass Fireplace Door', category: 'Doors & screens', kind: 'accessory', cost: 420, price: 740, reorder: [1, 2], vendorId: 'v-ozark', stock: { 'osage-beach': [2, 0], nixa: [1, 0] } },
-  { id: 'TR-OVATION42', brand: 'Thermo-Rite', name: 'Ovation Glass Door 42 in.', category: 'Doors & screens', kind: 'accessory', cost: 520, price: 890, reorder: [1, 1], vendorId: 'v-ozark', stock: { 'osage-beach': [0, 0], nixa: [1, 1] } },
   { id: 'UNI-SCREEN3', brand: 'Uniflame', name: '3-Panel Fireplace Screen', category: 'Doors & screens', kind: 'accessory', cost: 58, price: 119, reorder: [3, 6], vendorId: 'v-ozark', stock: { 'osage-beach': [6, 1], nixa: [4, 1] } },
 
   // Mantels & stone
-  { id: 'MAG-MANTEL60', brand: 'MagraHearth', name: 'Stone Mantel 60 in., Bluestone', category: 'Mantels & stone', kind: 'accessory', cost: 380, price: 690, reorder: [1, 2], vendorId: 'v-stone', stock: { 'osage-beach': [2, 1], nixa: [1, 0] } },
-  { id: 'CS-SLEDGE', brand: 'Cultured Stone', name: 'Southern Ledgestone, 10 sq ft box', category: 'Mantels & stone', kind: 'accessory', uom: 'box', cost: 78, price: 135, reorder: [10, 20], vendorId: 'v-stone', stock: { 'osage-beach': [24, 0], nixa: [18, 0] } },
-  { id: 'RS-SHADOW', brand: 'Realstone Systems', name: 'Shadowstone Panels, Charcoal, 6 sq ft', category: 'Mantels & stone', kind: 'accessory', uom: 'box', cost: 64, price: 115, reorder: [8, 16], vendorId: 'v-stone', stock: { 'osage-beach': [20, 0], nixa: [12, 0] } },
 
   // Venting
   { id: 'DV-DVP36', brand: 'DuraVent', name: 'DirectVent Pro 4×6⅝ in. Pipe, 36 in.', category: 'Venting', kind: 'part', cost: 46, price: 89, reorder: [8, 12], vendorId: 'v-venting', stock: { 'osage-beach': [14, 0], nixa: [10, 0] } },
@@ -187,8 +232,6 @@ const entries: CatalogEntry[] = [
   // Accessories & retail
   { id: 'ACC-RUTLAND', brand: 'Rutland', name: 'Gas Fireplace Glass Cleaner, 16 oz', category: 'Accessories', kind: 'accessory', cost: 4.2, price: 11.99, reorder: [12, 36], vendorId: 'v-ozark', stock: { 'osage-beach': [36, 0], nixa: [28, 0] } },
   { id: 'ACC-TOOLSET', brand: 'Stone County Ironworks', name: 'Hand-Forged 4-Piece Tool Set', category: 'Accessories', kind: 'accessory', cost: 92, price: 169, reorder: [2, 4], vendorId: 'v-ozark', stock: { 'osage-beach': [4, 1], nixa: [3, 1] } },
-  { id: 'ACC-LOGRACK', brand: 'Hy-C', name: 'Log Rack with Kindling Holder', category: 'Accessories', kind: 'accessory', cost: 54, price: 99, reorder: [2, 4], vendorId: 'v-venting', stock: { 'osage-beach': [5, 1], nixa: [4, 1] } },
-  { id: 'ACC-HEARTHPAD', brand: 'Imperial', name: 'Hearth Pad 36×52 in.', category: 'Accessories', kind: 'accessory', cost: 160, price: 289, reorder: [1, 2], vendorId: 'v-ozark', stock: { 'osage-beach': [2, 0], nixa: [2, 0] } },
   { id: 'ACC-PELLETS', brand: 'HMI Supply', name: 'Premium Wood Pellets, 40 lb bag', category: 'Accessories', kind: 'accessory', uom: 'bag', cost: 4.9, price: 7.99, reorder: [100, 200], vendorId: 'v-ozark', stock: { 'osage-beach': [160, 0], nixa: [240, 0] } },
 ];
 
@@ -241,6 +284,7 @@ export const vendors: Vendor[] = [
   { id: 'v-dimplex', name: 'Dimplex North America', kind: 'manufacturer', terms: 'Net 30', category: 'Inventory purchases' },
   { id: 'v-kuma', name: 'Kuma Stoves', kind: 'manufacturer', terms: 'Net 30', category: 'Inventory purchases' },
   { id: 'v-hpc', name: 'HPC Fire', kind: 'manufacturer', terms: 'Net 30', category: 'Inventory purchases' },
+  { id: 'v-montigo', name: 'Montigo', kind: 'manufacturer', terms: 'Net 30', category: 'Inventory purchases' },
   // Fictional suppliers for parts, venting and stone
   { id: 'v-ozark', name: 'Ozark Hearth Supply', kind: 'distributor', terms: 'Net 30', account: 'OHS-1975', category: 'Inventory purchases' },
   { id: 'v-venting', name: 'Show-Me Venting & Supply', kind: 'distributor', terms: 'Net 30', category: 'Inventory purchases' },

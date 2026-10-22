@@ -4,6 +4,7 @@
  * labelled placeholder with where to see the model meanwhile. Photos published from HMI mode in this browser replace
  * it as a preview (src/scripts/productPhotos.ts).
  */
+import '../styles/gallery.css';
 import Photo from './Photo.astro';
 import { photosFor } from '../data/productPhotos';
 import { productPath, type Product } from '../data/products';
@@ -34,7 +35,16 @@ const total = photos.length;
             <div class="gallery__frame">
               <Photo src={photo.src} alt={photo.alt} sizes="(min-width: 960px) 560px, 100vw" loading={i ? 'lazy' : 'eager'} fetchpriority={i ? undefined : 'high'} />
             </div>
-            {(photo.caption || photo.credit) && <figcaption class="gallery__caption">{[photo.caption, photo.credit].filter(Boolean).join(' · ')}</figcaption>}
+            {(photo.caption || photo.credit || photo.license) && (
+              <figcaption class="gallery__caption">
+                {[photo.caption, photo.credit].filter(Boolean).join(' · ')}
+                {photo.license && (
+                  <span class="gallery__credit">
+                    {(photo.caption || photo.credit) && ' · '}Photo: <a href={photo.license.source} rel="noopener">{photo.license.author}</a>, <a href={photo.license.url} rel="license noopener">{photo.license.name}</a>
+                  </span>
+                )}
+              </figcaption>
+            )}
           </figure>
         ))
       ) : (
@@ -66,7 +76,7 @@ const total = photos.length;
     !total && (outbound || stores.length > 0) && (
       <p class="gallery__note">
         {/* prettier-ignore */}
-        See it {outbound && <a href={outbound} target="_blank" rel="noopener" data-outbound>on {brand}’s site<span class="visually-hidden"> (opens in a new tab)</span></a>}{outbound && stores.length > 0 && ' or '}{stores.length > 0 && 'on the showroom floor in '}{stores.map((s, i) => <>{i > 0 && ' and '}<a href={s.href}>{s.name}</a></>)}.
+        See it {outbound && <a href={outbound} target="_blank" rel="noopener" data-outbound><span data-outbound-site>on {brand}’s site</span><span class="visually-hidden"> (opens in a new tab)</span></a>}{outbound && stores.length > 0 && ' or '}{stores.length > 0 && 'on the showroom floor in '}{stores.map((s, i) => <>{i > 0 && ' and '}<a href={s.href}>{s.name}</a></>)}.
       </p>
     )
   }
@@ -76,113 +86,3 @@ const total = photos.length;
   import { initProductPhotos } from '../scripts/productPhotos';
   initProductPhotos();
 </script>
-
-<style is:global>
-  /* Global: a preview built in the browser (src/scripts/productPhotos.ts) uses the same classes */
-  .gallery {
-    display: grid;
-    gap: var(--space-3);
-    min-width: 0;
-  }
-
-  .gallery__slide {
-    display: grid;
-    gap: var(--space-2);
-    margin: 0;
-  }
-
-  .gallery__slide[hidden] {
-    display: none;
-  }
-
-  .gallery__frame {
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: #120d0b;
-    box-shadow: 0 30px 60px -25px rgb(0 0 0 / 0.7);
-  }
-
-  .gallery__frame img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  .gallery__frame--placeholder {
-    background: #efe5d6;
-  }
-
-  .gallery__frame--placeholder img {
-    object-fit: cover;
-  }
-
-  .gallery__caption,
-  .gallery__note {
-    font-size: var(--fs-xs);
-    color: var(--c-text-invert-muted);
-  }
-
-  .gallery__note a {
-    color: var(--c-flame);
-    font-weight: 600;
-    text-underline-offset: 3px;
-  }
-
-  .gallery__note a:hover {
-    color: #ffd29a;
-  }
-
-  .gallery__note--preview {
-    padding: var(--space-2) var(--space-3);
-    border: 1px dashed rgb(240 160 75 / 0.55);
-    border-radius: var(--radius);
-    background: rgb(240 160 75 / 0.1);
-    color: var(--c-text-invert);
-  }
-
-  .gallery__thumbs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    padding: 0;
-    margin: 0;
-    list-style: none;
-  }
-
-  .gallery__thumb {
-    display: block;
-    width: 72px;
-    aspect-ratio: 4 / 3;
-    padding: 0;
-    overflow: hidden;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    background: #120d0b;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.15s ease, border-color 0.15s ease;
-  }
-
-  .gallery__thumb:hover,
-  .gallery__thumb[aria-pressed='true'] {
-    opacity: 1;
-  }
-
-  .gallery__thumb[aria-pressed='true'] {
-    border-color: var(--c-flame);
-  }
-
-  .gallery__thumb img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .gallery__thumb {
-      transition: none;
-    }
-  }
-</style>

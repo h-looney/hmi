@@ -4,11 +4,12 @@ import { money, plural, shortDate } from '../../../lib/format';
 import { storeName, STORES } from '../../../selectors';
 import { ChartFrame, HBarChart } from '../../../ui/charts';
 import { Badge, Button, Card, Chips, EmptyState, Link, Stat, type Tone } from '../../../ui/core';
-import type { IconName } from '../../../ui/Icon';
+import { Icon, type IconName } from '../../../ui/Icon';
 import { DataTable } from '../../../ui/Table';
 import type { ReportProps } from '../Analytics';
 import { downloadCSV, sum } from '../facts';
 import { inventoryHealth } from '../metrics';
+import { isStandIn, reportItemName, STAND_IN_NOTE } from '../standIns';
 
 type Health = ReturnType<typeof inventoryHealth>[number]['health'];
 
@@ -61,7 +62,7 @@ export default function InventoryHealth({ d, facts, range, store, today }: Repor
           onClick={() =>
             downloadCSV(`inventory-health-${today}.csv`, [
               ['SKU', 'Item', 'Category', 'On hand', 'Available', `Sold (${range.label})`, 'Last sold', 'Days of supply', 'Value at cost', 'Status'],
-              ...rows.map((r) => [r.item.id, `${r.item.brand} ${r.item.name}`, r.item.category, r.onHand, r.available, r.sold, r.lastSale ?? '', r.daysOfSupply !== undefined ? Math.round(r.daysOfSupply) : '', Math.round(r.value), healthMeta[r.health].label]),
+              ...rows.map((r) => [isStandIn(r.item) ? '' : r.item.id, reportItemName(d, r.item), r.item.category, r.onHand, r.available, r.sold, r.lastSale ?? '', r.daysOfSupply !== undefined ? Math.round(r.daysOfSupply) : '', Math.round(r.value), healthMeta[r.health].label]),
             ])
           }
         >
@@ -74,6 +75,14 @@ export default function InventoryHealth({ d, facts, range, store, today }: Repor
         <Stat label="Slow movers" icon="clock" value={slow.length} hint={`${money(sum(slow.map((r) => r.value)), false)} tied up · no sale in 120+ days`} />
         <Stat label="Low or out of stock" icon="alert" value={counts('low') + counts('out')} hint="Below reorder point" to="/office/inventory/?filter=low" />
         <Stat label="Appliance days of supply" icon="calendar" value={unitsSupply.length ? `${Math.round(unitsSupply.sort((a, b) => a - b)[Math.floor(unitsSupply.length / 2)])} days` : '—'} hint="Median across models that sold" />
+      </div>
+
+      <div class="callout callout--amber">
+        <Icon name="info" size={18} />
+        <div>
+          <p class="callout__title">Sample data</p>
+          <p class="callout__text">{STAND_IN_NOTE}</p>
+        </div>
       </div>
 
       <ChartFrame
@@ -99,17 +108,24 @@ export default function InventoryHealth({ d, facts, range, store, today }: Repor
             {
               key: 'item',
               label: 'Item',
-              sortValue: (r) => r.item.name,
-              render: (r) => (
-                <span>
-                  <Link class="cell-main" to={`/office/inventory/?id=${r.item.id}`}>
-                    {r.item.brand === 'HMI Supply' ? r.item.name : `${r.item.brand} ${r.item.name}`}
-                  </Link>
-                  <span class="cell-sub">
-                    {r.item.id} · {r.item.category}
+              sortValue: (r) => reportItemName(d, r.item),
+              // Real items under stand-in names, without the link or SKU that would name them (standIns.ts)
+              render: (r) =>
+                isStandIn(r.item) ? (
+                  <span>
+                    <span class="cell-main">{reportItemName(d, r.item)}</span>
+                    <span class="cell-sub">{r.item.category}</span>
                   </span>
-                </span>
-              ),
+                ) : (
+                  <span>
+                    <Link class="cell-main" to={`/office/inventory/?id=${r.item.id}`}>
+                      {r.item.name}
+                    </Link>
+                    <span class="cell-sub">
+                      {r.item.id} · {r.item.category}
+                    </span>
+                  </span>
+                ),
             },
             { key: 'onHand', label: 'On hand', align: 'right', sortValue: (r) => r.onHand, render: (r) => r.onHand },
             { key: 'sold', label: 'Sold', align: 'right', sortValue: (r) => r.sold, render: (r) => r.sold },

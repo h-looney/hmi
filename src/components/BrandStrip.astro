@@ -1,0 +1,90 @@
+---
+/**
+ * The brands HMI carries for a category, as one row of links straight into that category's listings filtered to the
+ * brand (?brand=<id>), each with how many of its models are listed. Sits directly under listings on a model page.
+ */
+import { brands as brandDirectory } from '../data/brands';
+import type { Category } from '../data/categories';
+import { brandSites, productsIn } from '../data/products';
+import { withBase } from '../scripts/url';
+
+interface Props {
+  category: Category;
+  /** The brand of the page it's on, listed first */
+  current?: string;
+}
+
+const { category: c, current } = Astro.props;
+const listed = productsIn(c.slug as Parameters<typeof productsIn>[0]).filter((m) => m.status === 'current');
+const name = (id: string) => brandDirectory.find((b) => b.id === id)?.name ?? brandSites[id]?.name ?? id;
+const rows = [...new Set([...c.brands, ...listed.map((m) => m.brand)])]
+  .map((id) => ({ id, name: name(id), count: listed.filter((m) => m.brand === id).length }))
+  .sort((a, b) => Number(b.id === current) - Number(a.id === current) || b.count - a.count || a.name.localeCompare(b.name));
+const lower = c.name.toLowerCase();
+---
+
+<div class="brand-strip">
+  <h3 class="brand-strip__title" id={`brand-strip-${c.slug}`}>Brands we carry for {lower}</h3>
+  <ul class="brand-strip__list" role="list" aria-labelledby={`brand-strip-${c.slug}`}>
+    {
+      rows.map((b) => (
+        <li>
+          <a
+            class="chip brand-strip__chip"
+            href={withBase(b.count > 0 ? `/products/${c.slug}/?brand=${b.id}#models` : `/products/${c.slug}/#shop-brand-${b.id}`)}
+          >
+            {b.name}{' '}
+            <span class="brand-strip__n">
+              {b.count > 0 ? b.count : 'ask'}
+              <span class="visually-hidden">{b.count > 0 ? ` ${b.count === 1 ? 'model' : 'models'} listed` : ' us about any model'}</span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .brand-strip {
+    margin-top: var(--space-7);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--c-stone);
+  }
+
+  .brand-strip__title {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-md);
+  }
+
+  .brand-strip__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .brand-strip__chip {
+    min-height: 38px;
+    padding-inline: 1em;
+    text-decoration: none;
+    transition: border-color var(--dur) var(--ease);
+  }
+
+  .brand-strip__chip:hover {
+    border-color: var(--c-ember);
+  }
+
+  .brand-strip__n {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6em;
+    height: 1.6em;
+    padding-inline: 0.4em;
+    border-radius: var(--radius-pill);
+    background: var(--c-linen);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

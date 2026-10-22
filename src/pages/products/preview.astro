@@ -1,0 +1,144 @@
+---
+/**
+ * A new listing's page: one written in HMI mode and published (simulated) in this browser. There's no server in this
+ * concept, so this one page reads ?id= and fills itself in from this browser's storage
+ * (src/scripts/listingPreview.ts). In production a publish would give the listing a real page like every model's.
+ */
+import '../../styles/model-page.css';
+import '../../styles/gallery.css';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import Icon from '../../components/Icon.astro';
+import { categories } from '../../data/categories';
+import { locations, prettyPhone, tel } from '../../data/site';
+import { withBase } from '../../scripts/url';
+
+const names = Object.fromEntries(categories.map((c) => [c.slug, c.name]));
+---
+
+<BaseLayout title="Listing preview" description="A product listing written in HMI mode, previewed in this browser." noindex>
+  <div data-preview-page>
+    <script is:inline type="application/json" data-categories set:html={JSON.stringify(names)} />
+
+    <div data-preview-found hidden>
+      <section class="mhero on-dark">
+        <div class="container mhero__inner">
+          <div class="mhero__text">
+            <Breadcrumbs items={[{ label: 'Products', href: withBase('/products/') }, { label: 'Category', href: withBase('/products/') }, { label: 'Listing' }]} class="mhero__crumbs" />
+            <p class="eyebrow" data-preview-brand></p>
+            <h1 data-preview-name>Listing</h1>
+            <p class="lead" data-preview-summary></p>
+            <ul class="cluster mhero__chips" role="list">
+              <li class="chip" data-preview-type></li>
+              <li class="chip">Preview</li>
+            </ul>
+            <div class="mhero__actions">
+              <a href={withBase('/contact/')} class="btn btn--primary btn--lg" data-preview-quote>
+                Get a quote on this model <Icon name="arrow-right" size={18} class="icon-arrow" />
+              </a>
+              <a href="#specs" class="btn btn--ghost-light btn--lg" target="_blank" rel="noopener noreferrer" data-preview-outbound>
+                <span data-preview-outbound-text>Full specs</span>
+                <Icon name="arrow-up-right" size={18} />
+                <span class="visually-hidden">(opens in a new tab)</span>
+              </a>
+            </div>
+          </div>
+          <div class="gallery" data-gallery data-preview-gallery>
+            <div class="gallery__slides">
+              <figure class="gallery__slide" data-slide="0">
+                <div class="gallery__frame gallery__frame--placeholder"></div>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container mgrid">
+          <div class="mspecs" id="specs">
+            <h2 class="mspecs__title">Key specs</h2>
+            <p class="mspecs__preview">
+              <Icon name="info" size={16} />
+              <span>Preview: a listing written in HMI mode and published in this browser. On the live site it would have a page like every other model’s.</span>
+            </p>
+            <div data-preview-specs>
+              <p class="muted">Ask us for the full spec sheet.</p>
+            </div>
+          </div>
+
+          <aside class="mdisplay" aria-labelledby="display-title">
+            <h2 id="display-title" class="mdisplay__title">On display at</h2>
+            <ul role="list" class="mdisplay__list">
+              {
+                locations.map((s) => (
+                  <li class="store-row" data-store-row={s.slug}>
+                    <span class="store-row__icon">
+                      <Icon name="pin" size={18} />
+                    </span>
+                    <span class="store-row__main">
+                      <a href={withBase(`/locations/${s.slug}/`)} class="store-row__name">
+                        {s.shortName}
+                      </a>
+                      <span class="store-row__state" data-store-state>
+                        Not on display — we can order one
+                      </span>
+                      <span class="store-row__meta">
+                        {s.street}, {s.city} ·{' '}
+                        <a href={tel(s.phone)} class="tabular">
+                          {prettyPhone(s.phone)}
+                        </a>
+                      </span>
+                    </span>
+                  </li>
+                ))
+              }
+            </ul>
+            <p class="mdisplay__note">Displays change — call ahead to make sure it’s on the floor.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section section--linen">
+        <div class="container">
+          <a href={withBase('/products/')} class="link-arrow" data-preview-category-link>
+            Shop all <span data-preview-category>products</span>
+            <Icon name="arrow-right" size={16} />
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <section class="section" data-preview-missing>
+      <div class="container--narrow preview-missing">
+        <p class="eyebrow">Listing preview</p>
+        <h1>Nothing to preview here</h1>
+        <p class="lead">
+          This page shows a listing written in HMI mode once it’s published (simulated) in this browser. There isn’t one for this link here — it may have
+          been published in another browser, or taken down.
+        </p>
+        <div class="cluster">
+          <a href={withBase('/office/website/?listing=new&signin')} class="btn btn--primary">Write a listing in HMI mode</a>
+          <a href={withBase('/products/')} class="btn btn--outline">Browse products</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initPreviewPage } from '../../scripts/listingPreview';
+  void initPreviewPage();
+</script>
+
+<style>
+  .preview-missing {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  [data-preview-found][hidden],
+  [data-preview-missing][hidden] {
+    display: none;
+  }
+</style>

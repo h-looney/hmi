@@ -3,7 +3,8 @@
  *
  * - Galleries: the thumbnails under a model's photo switch the large one.
  * - Preview: photos published from HMI mode in this browser (simulated — they're kept in this browser, not on the
- *   site) take the placeholder's place on model pages and cards, with a note saying so.
+ *   site) take the placeholder's place on model pages and cards, with a note saying so. The listing preview
+ *   (src/scripts/listingPreview.ts) uses the same pieces for the cards and pages it builds.
  */
 import { readPublishedPhotos, type SitePhoto } from '../office/bridge';
 
@@ -15,7 +16,7 @@ export function initProductPhotos() {
   if (started) return;
   started = true;
   document.querySelectorAll<HTMLElement>('[data-gallery]').forEach(wire);
-  void preview();
+  void previewPhotosIn(document);
 }
 
 function wire(gallery: HTMLElement) {
@@ -48,7 +49,7 @@ function img(photo: Published, alt: string) {
 }
 
 /** Rebuild a model page's gallery from the photos published in this browser. */
-function build(gallery: HTMLElement, photos: Published[]) {
+export function buildGallery(gallery: HTMLElement, photos: Published[]) {
   const slides = el('div', 'gallery__slides');
   photos.forEach((photo, i) => {
     const slide = el('figure', 'gallery__slide');
@@ -82,16 +83,17 @@ function build(gallery: HTMLElement, photos: Published[]) {
   wire(gallery);
 }
 
-async function preview() {
-  const galleries = [...document.querySelectorAll<HTMLElement>('[data-gallery-for]')];
-  const cards = [...document.querySelectorAll<HTMLElement>('[data-product-photo]')];
+/** Show the photos published from HMI mode in this browser in the galleries and cards under `root` */
+export async function previewPhotosIn(root: ParentNode) {
+  const galleries = [...root.querySelectorAll<HTMLElement>('[data-gallery-for]')];
+  const cards = [...root.querySelectorAll<HTMLElement>('[data-product-photo]')];
   const ids = [...new Set([...galleries.map((g) => g.dataset.galleryFor!), ...cards.map((c) => c.dataset.productPhoto!)])];
   if (!ids.length) return;
   const published = await readPublishedPhotos(ids);
   if (!published.size) return;
   for (const gallery of galleries) {
     const photos = published.get(gallery.dataset.galleryFor!);
-    if (photos) build(gallery, photos);
+    if (photos) buildGallery(gallery, photos);
   }
   for (const card of cards) {
     const photos = published.get(card.dataset.productPhoto!);

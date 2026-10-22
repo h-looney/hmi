@@ -1,0 +1,314 @@
+---
+/**
+ * What HMI sells in a category, in one place: its listings (filter them by brand), then directly underneath every
+ * brand it carries for the category — how many of that brand's models are listed here, and its full line on its own
+ * site — then the models it still services. Listings published from HMI mode in this browser join the grid as
+ * previews (src/scripts/listingPreview.ts). Category pages accept ?brand=<id> to open on one brand.
+ */
+import Icon from './Icon.astro';
+import ProductCard from './ProductCard.astro';
+import SectionHeading from './SectionHeading.astro';
+import { brands as brandDirectory } from '../data/brands';
+import type { Category } from '../data/categories';
+import { goPath } from '../data/links';
+import { brandSites, productPath, productsIn } from '../data/products';
+import { withBase } from '../scripts/url';
+
+interface Props {
+  category: Category;
+}
+
+const { category: c } = Astro.props;
+const models = productsIn(c.slug as Parameters<typeof productsIn>[0]);
+const current = models.filter((m) => m.status === 'current');
+const retired = models.filter((m) => m.status === 'discontinued');
+const brandName = (id: string) => brandDirectory.find((b) => b.id === id)?.name ?? brandSites[id]?.name ?? id;
+const count = (id: string) => current.filter((m) => m.brand === id).length;
+
+// Every brand carried for the category, plus any brand with a model listed here: listed brands first
+const brandIds = [...new Set([...c.brands, ...current.map((m) => m.brand)])];
+const brandRows = brandIds
+  .map((id) => ({
+    id,
+    name: brandName(id),
+    blurb: brandDirectory.find((b) => b.id === id)?.blurb,
+    count: count(id),
+    site: brandSites[id] ? withBase(goPath(id)) : undefined,
+  }))
+  .sort((a, b) => Number(b.count > 0) - Number(a.count > 0) || a.name.localeCompare(b.name));
+const withModels = brandRows.filter((b) => b.count > 0);
+const lower = c.name.toLowerCase();
+const plural = (n: number) => `${n} ${n === 1 ? 'model' : 'models'}`;
+---
+
+<section class="section section--linen shop" id="models" data-shop={c.slug} data-shop-name={lower}>
+  <div class="container">
+    <SectionHeading
+      eyebrow="Shop"
+      title={`${c.name} <em>we sell.</em>`}
+      lead={`Every model here has its own page with checked specs and which showroom has it on display. Each brand below can also order its full line — ask about anything you don’t see.`}
+      align="split"
+    />
+
+    <div class="shop__filters" role="group" aria-label={`Show ${lower} by brand`} data-shop-filters hidden={withModels.length < 2 || undefined}>
+      <button type="button" class="chip" data-shop-brand="all" aria-pressed="true">
+        All brands <span class="shop__n" data-shop-count="all">{current.length}</span>
+      </button>
+      {
+        withModels.map((b) => (
+          <button type="button" class="chip" data-shop-brand={b.id} aria-pressed="false">
+            {b.name} <span class="shop__n" data-shop-count={b.id}>{b.count}</span>
+          </button>
+        ))
+      }
+    </div>
+    <p class="visually-hidden" role="status" data-shop-status></p>
+
+    <div class="grid grid--models shop__grid" data-shop-grid>
+      {
+        current.map((m) => (
+          <div class="shop__item" data-brand={m.brand}>
+            <ProductCard product={m} />
+          </div>
+        ))
+      }
+    </div>
+    <p class="shop__empty" data-shop-empty hidden={current.length > 0 || undefined}>
+      No {lower} are listed yet — every brand below can order its full line.
+    </p>
+
+    <div class="shop__brands" id="brands" data-shop-brands>
+      <div class="shop__brands-head">
+        <h3 class="shop__brands-title">Brands we carry for {lower}</h3>
+        <a href={withBase('/products/#brands')} class="link-arrow">Every brand we carry <Icon name="arrow-right" size={16} /></a>
+      </div>
+      <ul class="shop-brands" role="list">
+        {
+          brandRows.map((b) => (
+            <li class:list={['shop-brand', { 'is-listed': b.count > 0 }]} id={`shop-brand-${b.id}`} data-brand-card={b.id}>
+              <h4 class="shop-brand__name">{b.name}</h4>
+              <p class="shop-brand__count" data-brand-count={b.id} data-name={b.name}>
+                {b.count > 0 ? `${plural(b.count)} listed here` : 'Ask us about any model'}
+              </p>
+              {b.blurb && <p class="shop-brand__blurb">{b.blurb}</p>}
+              <div class="shop-brand__links">
+                <a
+                  href={b.count > 0 ? `?brand=${b.id}#models` : withBase(`/contact/?interest=${c.slug}&brand=${b.id}`)}
+                  class="shop-brand__show"
+                  data-shop-show={b.id}
+                  data-ask={withBase(`/contact/?interest=${c.slug}&brand=${b.id}`)}
+                >
+                  {b.count > 0 ? (
+                    <>
+                      Show {b.count === 1 ? 'it' : 'them'}
+                      <span class="visually-hidden"> ({b.name} {lower})</span>
+                    </>
+                  ) : (
+                    <>
+                      Ask about {b.name}
+                    </>
+                  )}
+                </a>
+                {b.site && (
+                  <a href={b.site} class="shop-brand__site" target="_blank" rel="noopener">
+                    Full line <Icon name="arrow-up-right" size={14} />
+                    <span class="visually-hidden">at {b.name}’s site (opens in a new tab)</span>
+                  </a>
+                )}
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    {
+      retired.length > 0 && (
+        <div class="retired">
+          <h3 class="retired__title">No longer made — we still service them</h3>
+          <ul role="list" class="retired__list">
+            {retired.map((m) => (
+              <li>
+                <a href={withBase(productPath(m))}>
+                  {brandName(m.brand)} {m.model}
+                </a>
+                <span class="muted"> · {m.type}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<script>
+  import { initShop } from '../scripts/listingPreview';
+  initShop();
+</script>
+
+<style is:global>
+  .shop__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: var(--space-6);
+  }
+
+  .shop__filters[hidden] {
+    display: none;
+  }
+
+  .shop__n {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6em;
+    height: 1.6em;
+    padding-inline: 0.35em;
+    border-radius: var(--radius-pill);
+    background: var(--c-linen);
+    color: var(--c-text);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  button.chip[aria-pressed='true'] .shop__n {
+    background: rgb(255 255 255 / 0.16);
+    color: inherit;
+  }
+
+  .shop__grid {
+    align-items: stretch;
+  }
+
+  .shop__item {
+    display: grid;
+  }
+
+  .shop__item[hidden] {
+    display: none;
+  }
+
+  .shop__empty {
+    padding: var(--space-5);
+    border: 1px dashed var(--c-stone-2);
+    border-radius: var(--radius-lg);
+    background: var(--c-paper);
+    color: var(--c-text-muted);
+  }
+
+  .shop__empty[hidden] {
+    display: none;
+  }
+
+  .shop__brands {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--c-stone);
+    scroll-margin-top: var(--space-8);
+  }
+
+  .shop__brands-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+
+  .shop__brands-title {
+    font-size: var(--fs-lg);
+  }
+
+  .shop-brands {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .shop-brand {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 0.3rem;
+    padding: var(--space-4) var(--space-5);
+    background: var(--c-paper);
+    border: 1px solid var(--c-stone);
+    border-radius: var(--radius-lg);
+  }
+
+  .shop-brand.is-listed {
+    border-top: 3px solid var(--c-ember);
+  }
+
+  .shop-brand:target {
+    border-color: var(--c-ember);
+    box-shadow: 0 0 0 3px var(--c-ember-50);
+    scroll-margin-top: var(--space-8);
+  }
+
+  .shop-brand__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .shop-brand__count {
+    font-size: var(--fs-2xs);
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-brass-text);
+  }
+
+  .shop-brand__blurb {
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  .shop-brand__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-top: var(--space-2);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .shop-brand__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    min-height: 24px;
+    color: var(--c-ember-700);
+  }
+
+  .retired {
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    border: 1px dashed var(--c-stone-2);
+    border-radius: var(--radius-lg);
+    background: var(--c-paper);
+  }
+
+  .retired__title {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-md);
+  }
+
+  .retired__list {
+    display: grid;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-sm);
+  }
+
+  .retired__list a {
+    color: var(--c-ember-700);
+    font-weight: 600;
+  }
+</style>

@@ -1,25 +1,31 @@
-/** Products: the one list behind every model page and manufacturer link, with edits pending the next publish. */
+/**
+ * Products: the one list behind every model page and manufacturer link, with edits pending the next publish — and
+ * the listings HMI writes itself (?listing=new, or ?listing=<id> to edit one).
+ */
 import { useMemo, useState } from 'preact/hooks';
 import { categories } from '../../../data/categories';
 import { productById, products, type ProductStatus } from '../../../data/products';
 import { plural } from '../../lib/format';
-import { setParams } from '../../router';
+import { param, setParams } from '../../router';
 import { toast } from '../../toast';
 import { Button, Card, Chips, EmptyState, Field, Menu, SearchInput } from '../../ui/core';
 import { Dialog } from '../../ui/Dialog';
 import { Icon } from '../../ui/Icon';
 import { DataTable, type Column } from '../../ui/Table';
-import { editProduct, removeDraft, setLinkUrl, undoEdit, undoLinkUrl, undoPhotos } from './actions';
+import { editProduct, removeListing, setLinkUrl, undoEdit, undoLinkUrl, undoListing, undoPhotos } from './actions';
 import { goHref, onDisplay, report, siteHref, webProducts, type WebProduct } from './data';
 import { ago, LinkBadge, PendingBadge, ProductBadge, shortUrl } from './helpers';
+import { ListingEditor } from './ListingEditor';
 import { PhotoImg, PhotosDialog } from './PhotosDialog';
 
 type Filter = 'all' | 'current' | 'discontinued' | 'hidden' | 'attention' | 'pending' | 'nophotos';
 
 const categoryName = (slug: string) => categories.find((c) => c.slug === slug)?.name ?? slug;
 const failing = (p: WebProduct) => !!p.link && ['dead', 'wrong-page', 'soft-404'].includes(p.link.status);
+/** Photos can be added to a model with a public page, and to a new listing before it goes up */
+const takesPhotos = (p: WebProduct) => (!!p.page || p.isNew) && !p.removed;
 /** On the showroom floor, with a public page, but no photos yet */
-const needsPhotos = (p: WebProduct) => !!p.page && p.status === 'current' && onDisplay(p) && p.photos.length === 0;
+const needsPhotos = (p: WebProduct) => takesPhotos(p) && p.status === 'current' && onDisplay(p) && p.photos.length === 0;
 
 function EditDialog({ p, onClose }: { p: WebProduct; onClose: () => void }) {
   const [status, setStatus] = useState<ProductStatus>(p.status);
@@ -83,6 +89,14 @@ function EditDialog({ p, onClose }: { p: WebProduct; onClose: () => void }) {
 }
 
 export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
+  const listing = param('listing');
+  if (listing) return <ListingEditor key={listing} id={listing} onClose={() => setParams({ listing: undefined, category: undefined })} />;
+  return <ProductList onTag={onTag} />;
+}
+
+const openListing = (id: string) => setParams({ listing: id });
+
+function ProductList({ onTag }: { onTag: (id: string) => void }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [editing, setEditing] = useState<WebProduct | null>(null);
@@ -122,7 +136,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
         <span>
           <span class="cell-sub">{p.brandName}</span>
           <span class="cell-main">{p.model}</span>
-          <span class="cell-sub">{p.draft ? 'New model (draft)' : `${p.type} · ${categoryName(p.category)}`}</span>
+          <span class="cell-sub">{[p.isNew ? 'New listing' : '', p.type, p.category ? categoryName(p.category) : p.isNew ? 'No category yet' : ''].filter(Boolean).join(' · ')}</span>
         </span>
       ),
     },
@@ -134,6 +148,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
         <span class="web-status">
           <ProductBadge status={p.status} />
           {p.status === 'discontinued' && <span class="cell-sub">{p.replacement ? `Replacement: ${p.replacement.name}` : 'No replacement named'}</span>}
+          {p.removed && <span class="cell-sub">Taken off the list</span>}
           {p.pending && <PendingBadge />}
         </span>
       ),
@@ -149,13 +164,17 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
               HMI page<span class="sr-only"> for {p.model} (opens in a new tab)</span>
             </a>
           ) : (
-            <span class="cell-sub">No public page</span>
+            <span class="cell-sub">{p.isNew && p.status === 'current' && !p.removed ? 'Page after publish' : 'No public page'}</span>
           )}
-          <a href={p.url} target="_blank" rel="noopener noreferrer" class="web-url" title={p.url}>
-            <Icon name="external" size={13} />
-            <span class="web-url__text">{shortUrl(p.url)}</span>
-            <span class="sr-only"> (manufacturer page for {p.model}, opens in a new tab)</span>
-          </a>
+          {p.url ? (
+            <a href={p.url} target="_blank" rel="noopener noreferrer" class="web-url" title={p.url}>
+              <Icon name="external" size={13} />
+              <span class="web-url__text">{shortUrl(p.url)}</span>
+              <span class="sr-only"> (manufacturer page for {p.model}, opens in a new tab)</span>
+            </a>
+          ) : (
+            <span class="cell-sub">No manufacturer page</span>
+          )}
         </span>
       ),
     },
@@ -165,7 +184,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
       sortValue: (p) => p.link?.status ?? 'zz',
       render: (p) => (
         <span class="web-health">
-          {p.draft ? <span class="cell-sub">Checked after publish</span> : p.status === 'hidden' ? <span class="cell-sub">Not checked (hidden)</span> : <LinkBadge result={p.link} />}
+          {p.isNew ? <span class="cell-sub">{p.url ? 'Checked after publish' : '—'}</span> : p.status === 'hidden' ? <span class="cell-sub">Not checked (hidden)</span> : <LinkBadge result={p.link} />}
           {p.link && <span class="cell-sub">checked {ago(p.link.checkedAt)}</span>}
         </span>
       ),
@@ -176,7 +195,7 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
       hide: 'sm',
       sortValue: (p) => p.photos.length,
       render: (p) =>
-        !p.page ? (
+        !takesPhotos(p) ? (
           <span class="cell-sub">—</span>
         ) : p.photos.length ? (
           <button type="button" class="web-photos" onClick={() => setPhotosFor(p.id)}>
@@ -208,40 +227,49 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
       key: 'actions',
       label: <span class="sr-only">Actions</span>,
       align: 'right',
-      render: (p) =>
-        p.draft ? (
-          <Menu
-            label={`Actions for ${p.model}`}
-            size="sm"
-            items={[{ label: 'Remove draft', icon: 'trash', danger: true, onSelect: () => (removeDraft(p.id), toast(`Draft ${p.model} removed`)) }]}
-          />
-        ) : (
-          <Menu
-            label={`Actions for ${p.model}`}
-            size="sm"
-            items={[
-              { label: 'Edit status or link…', icon: 'edit', onSelect: () => setEditing(p) },
-              ...(p.page ? [{ label: 'Photos…', icon: 'camera' as const, onSelect: () => setPhotosFor(p.id) }] : []),
-              ...(p.page ? [{ label: 'Print showroom tag', icon: 'printer' as const, onSelect: () => onTag(p.id) }] : []),
-              ...(p.slug ? [{ label: 'Open the /go/ link', icon: 'link' as const, onSelect: () => window.open(goHref(p.slug!), '_blank', 'noopener') }] : []),
-              ...(p.pending
-                ? [
-                    'divider' as const,
-                    {
-                      label: 'Undo pending change',
-                      icon: 'undo' as const,
-                      onSelect: () => {
-                        undoEdit(p.id);
-                        if (p.product) undoLinkUrl(p.product.slug);
-                        if (p.photosPending) undoPhotos(p.id);
-                        toast('Pending change undone');
-                      },
+      render: (p) => (
+        <Menu
+          label={`Actions for ${p.model}`}
+          size="sm"
+          items={[
+            ...(p.removed ? [] : [{ label: 'Edit listing…', icon: 'edit' as const, onSelect: () => openListing(p.id) }]),
+            ...(p.isNew ? [] : [{ label: 'Edit status or link…', icon: 'link' as const, onSelect: () => setEditing(p) }]),
+            ...(takesPhotos(p) ? [{ label: 'Photos…', icon: 'camera' as const, onSelect: () => setPhotosFor(p.id) }] : []),
+            ...(p.page && !p.isNew ? [{ label: 'Print showroom tag', icon: 'printer' as const, onSelect: () => onTag(p.id) }] : []),
+            ...(p.slug ? [{ label: 'Open the /go/ link', icon: 'external' as const, onSelect: () => window.open(goHref(p.slug!), '_blank', 'noopener') }] : []),
+            ...(p.pending
+              ? [
+                  'divider' as const,
+                  {
+                    label: p.removed ? 'Put it back' : 'Undo pending change',
+                    icon: 'undo' as const,
+                    onSelect: () => {
+                      undoEdit(p.id);
+                      if (p.product) undoLinkUrl(p.product.slug);
+                      undoListing(p.id);
+                      if (p.photosPending) undoPhotos(p.id);
+                      toast(p.removed ? `${p.model} is back on the list` : 'Pending change undone');
                     },
-                  ]
-                : []),
-            ]}
-          />
-        ),
+                  },
+                ]
+              : []),
+            ...(p.isNew && !p.removed
+              ? [
+                  'divider' as const,
+                  {
+                    label: 'Remove listing',
+                    icon: 'trash' as const,
+                    danger: true,
+                    onSelect: () => {
+                      removeListing(p.id);
+                      toast(`${p.model || 'Listing'} taken off the list${p.page ? ' — it leaves the site on the next publish (simulated)' : ''}`);
+                    },
+                  },
+                ]
+              : []),
+          ]}
+        />
+      ),
     },
   ];
 
@@ -250,6 +278,11 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
       <Card
         title="Products"
         subtitle={`${plural(products.length, 'model')} on the list${checked ? ` · links checked ${ago(checked)}` : ''} — the same list drives the model pages, /go/ links, the nightly checker, the sitemap watcher and HMI mode’s catalog.`}
+        actions={
+          <Button variant="primary" icon="plus" onClick={() => openListing('new')}>
+            New listing
+          </Button>
+        }
         flush
       >
         <div class="toolbar web-toolbar">
@@ -275,13 +308,13 @@ export function ProductsTab({ onTag }: { onTag: (id: string) => void }) {
           rowKey={(p) => p.id}
           caption="Product list"
           initialSort={{ key: 'model', dir: 'asc' }}
-          pageSize={50}
-          onRowClick={(p) => !p.draft && setEditing(p)}
+          pageSize={100}
+          onRowClick={(p) => !p.removed && openListing(p.id)}
           empty={<EmptyState icon="search" title="No products match" action={<Button onClick={() => (setQ(''), setFilter('all'))}>Clear filters</Button>} />}
         />
       </Card>
       <p class="demo-footnote">
-        Displays come from Inventory (the same counts the public “On display at” shows). Photos you add stay in this browser: after a publish (simulated), its model pages show them as a preview.{' '}
+        Displays come from Inventory (the same counts the public “On display at” shows). Listings and photos you add stay in this browser: after a publish (simulated), the public pages show them as a preview.{' '}
         <button type="button" class="link-btn" onClick={() => setParams({ tab: 'health' })}>
           See link health
         </button>

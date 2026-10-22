@@ -91,17 +91,6 @@ const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
         or <a href={withBase('/contact/')} class="text-link">ask our team</a>.
       </p>
 
-      <aside class="callout" data-reveal>
-        <span class="icon-tile"><Icon name="sparkle" size={24} /></span>
-        <div>
-          <h2 class="callout__title">Central vacuum systems, too</h2>
-          <p class="muted">
-            HMI has long been a source for central vacuum systems for new construction and existing homes. Ask either
-            showroom about options for your project.
-          </p>
-        </div>
-        <a href={withBase('/contact/?interest=central-vacuum')} class="btn btn--outline">Ask about central vacs</a>
-      </aside>
     </div>
   </section>
 
@@ -133,6 +122,22 @@ const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
       </div>
       <p class="filters__count" aria-live="polite" data-brand-count>{sortedBrands.length} brands</p>
       <BrandGrid brands={sortedBrands} showCategories anchors />
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <aside class="callout" data-reveal>
+        <span class="icon-tile"><Icon name="sparkle" size={24} /></span>
+        <div>
+          <h2 class="callout__title">Central vacuum systems, too</h2>
+          <p class="muted">
+            HMI has long been a source for central vacuum systems for new construction and existing homes. Ask either
+            showroom about options for your project.
+          </p>
+        </div>
+        <a href={withBase('/contact/?interest=central-vacuum')} class="btn btn--outline">Ask about central vacs</a>
+      </aside>
     </div>
   </section>
 
@@ -235,7 +240,6 @@ const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
     display: grid;
     gap: var(--space-5);
     align-items: center;
-    margin-top: var(--space-9);
     padding: var(--space-6);
     background: var(--c-paper);
     border: 1px solid var(--c-stone);

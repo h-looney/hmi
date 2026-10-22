@@ -81,6 +81,10 @@ previews stay out of search results.
 - **Multi-step quote form** and **service request form** with inline validation (front-end only — see below).
 - **Mega menu**, mobile drawer, and a phone **action bar** (Call · Visit · Get a quote) for local customers.
 - **Filterable product catalog**, searchable **brand directory**, and an **inspiration gallery** with lightbox.
+- **Shopping first on every product page**: a category page opens on what HMI sells — its models, filterable by
+  brand — with the brands HMI carries for that category directly underneath (how many of each brand's models are
+  listed, its full line on its own site, or “ask about any model”). Model pages end the same way: more models HMI
+  sells there, then the brands. Category cards say how many models they list (“Shop 8 models”).
 - **A page for every model** with specs checked against the manufacturer, a photo gallery (staff can add their own
   showroom photos in HMI mode), which showroom has it on display, and a one-click quote — plus **manufacturer links
   that fix themselves**: checked every night, with a safe fallback when a manufacturer’s page breaks (see
@@ -116,7 +120,7 @@ change each role's access under Settings → Team & permissions.
 | Inventory | Stock at Osage Beach and Nixa (on hand, reserved for jobs, showroom displays), transfers, adjustments, purchase orders and receiving |
 | Accounting | Invoices, estimates, payments, vendor bills, bank transactions and reports (P&L, sales tax, AR aging). Books can be kept **in-house** or **synced to QuickBooks Online** (simulated connection, sync settings, account mapping and log) |
 | Analytics | Reports filtered by date range and showroom — see below |
-| Website | The product list behind the model pages and manufacturer links: status and replacements, model photos, link health from the nightly check, new and discontinued models from the weekly sitemap watch, outbound clicks, the Monday summary and printable showroom tags with QR codes. Owners and store managers by default |
+| Website | The product list behind the model pages and manufacturer links: new listings written in HMI mode (custom specs, floor and install photos), status and replacements, model photos, link health from the nightly check, new and discontinued models from the weekly sitemap watch, outbound clicks, the Monday summary and printable showroom tags with QR codes. Owners and store managers by default |
 | Settings | Business profile, team & permissions, website-form routing and auto-reply, invoicing & tax, notifications, demo data |
 
 **The public site and HMI mode are connected.** Submit the quote or service-request form on the public site and the
@@ -147,7 +151,10 @@ five weeks of detailed jobs, invoices and requests, and three weeks of schedule 
 Brands and model names are real products from the product list (`src/data/products.ts`, which also supplies the
 showroom display counts); **customers, figures and every performance number are invented**
 (phone numbers use the reserved 555-01xx range, emails use example.com). Office staff profiles use names from the
-public About page; **technician names are placeholders**, and they're the only people the reports rate. The
+public About page; **technician names are placeholders**, and they're the only people the reports rate. The reports
+that rank or rate how products sold or held up (Best sellers, Problem units, Inventory health) show models, parts and
+brands under **stand-in names** (“Gas fireplace C”, “Brand F”, fixed for the demo), so invented figures never sit
+next to a real product; the live system would show HMI's real names with its real history. The
 problem-unit report is labeled as sample data, and its high-service groups are older appliances installed by others.
 
 ### How it's built
@@ -316,6 +323,18 @@ built to take whoever owns it about five minutes a week:
 - **Products** — the one list: brand, model, category, status and replacement, HMI page and manufacturer link, link
   health and last check, photos, and which showroom has it on display (the same counts as Inventory and the public
   pages). Edits are saved in this browser like the rest of HMI mode and marked “goes live on next publish (simulated)”.
+- **Listings** — **New listing** writes a product listing from scratch: category, brand (the ones HMI carries for that
+  category first), model, what it is, a short description in HMI’s words, the **link to the manufacturer’s or a
+  distributor’s page and what the link says** (“Full specs at Forge & Flame”), and how many are on each showroom floor. **Specs** are label + value rows: the common ones (fuel, heat input, heat output,
+  heating area, sizes, venting, viewing area, efficiency, burn time, ignition, dimensions, finish) are one click
+  away, anything else is typed in (labels already used on the site are suggested), and rows can be reordered.
+  **Photos** go straight in from the showroom floor or an install. A live preview shows the card and spec list as
+  they'll look. Clicking any model on the list opens the same editor on its page's content (its specs start with
+  the ones on its page), including its link: a changed address is stored with the other outbound links, so its /go/
+  page, the nightly check and the fallbacks all follow it. Draft listings stay off the site; models found by the sitemap watch join as drafts to fill
+  in. After a publish (simulated), the category page *in that browser* shows the new listing as a card marked
+  “Preview”, with its own page (`/products/preview/?id=…`), and changed model pages show their new specs and
+  description with a preview note; the quote form knows the listing too.
 - **Photos** — staff add their own photos of a model (a unit on the showroom floor, or one they installed); models on
   display without any get an “Add photos” button and a filter. Each photo is shrunk to 1600 px and re-encoded as JPEG
   in the browser, which also strips its location data; it needs a description (alt text) and can say where it was
@@ -335,11 +354,12 @@ The dashboard’s “Needs attention” list flags failing links, URLs to update
 
 | Real | Simulated or sample |
 | --- | --- |
-| Every model on the list, its manufacturer URL and every spec shown — checked on the manufacturer’s site on 2026-10-21 | Showroom display counts, stock, costs and prices (HMI mode’s sample data — the public pages show displays, never prices) |
+| Every model on the list, its manufacturer URL and every spec shown — checked on the manufacturer’s site on 2026-10-21 (2026-10-22 for the 36 added since) | Showroom display counts, stock, costs and prices (HMI mode’s sample data — the public pages show displays, never prices) |
 | The link checks, their verdicts, fallbacks and dates (`npm run links:check`, and the nightly job) | “Publish” of edits made in HMI mode (nothing on the public site changes) |
 | The sitemap reads and suggestions (`npm run links:sitemaps`, and the Monday job) | Sending the weekly summary (previewed only) |
 | /go/ redirects and the clicks recorded in your browser | Click counts across visitors (production would use server-side analytics) |
-| The GitHub issue alert (once the workflow runs) | Model photos: placeholders until HMI supplies media-kit or showroom photos. Photos added in HMI mode stay in that browser (published = previewed there) |
+| The GitHub issue alert (once the workflow runs) | Model photos: placeholders until HMI supplies media-kit or showroom photos (two models have openly licensed photos taken by their owners, credited). Photos added in HMI mode stay in that browser (published = previewed there) |
+| | Listings written or changed in HMI mode: kept in that browser, previewed on its public pages after a publish. In production a publish would add them to the product list (or a CMS) and rebuild, giving each its own page, /go/ link and nightly check |
 
 ## Editing content
 
@@ -384,6 +404,12 @@ repo). To add real ones (from the manufacturers’ dealer media kits, or HMI’s
 `src/assets/products/<model id>/` and describe them in `src/data/productPhotos.ts`. File-name order is gallery order,
 and the first file is the main photo.
 
+Openly licensed photos of an exact model are allowed too (CC0, CC BY or CC BY-SA — never NC or ND), credited under the
+photo with links to the source and license. A search of Flickr, Wikimedia Commons and Openverse found usable ones for
+two listed models — the Vermont Castings **Encore** and **Resolute Acclaim**, taken by their owners (CC BY-SA 2.0;
+credits in `src/assets/products/README.md`). Nothing turned up for the other brands' models, so the rest still need
+HMI's own or media-kit photos.
+
 ## To confirm with HMI
 
 - **Logo** — the logo file from the current site was cropped so tight that the final “p” and the left serifs of the
@@ -417,11 +443,27 @@ and the first file is the main photo.
   - **Which version:** Empire Boulevard 48 (direct-vent assumed; there’s also a vent-free one), HPC’s 30″ match-lit
     insert (round flat assumed; also square flat and square bowl), the Revillusion 42 finish (black assumed), and the
     Kozy Heat Chaska 34 is an insert, not a fireplace.
+- **The second batch of models** (36 added on 2026-10-22, so every category page lists at least three) is again a
+  guess at what HMI sells, checked against each maker’s page — which does HMI actually carry? Along the way:
+  - **Doors, mantels, stone and accessories now have model pages**, and the ones HMI mode already stocked became
+    real products where one exists: Cultured Stone Southern Ledgestone, Realstone Shadowstone (Galaxy Black), a Stoll
+    Original door (the 36″ matte-black bi-fold is a made-to-order option), MagraHearth Chiseled Stone (it has no
+    bluestone color), Imperial’s Type 2 stove board (Imperial doesn’t sell a “hearth pad”) and Hy-C’s Shelter log
+    racks (the one with a kindling holder is discontinued — Uniflame’s W-1246 has one).
+  - **Didn’t exist:** the Design Specialties “Tempco” and Thermo-Rite “Ovation” doors — replaced by the Carolina and
+    the TK Fireside Heritage.
+  - **Stone County Ironworks** now sells as Urban Forge, whose site blocks automated checks, so it has no listing yet.
+    **Blue Rhino**’s site is propane exchange only, with no hearth products — keep it in the accessories brands?
+  - **Mason-Lite** has one page for its Traditional kits rather than a page per model, so the MFP44 links there; its
+    figures are from the catalog that page links.
+  - **Vermont Castings Resolute Acclaim** is listed as discontinued (service and parts), with its owner’s manual.
 - **Showroom displays** on the model pages come from HMI mode’s sample inventory — the real list of floor models is
   needed before launch.
 - **Website owner** — who should receive the Monday website summary (Gabe by default), and which roles should see the
   Website section?
-- **Model photos** — can HMI share the manufacturers’ dealer media-kit images (or its logins to the dealer portals)?
+- **Model photos** — HMI’s own photos are the best source: floor models, installs, and the ones already on its
+  Facebook page or Google listing (staff can add them in HMI mode). Can HMI also share the manufacturers’ dealer
+  media-kit images (or its logins to the dealer portals)?
   They’re the only manufacturer photos the site can use. And which floor models should staff photograph first?
 - **Click counts** — production would count outbound clicks server-side; which analytics does HMI use, if any?
 - **Service areas** listed on the location pages are an educated guess.

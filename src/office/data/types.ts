@@ -451,17 +451,43 @@ export interface ProductEdit {
   publishedAt?: string;
 }
 
-/** A model added from the sitemap watcher's suggestions — a draft until it's published (simulated). */
-export interface DraftProduct {
+/** One line of a listing's specs, as staff write it: "Heat input" · "40,000 BTU/hr" */
+export interface ListingSpec {
+  label: string;
+  value: string;
+}
+
+/**
+ * A product listing written in HMI mode: a new one (from scratch, or a model the sitemap watch found) or staff's
+ * changes to the page of a model already on the product list. It holds everything the public page and cards show.
+ */
+export interface Listing {
+  /** The product id for a model on the product list; NEW-… for a new listing */
   id: string;
+  isNew: boolean;
+  /** Brand id (src/data/brands.ts) */
   brand: string;
   model: string;
-  url: string;
-  category?: string;
+  /** What it is, in a few words: "Linear gas fireplace" */
+  type: string;
+  /** Category slug (src/data/categories.ts); '' until someone picks one */
+  category: string;
+  /** HMI's own words, one or two sentences */
+  summary: string;
+  specs: ListingSpec[];
+  /** New listings: the manufacturer's or distributor's page, when there is one (a model on the list keeps its link
+   *  with the other outbound links, in WebsiteState.linkUrls — the nightly check tests those) */
+  url?: string;
+  /** What the link says, e.g. "Full specs at Forge & Flame" for a distributor's page. Default: "Full specs at <brand>" */
+  linkText?: string;
+  /** New listings: on the public site, or a draft. Models on the list change status under "Edit status or link" */
+  status: 'current' | 'hidden';
+  /** New listings: showroom display units (models on the list take Inventory's counts) */
+  display: Record<StoreId, number>;
+  /** Added from a sitemap suggestion */
   suggestionId?: string;
   by: string;
   at: string;
-  publishedAt?: string;
 }
 
 /** A new stored URL for an outbound link — typed in, or an accepted "moved" suggestion from the link check */
@@ -492,7 +518,10 @@ export interface WebsiteState {
   edits: Record<string, ProductEdit>;
   /** New stored URLs, by /go/ slug (models, brand sites, support pages and tools) */
   linkUrls: Record<string, LinkUrlEdit>;
-  drafts: DraftProduct[];
+  /** Listings written or changed in HMI mode, by id (new listings and models on the list) */
+  listings: Record<string, Listing>;
+  /** The listings as last published (simulated) */
+  listingsLive: Record<string, Listing>;
   /** Sitemap suggestions someone dismissed */
   dismissed: string[];
   /** Who gets the Monday summary (staff id) */

@@ -3,8 +3,8 @@
  *
  * There's no backend in this concept, so a submitted quote or service form is queued in
  * localStorage and a BroadcastChannel ping tells any open HMI mode tab to pick it up. The other
- * way round, model photos published from HMI mode (simulated) are read from this browser's
- * IndexedDB. The public pages import only this small file.
+ * way round, listings and model photos published from HMI mode (simulated) are read from this
+ * browser's IndexedDB. The public pages import only this small file.
  */
 
 export const QUEUE_KEY = 'hmi-office-queue';
@@ -142,7 +142,26 @@ export function recordClick(click: Omit<GoClick, 'at'>) {
 export const OFFICE_DB = 'hmi-office';
 export const OFFICE_STORE = 'state';
 export const SITE_PHOTOS_KEY = 'site-photos';
+export const SITE_LISTINGS_KEY = 'site-listings';
 export const photoKey = (id: string) => `photo:${id}`;
+
+/** A listing as published from HMI mode (simulated): a new one, or HMI's changes to a model on the product list */
+export interface SiteListing {
+  id: string;
+  isNew: boolean;
+  brand: string;
+  brandName: string;
+  model: string;
+  type: string;
+  category: string;
+  summary: string;
+  specs: { label: string; value: string }[];
+  /** The manufacturer's or distributor's page, when HMI set one in HMI mode */
+  url?: string;
+  /** What the link says, when HMI changed it */
+  linkText?: string;
+  display: { 'osage-beach': number; nixa: number };
+}
 
 export interface SitePhoto {
   id: string;
@@ -177,6 +196,18 @@ function read<T>(conn: IDBDatabase, key: string): Promise<T | undefined> {
       resolve(undefined);
     }
   });
+}
+
+/** Listings published from HMI mode in this browser (new ones on the public site, and changes to models on the list). */
+export async function readPublishedListings(): Promise<Record<string, SiteListing>> {
+  if (typeof indexedDB === 'undefined') return {};
+  const conn = await openOfficeDb();
+  if (!conn) return {};
+  try {
+    return (await read<Record<string, SiteListing>>(conn, SITE_LISTINGS_KEY)) ?? {};
+  } finally {
+    conn.close();
+  }
 }
 
 /** Photos published from HMI mode in this browser, for the given product ids — each with an object URL. */

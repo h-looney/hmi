@@ -4,6 +4,7 @@ import type { DB, History, JobFact, StoreFilter, StoreId } from '../../data/type
 import { addDays, diffDays } from '../../lib/dates';
 import { available, isOpenJob, matchStore, serviceDueOn, stockStatus, stockValue, STORES } from '../../selectors';
 import { avg, groupLabel, median, sum, within, type Facts, type Range } from './facts';
+import { reportBrandName, reportItemName } from './standIns';
 
 const SERVICE_TYPES = new Set(['maintenance', 'repair', 'warranty']);
 const FIX_TYPES = new Set(['repair', 'warranty']);
@@ -205,7 +206,9 @@ export function bestSellers(d: DB, facts: Facts, range: Range, store: StoreFilte
     const key = by === 'model' ? it.id : by === 'brand' ? it.brand : it.category;
     let r = acc.get(key);
     if (!r) {
-      r = { key, label: by === 'model' ? `${it.brand} ${it.name}` : key, brand: by === 'model' ? it.brand : '', category: by === 'model' ? it.category : '', units: 0, revenue: 0, cost: 0, margin: 0, avgPrice: 0, byStore: { 'osage-beach': 0, nixa: 0 }, itemId: by === 'model' ? it.id : undefined };
+      // Models and brands under their stand-in names: the sales are invented (standIns.ts)
+      const label = by === 'model' ? reportItemName(d, it) : by === 'brand' ? reportBrandName(d, it.brand) : key;
+      r = { key, label, brand: by === 'model' ? reportBrandName(d, it.brand) : '', category: by === 'model' ? it.category : '', units: 0, revenue: 0, cost: 0, margin: 0, avgPrice: 0, byStore: { 'osage-beach': 0, nixa: 0 }, itemId: by === 'model' ? it.id : undefined };
       acc.set(key, r);
     }
     r.units += s.qty;

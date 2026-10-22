@@ -9,8 +9,9 @@ import { FAILING, goPath, outboundLinks, type LinkReport, type LinkResult, type 
 import { brandSites, productPath, products, type Product, type ProductStatus } from '../../../data/products';
 import type { SitemapFeed, SitemapSuggestion } from '../../../data/sitemapFeed';
 import { CHANNEL, CLICKS_KEY, readClicks, type GoClick } from '../../bridge';
-import type { DraftProduct, LinkUrlEdit, ProductEdit, ProductPhotoMeta, StoreId } from '../../data/types';
+import type { Listing, LinkUrlEdit, ProductEdit, ProductPhotoMeta, StoreId } from '../../data/types';
 import { db } from '../../store';
+import { isListingPending, listingFromProduct, previewPath } from './listings';
 import { samePhotos } from './photos';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -75,10 +76,10 @@ export interface WebProduct {
   /** Status on the public site right now */
   liveStatus: ProductStatus;
   replacement?: { id?: string; name: string };
-  /** Manufacturer URL with any pending edit applied */
+  /** Manufacturer URL with any pending edit applied ('' when a new listing has none) */
   url: string;
   liveUrl: string;
-  /** HMI's page (site path, before the base) — undefined for drafts and hidden models */
+  /** HMI's page (site path, before the base) — undefined for hidden models and unpublished new listings */
   page?: string;
   /** /go/ slug */
   slug?: string;
@@ -86,7 +87,12 @@ export interface WebProduct {
   display: Record<StoreId, number>;
   edit?: ProductEdit;
   urlEdit?: LinkUrlEdit;
-  draft?: DraftProduct;
+  /** A listing written in HMI mode (not on the product list yet) */
+  isNew: boolean;
+  /** The listing as it stands in HMI mode: a new one, or changes to a model on the list */
+  listing?: Listing;
+  /** A new listing taken off the list since the last publish */
+  removed?: boolean;
   /** Photos added in HMI mode, in order (the first one leads) */
   photos: ProductPhotoMeta[];
   /** The photos differ from the ones last published */
@@ -106,14 +112,18 @@ export const webProducts = computed<WebProduct[]>(() => {
   if (!d) return [];
   const edits = d.website?.edits ?? {};
   const urls = d.website?.linkUrls ?? {};
+  const listings = d.website?.listings ?? {};
+  const listingsLive = d.website?.listingsLive ?? {};
   const photos = d.website?.photos ?? {};
   const live = d.website?.photosLive ?? {};
   const items = new Map(d.items.map((i) => [i.id, i]));
   const list: WebProduct[] = products.map((p) => {
     const e = edits[p.id];
     const ue = urls[p.slug];
+    const l = listings[p.id];
     const photosPending = !samePhotos(photos[p.id], live[p.id]);
-    const pendingEdit = (e && !e.publishedAt) || (ue && !ue.publishedAt) || photosPending;
+    const listingPending = isListingPending(l, listingsLive[p.id], listingFromProduct(p));
+    const pendingEdit = (e && !e.publishedAt) || (ue && !ue.publishedAt) || photosPending || listingPending;
     const status = e?.status ?? p.status;
     const repId = e?.replacement ?? p.replacement?.id;
     const rep = repId ? products.find((x) => x.id === repId) : undefined;
@@ -122,8 +132,8 @@ export const webProducts = computed<WebProduct[]>(() => {
       id: p.id,
       brand: p.brand,
       brandName: brandName(p.brand),
-      model: p.model,
-      type: p.type,
+      model: l?.model ?? p.model,
+      type: l?.type ?? p.type,
       category: p.category,
       status,
       liveStatus: p.status,
@@ -136,29 +146,39 @@ export const webProducts = computed<WebProduct[]>(() => {
       display: { 'osage-beach': item?.stock['osage-beach'].display ?? p.display['osage-beach'], nixa: item?.stock.nixa.display ?? p.display.nixa },
       edit: e,
       urlEdit: ue,
+      isNew: false,
+      listing: l,
       photos: photos[p.id] ?? [],
       photosPending,
       pending: !!pendingEdit,
       product: p,
     };
   });
-  for (const dr of d.website?.drafts ?? []) {
+  // New listings, including ones taken off since the last publish
+  for (const id of new Set([...Object.keys(listings), ...Object.keys(listingsLive)])) {
+    const l = listings[id] ?? listingsLive[id];
+    if (!l.isNew) continue;
+    const was = listingsLive[id];
+    const photosPending = !samePhotos(photos[id], live[id]);
     list.push({
-      id: dr.id,
-      brand: dr.brand,
-      brandName: brandName(dr.brand),
-      model: dr.model,
-      type: 'New model (draft)',
-      category: dr.category ?? '',
-      status: 'hidden',
-      liveStatus: 'hidden',
-      url: dr.url,
-      liveUrl: dr.url,
-      display: { 'osage-beach': 0, nixa: 0 },
-      draft: dr,
-      photos: [],
-      photosPending: false,
-      pending: !dr.publishedAt,
+      id,
+      brand: l.brand,
+      brandName: brandName(l.brand),
+      model: l.model,
+      type: l.type,
+      category: l.category,
+      status: listings[id] ? l.status : 'hidden',
+      liveStatus: was?.status ?? 'hidden',
+      url: l.url ?? '',
+      liveUrl: was?.url ?? '',
+      page: was?.status === 'current' && was.category ? previewPath(id) : undefined,
+      display: { ...l.display },
+      isNew: true,
+      listing: listings[id],
+      removed: !listings[id],
+      photos: photos[id] ?? [],
+      photosPending,
+      pending: isListingPending(listings[id], was, undefined) || photosPending,
     });
   }
   return list;
@@ -167,11 +187,17 @@ export const webProducts = computed<WebProduct[]>(() => {
 export const pendingCount = computed(() => {
   const w = db.value?.website;
   if (!w) return 0;
-  const photoSets = new Set([...Object.keys(w.photos ?? {}), ...Object.keys(w.photosLive ?? {})]);
+  const listingIds = new Set([...Object.keys(w.listings ?? {}), ...Object.keys(w.listingsLive ?? {})]);
+  // Photos count once their listing exists (a new listing's photos wait until it's saved)
+  const photoSets = new Set([...Object.keys(w.photos ?? {}), ...Object.keys(w.photosLive ?? {})].filter((id) => listingIds.has(id) || products.some((p) => p.id === id)));
+  const base = (id: string) => {
+    const p = products.find((x) => x.id === id);
+    return p ? listingFromProduct(p) : undefined;
+  };
   return (
     Object.values(w.edits).filter((e) => !e.publishedAt).length +
     Object.values(w.linkUrls).filter((e) => !e.publishedAt).length +
-    w.drafts.filter((dr) => !dr.publishedAt).length +
+    [...listingIds].filter((id) => isListingPending(w.listings?.[id], w.listingsLive?.[id], base(id))).length +
     [...photoSets].filter((id) => !samePhotos(w.photos?.[id], w.photosLive?.[id])).length
   );
 });
@@ -194,7 +220,7 @@ export const unverifiedLinks = computed(() => (report.value.state === 'ready' ? 
 export const openSuggestions = computed<SitemapSuggestion[]>(() => {
   if (feed.value.state !== 'ready') return [];
   const w = db.value?.website;
-  const handled = new Set([...(w?.dismissed ?? []), ...(w?.drafts ?? []).map((dr) => dr.suggestionId ?? '')]);
+  const handled = new Set([...(w?.dismissed ?? []), ...Object.values(w?.listings ?? {}).map((l) => l.suggestionId ?? '')]);
   const edits = w?.edits ?? {};
   return feed.value.data.suggestions.filter((s) => !handled.has(s.id) && !(s.type === 'discontinued' && s.productId && edits[s.productId]?.status === 'discontinued'));
 });

@@ -18,6 +18,7 @@ import { crc32, deflateSync } from 'node:zlib';
 import type { Page } from 'puppeteer-core';
 import { buildReport, type Checked } from '../../scripts/link-health/run.ts';
 import { outboundLinks } from '../../src/data/links.ts';
+import { buildItems } from '../../src/office/data/catalog.ts';
 import { productPath, products, productsIn, publicProducts } from '../../src/data/products.ts';
 import type { SitemapFeed } from '../../src/data/sitemapFeed.ts';
 import { assert, axe, closeBrowser, goto, launch, noSideScroll, officeReady, open, results, signIn, sleep, tabStops, test } from './harness.ts';
@@ -282,8 +283,9 @@ await test('Products: every model, its status, pages, link health and displays',
 
 await test('editing a model marks it “goes live on next publish (simulated)”, and publishing clears it', async () => {
   const { page } = await website();
-  const rows = await page.$$('.table tbody tr');
-  for (const r of rows) if ((await r.evaluate((x) => x.textContent ?? '')).includes('Radiance Direct Vent')) await r.evaluate((x) => (x.querySelector('.cell-main') as HTMLElement).click());
+  await page.click('button[aria-label="Actions for Radiance Direct Vent"]');
+  await page.waitForSelector('[role="menuitem"]');
+  for (const item of await page.$$('[role="menuitem"]')) if ((await item.evaluate((x) => x.textContent ?? '')).includes('Edit status or link')) await item.click();
   await page.waitForSelector('dialog[open]');
   await axe(page, 'edit dialog');
   await page.select('dialog[open] select', 'discontinued');
@@ -327,7 +329,7 @@ await test('New & discontinued: add a suggested model as a draft, dismiss one, m
   await mark!.evaluate((b) => (b as HTMLButtonElement).click());
   await page.waitForFunction(() => document.body.textContent?.includes('Nothing missing'));
   await page.click('#web-tab-products');
-  await page.waitForFunction(() => document.body.textContent?.includes('New model (draft)'));
+  await page.waitForFunction(() => document.body.textContent?.includes('New listing · No category yet'));
 });
 
 await test('Clicks: a /go/ visit in this browser shows up per product, with the server-side note', async () => {
@@ -435,11 +437,14 @@ const portrait = pngFile('artisan-close.png', 480, 640, [47, 109, 176]);
 const artisan = products.find((p) => p.id === 'MON-ART42')!;
 const artisanPath = `/hmi${productPath(artisan)}`;
 
-await test('a category with a single model keeps its card the usual size', async () => {
+await test('a single model showing keeps its card the usual size (a brand with one model, filtered)', async () => {
   const { page } = await open();
-  await goto(page, `${REAL}/hmi/products/vent-free-gas/`);
-  const w = await page.$eval('#models .model-card', (c) => c.getBoundingClientRect().width);
-  assert(w < 460, `the only model card is ${Math.round(w)}px wide`);
+  await goto(page, `${REAL}/hmi/products/gas-fireplaces/`);
+  const one = await page.$$eval('[data-shop-brand]', (bs) => bs.find((b) => b.querySelector('.shop__n')?.textContent === '1')?.getAttribute('data-shop-brand'));
+  assert(one, 'no brand with a single gas fireplace to filter to');
+  await page.click(`[data-shop-brand="${one}"]`);
+  const widths = await page.$$eval('#models .shop__item:not([hidden]) .model-card', (cs) => cs.map((c) => c.getBoundingClientRect().width));
+  assert(widths.length === 1 && widths[0] < 460, `showing ${widths.length} card(s), ${widths.map(Math.round).join(', ')}px wide`);
 });
 
 await test('a model without photos says where to see it: the maker’s site (through /go/) or the showroom', async () => {
@@ -549,6 +554,205 @@ await test('Photos: a fresh browser still sees the placeholder (nothing is publi
   assert((await page.$eval('.gallery__frame img', (i) => i.getAttribute('alt'))) === 'Photo coming soon: Monessen Artisan 42', 'placeholder missing');
 });
 
+/* ---------- Shop sections and listings written in HMI mode ---------- */
+console.log('\nShop and listings');
+
+await test('category page: the listings come first, the brands we carry directly under them; filter by brand (and ?brand=)', async () => {
+  for (const width of [1440, 390]) {
+    const { page } = await open({ width });
+    await goto(page, `${REAL}/hmi/products/gas-fireplaces/`);
+    const layout = await page.$eval('#models', (shop) => ({
+      afterHero: !!shop.previousElementSibling?.classList.contains('page-hero'),
+      order: [...shop.querySelector('.container')!.children].map((c) => c.className.split(' ').find((x) => /^(section-head|shop__|retired)/.test(x)) ?? c.tagName),
+    }));
+    assert(layout.afterHero, 'the shop section isn’t straight after the hero');
+    const at = (k: string) => layout.order.indexOf(k);
+    assert(at('shop__grid') < at('shop__brands') && at('shop__brands') - at('shop__grid') <= 2 && at('retired') > at('shop__brands'), `order: ${layout.order.join(' → ')}`);
+    const brandCards = await page.$$eval('[data-brand-card]', (c) => c.map((x) => x.getAttribute('data-brand-card')));
+    // (categories.ts imports images, so Node can't read its brand lists: every brand with a model listed will do)
+    const want = [...new Set(productsIn('gas-fireplaces').filter((p) => p.status === 'current').map((p) => p.brand))];
+    assert(want.every((b) => brandCards.includes(b)) && brandCards.length >= want.length, `brand cards: ${brandCards.join(', ')}`);
+
+    await page.click('[data-shop-brand="heat-glo"]');
+    const shown = await page.$$eval('#models .shop__item:not([hidden])', (i) => i.map((x) => x.getAttribute('data-brand')));
+    assert(shown.length > 0 && shown.every((b) => b === 'heat-glo'), `showing ${shown.join(', ')}`);
+    assert((await page.$eval('[data-shop-status]', (e) => e.textContent)) === `Showing ${shown.length} Heat & Glo gas fireplaces`, 'no announcement');
+    assert((await page.evaluate(() => location.search)) === '?brand=heat-glo', 'the address doesn’t keep the brand');
+    if (width === 390) await noSideScroll(page, 'gas fireplaces, filtered');
+    await axe(page, `gas fireplaces filtered to Heat & Glo (${width} px)`);
+    // Focus is on the Heat & Glo filter now: Tab carries on to the next brand's
+    const next = await page.$eval('[data-shop-brand="heat-glo"]', (b) => b.nextElementSibling?.textContent?.replace(/\s+/g, ' ').trim());
+    const stops = await tabStops(page);
+    assert(next && stops[0] === `button|${next}|`, `brand filters aren’t reachable by keyboard (expected “${next}”):\n${stops.slice(0, 5).join('\n')}`);
+  }
+  const { page } = await open();
+  await goto(page, `${REAL}/hmi/products/gas-fireplaces/?brand=empire`);
+  const shown = await page.$$eval('#models .shop__item:not([hidden])', (i) => i.map((x) => x.getAttribute('data-brand')));
+  assert(shown.length > 0 && shown.every((b) => b === 'empire'), `?brand=empire shows ${shown.join(', ')}`);
+  assert((await page.$eval('[data-shop-brand="empire"]', (b) => b.getAttribute('aria-pressed'))) === 'true', 'the Empire filter isn’t on');
+  // A brand card's "Show them" filters too
+  await page.$eval('[data-brand-card="heat-glo"] [data-shop-show]', (a) => (a as HTMLAnchorElement).click());
+  const now = await page.$$eval('#models .shop__item:not([hidden])', (i) => i.map((x) => x.getAttribute('data-brand')));
+  assert(now.every((b) => b === 'heat-glo'), `“Show them” left ${now.join(', ')}`);
+});
+
+await test('model page: more of what we sell here, with the brands we carry directly under it', async () => {
+  const { page } = await open();
+  await goto(page, `${REAL}${mezzoPath}`);
+  const strip = await page.$eval('.brand-strip', (el) => ({
+    afterGrid: !!el.previousElementSibling?.classList.contains('grid--models'),
+    first: el.querySelector('a')?.getAttribute('href'),
+    text: el.querySelector('a')?.textContent?.replace(/\s+/g, ' ').trim(),
+  }));
+  assert(strip.afterGrid, 'the brand strip isn’t right under the models');
+  assert(strip.first === '/hmi/products/gas-fireplaces/?brand=heat-glo#models', `first brand link: ${strip.first}`);
+  assert(strip.text?.startsWith('Heat & Glo '), `first brand: ${strip.text}`);
+});
+
+const stove = pngFile('stove-floor.png', 800, 600, [150, 60, 30]);
+
+await test('New listing: common specs are a click, custom ones typed in; with a floor photo it’s on its category page after a publish', async () => {
+  const t = await website('cheryl', FIX, 1440, '?listing=new&category=gas-stoves');
+  const { page } = t;
+  await page.waitForSelector('.listing-editor');
+  await axe(page, 'new listing editor');
+  const selects = await page.$$('.listing-editor .form-grid select');
+  assert((await selects[0].evaluate((s) => (s as HTMLSelectElement).value)) === 'gas-stoves', 'the category from the link isn’t picked');
+  await selects[1].select('hearthstone');
+  const fields = await page.$$('.listing-editor .form-grid input.input');
+  await fields[0].type('Test Stove 30');
+  await fields[1].type('Cast iron gas stove');
+  await page.type('.listing-editor textarea', 'A small cast iron gas stove for a den or cabin.');
+  const focusedValue = () => page.waitForFunction(() => /-value$/.test(document.activeElement?.id ?? ''), { polling: 50, timeout: 5000 });
+  const chip = async (label: string) => {
+    for (const c of await page.$$('.spec-chip')) if ((await c.evaluate((e) => e.textContent ?? '')).trim().startsWith(label)) return c;
+    throw new Error(`no “${label}” chip`);
+  };
+  for (const [label, value] of [['Fuel', 'Natural gas or propane'], ['Heat input', '30,000 BTU/hr'], ['Venting', 'Direct vent']]) {
+    await (await chip(label)).click();
+    await focusedValue();
+    await page.keyboard.type(value);
+  }
+  assert((await (await chip('Fuel')).evaluate((b) => b.getAttribute('aria-pressed'))) === 'true', 'the Fuel chip doesn’t show it’s added');
+  // A custom spec, left without a value: saving says what's missing
+  await page.click('#spec-add');
+  await page.waitForFunction(() => /-label$/.test(document.activeElement?.id ?? ''), { polling: 50, timeout: 5000 });
+  await page.keyboard.type('Blower');
+  await page.click('.listing-editor__actions .btn--primary');
+  await page.waitForSelector('.listing-problems');
+  assert((await page.$eval('.listing-problems', (e) => e.textContent ?? '')).includes('Add a value for “Blower”'), 'no message about the empty value');
+  await page.focus('.spec-row:nth-child(4) .spec-row__field--value input');
+  await page.keyboard.type('Optional');
+  // Venting goes above Heat input
+  await page.click('.spec-row:nth-child(3) button[aria-label="Move Venting up"]');
+  const specs = await page.$$eval('.spec-row', (r) => r.map((x) => [...x.querySelectorAll('input')].map((i) => (i as HTMLInputElement).value).join(' = ')));
+  assert(specs.join(' | ') === 'Fuel = Natural gas or propane | Venting = Direct vent | Heat input = 30,000 BTU/hr | Blower = Optional', `specs: ${specs.join(' | ')}`);
+  // On the Nixa floor, with a photo of it there
+  const display = await page.$$('.listing-display input');
+  await display[1].click({ count: 3 });
+  await display[1].type('1');
+  const input = (await page.$('.listing-editor input[type=file]')) as import('puppeteer-core').ElementHandle<HTMLInputElement>;
+  await input.uploadFile(stove);
+  await page.waitForSelector('.listing-editor .photo-row img', { timeout: 20_000 });
+  const alt = await page.$eval('.listing-editor .photo-row input.input', (i) => (i as HTMLInputElement).value);
+  assert(alt === 'Hearthstone Test Stove 30 on the Nixa showroom floor', `photo described as “${alt}”`);
+  assert(!(await page.$('.web-pending')), 'an unsaved listing’s photo already counts as a change');
+  assert((await page.$eval('.listing-card__model', (e) => e.textContent)) === 'Test Stove 30', 'the preview card doesn’t follow the form');
+  await axe(page, 'new listing editor, filled in');
+  await page.setViewport({ width: 390, height: 900 });
+  await noSideScroll(page, 'listing editor at 390 px');
+  await axe(page, 'listing editor (390 px)');
+  await page.setViewport({ width: 1440, height: 900 });
+  await page.click('.listing-editor__actions .btn--primary');
+  await page.waitForSelector('.web-pending');
+  const row = await page.$$eval('.table tbody tr', (r) => r.map((x) => x.textContent ?? '').find((x) => x.includes('Test Stove 30')) ?? '');
+  assert(row.includes('New listing') && row.includes('1 photo'), `row: ${row}`);
+  await page.$eval('.web-pending button', (b) => (b as HTMLButtonElement).click());
+  await page.waitForFunction(() => !document.querySelector('.web-pending'));
+
+  // Same browser, the public pages
+  const cat = await open({ context: page.browserContext(), label: 'gas stoves' });
+  await goto(cat.page, `${FIX}/hmi/products/gas-stoves/`);
+  await cat.page.waitForSelector('.shop__item[data-preview] .model-card__media[data-preview] img');
+  const card = await cat.page.$eval('.shop__item[data-preview]', (el) => ({ text: el.textContent?.replace(/\s+/g, ' ').trim(), img: el.querySelector('img')?.getAttribute('src')?.slice(0, 5), href: el.querySelector('a')?.getAttribute('href') }));
+  assert(card.text?.includes('Test Stove 30') && card.text.includes('On display in Nixa') && card.text.includes('Preview'), `card: ${card.text}`);
+  assert(card.img === 'blob:', 'the card doesn’t show the floor photo');
+  const brandCount = await cat.page.$eval('[data-brand-card="hearthstone"] [data-brand-count]', (e) => e.textContent);
+  assert(/listed here/.test(brandCount ?? ''), `HearthStone card says “${brandCount}”`);
+  await axe(cat.page, 'gas stoves with a preview card');
+
+  for (const width of [1440, 390]) {
+    const pv = await open({ context: page.browserContext(), width, label: `preview ${width}` });
+    await goto(pv.page, `${FIX}${card.href}`);
+    await pv.page.waitForFunction(() => !document.querySelector<HTMLElement>('[data-preview-found]')?.hidden, { polling: 100, timeout: 10_000 });
+    const got = await pv.page.evaluate(() => ({
+      h1: document.querySelector('[data-preview-name]')?.textContent,
+      specs: [...document.querySelectorAll('[data-preview-specs] dt')].map((d) => d.textContent),
+      photo: !!document.querySelector('.gallery[data-preview] img'),
+      crumb: document.querySelector('.crumbs [aria-current]')?.textContent,
+    }));
+    assert(got.h1 === 'Hearthstone Test Stove 30' && got.crumb === 'Test Stove 30', `page: ${JSON.stringify(got)}`);
+    assert(got.specs.join() === 'Fuel,Venting,Heat input,Blower', `specs: ${got.specs.join()}`);
+    assert(got.photo, 'no photo on the listing page');
+    await noSideScroll(pv.page, `listing preview page (${width} px)`);
+    await axe(pv.page, `listing preview page (${width} px)`);
+    if (width === 1440) {
+      await pv.page.$eval('[data-preview-quote]', (a) => (a as HTMLAnchorElement).click());
+      await pv.page.waitForFunction(() => !document.querySelector<HTMLElement>('[data-model-note]')?.hidden, { polling: 100, timeout: 10_000 });
+      const note = await pv.page.$eval('[data-model-note] p', (p) => p.textContent);
+      assert(note === 'You’re asking about the Hearthstone Test Stove 30.', `quote form says “${note}”`);
+    }
+  }
+  // A fresh browser has none of it
+  const other = await open();
+  await goto(other.page, `${FIX}/hmi/products/gas-stoves/`);
+  await sleep(400);
+  assert(!(await other.page.$('.shop__item[data-preview]')), 'a fresh browser shows the preview card');
+});
+
+await test('Editing a model’s listing: specs, description and its manufacturer/distributor link; after a publish its page shows them, marked as a preview', async () => {
+  // (the plain build: in the fixture build the Mezzo's link is failing, so its page has no outbound link to change)
+  const t = await website('cheryl', REAL, 1440, '?listing=HG-MEZZO48');
+  const { page } = t;
+  await page.waitForSelector('.listing-editor');
+  const first = await page.$$eval('.spec-row input', (i) => i.slice(0, 2).map((x) => (x as HTMLInputElement).value));
+  assert(first.join() === 'Fuel,Gas', `starts with ${first.join()}`);
+  for (const c of await page.$$('.spec-chip')) if ((await c.evaluate((e) => e.textContent ?? '')).trim().startsWith('Ignition')) await c.click();
+  await page.waitForFunction(() => /-value$/.test(document.activeElement?.id ?? ''), { polling: 50, timeout: 5000 });
+  await page.keyboard.type('IntelliFire Touch, with remote');
+  await page.$eval('.listing-editor textarea', (t) => ((t as HTMLTextAreaElement).value = ''));
+  await page.type('.listing-editor textarea', 'Our best-lit linear fireplace on the Nixa floor.');
+  // HMI's own link: a distributor's page, with words to match
+  const url = await page.$('.listing-editor input[type=url]');
+  assert((await url!.evaluate((i) => (i as HTMLInputElement).value)) === mezzo.url, 'the link doesn’t start as the stored one');
+  await url!.click({ count: 3 });
+  await page.keyboard.press('Backspace');
+  await url!.type('https://www.example.com/heat-glo/mezzo-48/');
+  await page.type('.listing-editor input[placeholder="Full specs at Heat & Glo"]', 'Specs and finishes at our distributor');
+  await page.click('.listing-editor__actions .btn--primary');
+  await page.waitForSelector('.web-pending');
+  await page.$eval('.web-pending button', (b) => (b as HTMLButtonElement).click());
+  await page.waitForFunction(() => !document.querySelector('.web-pending'));
+  const pub = await open({ context: page.browserContext() });
+  await goto(pub.page, `${REAL}${mezzoPath}`);
+  await pub.page.waitForSelector('[data-listing-note]:not([hidden])');
+  const shown = await pub.page.evaluate(() => ({
+    lead: document.querySelector('[data-listing-summary]')?.textContent,
+    specs: [...document.querySelectorAll('[data-listing-specs] dt')].map((d) => d.textContent),
+    links: [...document.querySelectorAll('a[data-outbound]')].map((a) => [a.getAttribute('href'), (a.querySelector('[data-outbound-text], [data-outbound-site]') ?? a).textContent]),
+  }));
+  assert(shown.lead === 'Our best-lit linear fireplace on the Nixa floor.', `lead: ${shown.lead}`);
+  assert(shown.specs.includes('Ignition') && shown.specs[0] === 'Fuel', `specs: ${shown.specs.join()}`);
+  // The hero button and the specs link say HMI's words; the photo note's link just says “online”
+  const want = ['Specs and finishes at our distributor', 'online', 'Specs and finishes at our distributor'];
+  assert(JSON.stringify(shown.links) === JSON.stringify(want.map((t) => ['https://www.example.com/heat-glo/mezzo-48/', t])), `links: ${JSON.stringify(shown.links)}`);
+  await axe(pub.page, 'model page with published listing changes');
+  const fresh = await open();
+  await goto(fresh.page, `${REAL}${mezzoPath}`);
+  await sleep(400);
+  assert(await fresh.page.$eval('[data-listing-note]', (n) => (n as HTMLElement).hidden), 'a fresh browser shows the preview note');
+});
+
 console.log('\nExisting pages');
 
 const sitemap = readFileSync(join(DIST, 'sitemap.xml'), 'utf8');
@@ -563,7 +767,8 @@ await test(`every page in the sitemap loads (${paths.length})`, async () => {
   }
 });
 
-const keyPages = ['/', '/products/', '/products/fireplace-inserts/', '/fireplace-finder/', '/services/', '/service-request/', '/contact/', '/gallery/', '/about/', '/about/team/', '/careers/', '/locations/osage-beach/', '/locations/nixa/', '/resources/', '/does-not-exist/'];
+// (the Encore: a model page with credited photos; the stove board: a product with no fuel)
+const keyPages = ['/', '/products/', '/products/fireplace-inserts/', '/products/wood-stoves/vermont-castings-encore/', '/products/accessories-care/imperial-stove-board-type-2/', '/fireplace-finder/', '/services/', '/service-request/', '/contact/', '/gallery/', '/about/', '/about/team/', '/careers/', '/locations/osage-beach/', '/locations/nixa/', '/resources/', '/does-not-exist/'];
 await test(`key public pages: axe at 1440 and 390 px, no sideways scroll (${keyPages.length} pages)`, async () => {
   for (const width of [1440, 390]) {
     const { page } = await open({ width });
@@ -626,6 +831,33 @@ await test('“Staff sign-in” opens the picker too; a profile without the page
   await pickProfile(t.page, 'Luis');
   assert((await signedInAs(t.page)) === 'Luis', 'not signed in as Luis');
   await t.page.waitForFunction(() => location.pathname === '/hmi/office/my-day/', { polling: 100, timeout: 10_000 });
+});
+
+await test('Analytics: invented sales and service figures never sit next to a real model, part or brand', async () => {
+  const t = await open();
+  await signIn(t.page, REAL, 'cheryl');
+  // Every real model, part and brand name in HMI mode's catalog (HMI's own "HMI Supply" items keep theirs)
+  const items = buildItems().filter((i) => i.brand !== 'HMI Supply');
+  const names = [...new Set([...items.map((i) => i.brand), ...items.map((i) => i.model ?? i.name)])].filter((n) => n.length > 3);
+  const pattern = new RegExp(`(^|[^A-Za-z])(${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})([^A-Za-z]|$)`);
+  const check = async (where: string) => {
+    const text = await t.page.$eval('.report', (r) => r.textContent ?? '');
+    const found = text.match(pattern);
+    assert(!found, `${where} shows “${found?.[2]}” next to invented figures`);
+  };
+  for (const report of ['', 'reliability', 'best-sellers', 'inventory']) {
+    await goto(t.page, `${REAL}/hmi/office/analytics/${report ? `?report=${report}` : ''}`);
+    await officeReady(t.page);
+    await t.page.waitForSelector('.report');
+    await check(report || 'overview');
+    if (report) assert((await t.page.$eval('.report', (r) => r.textContent ?? '')).includes('stand-in names'), `${report} doesn’t say its names are stand-ins`);
+    if (report === 'reliability' || report === 'best-sellers') {
+      // …and grouped by brand
+      await t.page.click('.segmented[aria-label="Group by"] button:nth-child(2)');
+      await sleep(150);
+      await check(`${report} by brand`);
+    }
+  }
 });
 
 await test('HMI mode sections still load for the owner: axe at 1440 and 390 px, no sideways scroll', async () => {

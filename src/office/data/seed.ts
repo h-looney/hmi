@@ -54,13 +54,13 @@ import type {
   WebsiteState,
 } from './types';
 
-export const DB_VERSION = 8;
+export const DB_VERSION = 9;
 
 /**
  * The Website section starts with nothing pending and no model photos (staff add their own); the weekly summary goes
  * to Gabe (the Nixa store manager).
  */
-export const defaultWebsite = (): WebsiteState => ({ edits: {}, linkUrls: {}, drafts: [], dismissed: [], digestTo: 'gabe', publishes: [], photos: {}, photosLive: {} });
+export const defaultWebsite = (): WebsiteState => ({ edits: {}, linkUrls: {}, listings: {}, listingsLive: {}, dismissed: [], digestTo: 'gabe', publishes: [], photos: {}, photosLive: {} });
 /** Detailed records cover this many days before today */
 export const WINDOW_DAYS = 35;
 const HISTORY_DAYS = 455;
@@ -715,7 +715,7 @@ export function createDemo(T: string, clock = '10:30'): { db: DB; history: Histo
   const COUNTER_ITEMS: [string, number][] = [
     ['ACC-RUTLAND', 30], ['ACC-PELLETS', 18], ['ACC-TOOLSET', 6], ['ACC-LOGRACK', 6], ['UNI-SCREEN3', 7], ['P-BATT-BACKUP', 8],
     ['HRG-OAK24', 6], ['ACC-HEARTHPAD', 3], ['P-GASKET34', 5], ['DIM-XLF60', 2], ['HPC-FP30', 1],
-    ['STOLL-BF36', 1], ['DS-TEMPCO', 1], ['P-PROFLAME2', 3], ['HYC-CAP13', 2],
+    ['STOLL-BF36', 1], ['DS-CAROLINA', 1], ['P-PROFLAME2', 3], ['HYC-CAP13', 2],
   ];
 
   function counterLines(m: number): InvoiceLine[] {

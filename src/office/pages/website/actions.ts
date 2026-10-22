@@ -3,12 +3,13 @@
  * changes are marked "goes live on next publish (simulated)" — in production they'd be committed to
  * src/data/products.ts (or a CMS) and go out with the next deploy.
  */
-import { productById } from '../../../data/products';
+import { productById, products } from '../../../data/products';
 import type { SitePhoto } from '../../bridge';
-import type { PhotoPlace, ProductEdit, ProductPhotoMeta } from '../../data/types';
+import type { Listing, PhotoPlace, ProductEdit, ProductPhotoMeta, WebsiteState } from '../../data/types';
 import { now } from '../../lib/dates';
-import { db, deletePhotos, me, mutate, putPhoto, setSitePhotos, uid } from '../../store';
+import { db, deletePhotos, me, mutate, putPhoto, setSiteListings, setSitePhotos, uid } from '../../store';
 import { brandName } from './data';
+import { isListingPending, listingFromProduct, sameListing, siteListings, tidySpecs } from './listings';
 import { photoCaption, preparePhoto, samePhotos } from './photos';
 
 const who = () => me.value?.id ?? 'cheryl';
@@ -55,19 +56,83 @@ export function restoreDismissed() {
   });
 }
 
-/** Add a model from a sitemap suggestion — a draft until the next publish (simulated). */
-export function addDraft(draft: { brand: string; model: string; url: string; category?: string; suggestionId?: string }) {
-  const id = uid('NEW-');
+/* ---------- Listings ---------- */
+
+export const newListingId = () => uid('NEW-');
+
+/** How the public site shows a model on the list that nobody has changed in HMI mode */
+const productListing = (id: string) => {
+  const p = productById(id);
+  return p ? listingFromProduct(p) : undefined;
+};
+
+/** Changed since the last publish (simulated)? */
+export const listingPending = (w: WebsiteState, id: string) => isListingPending(w.listings[id], w.listingsLive[id], productListing(id));
+
+/** Save a listing — a new one, or changes to a model on the list. It goes live on the next publish (simulated). */
+export function saveListing(listing: Omit<Listing, 'by' | 'at'>) {
+  const l: Listing = {
+    ...listing,
+    model: listing.model.trim(),
+    type: listing.type.trim(),
+    summary: listing.summary.trim(),
+    specs: tidySpecs(listing.specs),
+    url: listing.url?.trim() || undefined,
+    by: who(),
+    at: now(),
+  };
+  if (!l.url) delete l.url;
   mutate((d) => {
-    d.website = { ...d.website, drafts: [...d.website.drafts, { id, ...draft, by: who(), at: now() }] };
+    const listings = { ...d.website.listings };
+    // A model on the list put back the way the site already shows it: nothing to publish
+    if (!l.isNew && !d.website.listingsLive[l.id] && sameListing(l, productListing(l.id))) delete listings[l.id];
+    else listings[l.id] = l;
+    d.website = { ...d.website, listings };
   });
-  return id;
 }
 
-export function removeDraft(id: string) {
+/** Back to the listing as last published. A new listing that was never published goes, with its photos. */
+export function undoListing(id: string) {
+  const live = db.value?.website.listingsLive[id];
   mutate((d) => {
-    d.website = { ...d.website, drafts: d.website.drafts.filter((x) => x.id !== id) };
+    const listings = { ...d.website.listings };
+    if (live) listings[id] = structuredClone(live);
+    else delete listings[id];
+    d.website = { ...d.website, listings };
   });
+  if (!live) undoPhotos(id);
+}
+
+/** Take a new listing off the list — and off the public site on the next publish (simulated), if it was there */
+export function removeListing(id: string) {
+  const live = db.value?.website.listingsLive[id];
+  mutate((d) => {
+    const listings = { ...d.website.listings };
+    delete listings[id];
+    d.website = { ...d.website, listings };
+  });
+  if (live) setPhotos(id, []);
+  else undoPhotos(id);
+}
+
+/** Add a model the sitemap watch found: a new listing, kept as a draft until someone fills it in and shows it */
+export function addDraft(draft: { brand: string; model: string; url: string; category?: string; suggestionId?: string }) {
+  const id = newListingId();
+  saveListing({
+    id,
+    isNew: true,
+    brand: draft.brand,
+    model: draft.model,
+    type: '',
+    category: draft.category ?? '',
+    summary: '',
+    specs: [],
+    url: draft.url,
+    status: 'hidden',
+    display: { 'osage-beach': 0, nixa: 0 },
+    suggestionId: draft.suggestionId,
+  });
+  return id;
 }
 
 /* ---------- Model photos ---------- */
@@ -132,7 +197,7 @@ export function undoPhotos(productId: string) {
 function sitePhotos(photos: Record<string, ProductPhotoMeta[]>): Record<string, SitePhoto[]> {
   return Object.fromEntries(
     Object.entries(photos).map(([productId, list]) => {
-      const p = productById(productId);
+      const p = productById(productId) ?? db.value?.website.listings[productId];
       const name = p ? `${brandName(p.brand)} ${p.model}` : 'Fireplace';
       return [productId, list.map((ph) => ({ id: ph.id, alt: ph.alt.trim() || name, caption: photoCaption(ph.where), width: ph.width, height: ph.height }))];
     }),
@@ -157,19 +222,28 @@ export function publishPending(): number {
         return [slug, e.publishedAt ? e : { ...e, publishedAt: at }];
       }),
     );
-    const drafts = d.website.drafts.map((x) => {
-      if (!x.publishedAt) changes++;
-      return x.publishedAt ? x : { ...x, publishedAt: at };
-    });
-    for (const id of new Set([...Object.keys(d.website.photos), ...Object.keys(d.website.photosLive)])) {
+    for (const id of new Set([...Object.keys(d.website.listings), ...Object.keys(d.website.listingsLive)])) {
+      if (listingPending(d.website, id)) changes++;
+    }
+    // Photos go out with their listing: a new listing's photos wait until it's saved
+    const known = (id: string) => !!productById(id) || !!d.website.listings[id] || !!d.website.listingsLive[id];
+    const photoIds = [...new Set([...Object.keys(d.website.photos), ...Object.keys(d.website.photosLive)])].filter(known);
+    for (const id of photoIds) {
       if (!samePhotos(d.website.photos[id], d.website.photosLive[id])) changes++;
     }
-    const photosLive = structuredClone(d.website.photos);
-    d.website = { ...d.website, edits, linkUrls, drafts, photosLive, publishes: [{ id: uid('pub'), at, by: who(), changes }, ...d.website.publishes] };
+    const listingsLive = structuredClone(d.website.listings);
+    const photosLive = Object.fromEntries(Object.entries(structuredClone(d.website.photos)).filter(([id]) => known(id)));
+    d.website = { ...d.website, edits, linkUrls, listingsLive, photosLive, publishes: [{ id: uid('pub'), at, by: who(), changes }, ...d.website.publishes] };
   });
-  // The public pages in this browser now show the published photos; images taken off the site can go
+  // The public pages in this browser now show the published listings and photos; images taken off the site can go
   const photos = db.value?.website.photos ?? {};
-  void setSitePhotos(sitePhotos(photos));
+  const w = db.value?.website;
+  // Models whose manufacturer/distributor link was changed here: their pages link there too (a preview, like the rest)
+  const links = Object.fromEntries(
+    products.filter((p) => w?.linkUrls[p.slug]).map((p) => [p.id, { url: w!.linkUrls[p.slug].url, base: w!.listings[p.id] ?? listingFromProduct(p) }]),
+  );
+  void setSiteListings(siteListings(w?.listings ?? {}, brandName, links));
+  void setSitePhotos(sitePhotos(db.value?.website.photosLive ?? {}));
   const kept = new Set(Object.values(photos).flatMap((list) => list.map((p) => p.id)));
   void deletePhotos([...wasLive].filter((id) => !kept.has(id)));
   return changes;

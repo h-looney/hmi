@@ -16,16 +16,16 @@ const brand = brandSites[p.brand]?.name ?? brands.find((b) => b.id === p.brand)?
 const onDisplay = locations.filter((l) => (p.display[l.slug as keyof typeof p.display] ?? 0) > 0).map((l) => l.shortName);
 ---
 
-<article class="card card--hover model-card">
+<article class="card card--hover model-card" data-listing-card={p.id}>
   <div class="card__media model-card__media" data-product-photo={p.id}>
     <ProductImage product={p} sizes="(min-width: 1240px) 300px, (min-width: 700px) 45vw, 100vw" />
   </div>
   <div class="card__body model-card__body">
     <p class="model-card__brand">{brand}</p>
     <H class="model-card__title">
-      <a href={withBase(productPath(p))} class="card__link">{p.model}</a>
+      <a href={withBase(productPath(p))} class="card__link" data-listing-model>{p.model}</a>
     </H>
-    <p class="model-card__type">{p.type}</p>
+    <p class="model-card__type" data-listing-type>{p.type}</p>
     {
       p.status === 'discontinued' ? (
         <p class="model-card__note">No longer made · service &amp; parts</p>
@@ -39,17 +39,20 @@ const onDisplay = locations.filter((l) => (p.display[l.slug as keyof typeof p.di
 </article>
 
 <script>
-  // Photos published from HMI mode in this browser take the placeholder's place (a preview)
+  // Photos and listing changes published from HMI mode in this browser show here as a preview
+  import { cardEdits } from '../scripts/listingPreview';
   import { initProductPhotos } from '../scripts/productPhotos';
   initProductPhotos();
+  void cardEdits(document);
 </script>
 
-<style>
+<style is:global>
+  /* Global: listings published from HMI mode build these cards in the browser (src/scripts/listingPreview.ts) */
   .model-card__media {
     --ratio: 4 / 3;
   }
 
-  .model-card__media :global(img) {
+  .model-card__media img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -86,5 +89,16 @@ const onDisplay = locations.filter((l) => (p.display[l.slug as keyof typeof p.di
 
   .model-card__note--display {
     color: var(--c-ember-700);
+  }
+
+  .model-card__preview {
+    justify-self: start;
+    margin-top: var(--space-2);
+    padding: 0.15em 0.6em;
+    border-radius: var(--radius-pill);
+    background: var(--c-ember-50);
+    color: var(--c-ember-700);
+    font-size: var(--fs-2xs);
+    font-weight: 650;
   }
 </style>

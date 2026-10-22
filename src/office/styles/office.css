@@ -1252,6 +1252,11 @@ main:focus {
   border-color: #c5d8ee;
 }
 
+.callout--red {
+  background: #fbeceb;
+  border-color: #efc4be;
+}
+
 .callout__title {
   font-weight: 650;
 }

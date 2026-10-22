@@ -3,7 +3,9 @@
  * Three-step quote request. Interests can be pre-selected via
  * ?interest=gas-fireplaces,wood-stoves (used by product pages and the
  * Fireplace Finder), and a model page adds ?model=<SKU> ("Get a quote on this
- * model"). Front-end only — see src/scripts/forms.ts.
+ * model") — or the id of a listing published from HMI mode in this browser. A
+ * category page's brand card adds ?brand=<id> ("Ask about <brand>").
+ * Front-end only — see src/scripts/forms.ts.
  */
 import Icon from './Icon.astro';
 import { brands } from '../data/brands';
@@ -20,10 +22,11 @@ const interests = [
 
 const steps = ['Interests', 'Project', 'Contact'];
 
-// Model names for ?model=<SKU>, so the form can say which model the request is about
-const modelNames = Object.fromEntries(
-  publicProducts().map((p) => [p.id, `${brandSites[p.brand]?.name ?? brands.find((b) => b.id === p.brand)?.name ?? p.brand} ${p.model}`]),
-);
+// Model names for ?model=<SKU> and brand names for ?brand=<id>, so the form can say what the request is about
+const modelNames = {
+  ...Object.fromEntries(publicProducts().map((p) => [p.id, `${brandSites[p.brand]?.name ?? brands.find((b) => b.id === p.brand)?.name ?? p.brand} ${p.model}`])),
+  ...Object.fromEntries(brands.map((b) => [`brand:${b.id}`, b.name])),
+};
 ---
 
 <div class="quote" data-quote>
@@ -45,7 +48,7 @@ const modelNames = Object.fromEntries(
       <legend class="quote__legend">What are you interested in?</legend>
       <div class="quote__model" data-model-note hidden>
         <Icon name="tag" size={18} />
-        <p>You’re asking about the <strong data-model-name></strong>.</p>
+        <p>You’re asking about <span data-model-the>the </span><strong data-model-name></strong>.</p>
         <button type="button" class="quote__model-clear" data-model-clear>Remove<span class="visually-hidden"> this model from the request</span></button>
         <input type="hidden" name="model" value="" data-model-input />
       </div>
@@ -470,6 +473,7 @@ const modelNames = Object.fromEntries(
 </style>
 
 <script>
+  import { readPublishedListings } from '../office/bridge';
   import { validate, liveClear, submit, setBusy } from '../scripts/forms';
   import { withBase } from '../scripts/url';
 
@@ -523,17 +527,29 @@ const modelNames = Object.fromEntries(
     } catch {
       /* no names */
     }
-    const modelName = names[params.get('model') ?? ''];
-    if (modelName && modelNote && modelInput) {
-      modelInput.value = modelName;
-      modelNote.querySelector('[data-model-name]')!.textContent = modelName;
+    const showModel = (name: string, isBrand = false) => {
+      if (!modelNote || !modelInput) return;
+      modelInput.value = name;
+      modelNote.querySelector('[data-model-name]')!.textContent = name;
+      modelNote.querySelector<HTMLElement>('[data-model-the]')!.hidden = isBrand;
       modelNote.hidden = false;
-      modelNote.querySelector<HTMLButtonElement>('[data-model-clear]')!.addEventListener('click', () => {
-        modelInput.value = '';
-        modelNote.hidden = true;
-        form.querySelector<HTMLInputElement>('input[name="interests"]')?.focus();
+    };
+    modelNote?.querySelector<HTMLButtonElement>('[data-model-clear]')!.addEventListener('click', () => {
+      if (modelInput) modelInput.value = '';
+      modelNote.hidden = true;
+      form.querySelector<HTMLInputElement>('input[name="interests"]')?.focus();
+    });
+    const wanted = params.get('model') ?? '';
+    const brandName = names[`brand:${params.get('brand') ?? ''}`];
+    if (names[wanted]) showModel(names[wanted]);
+    else if (wanted.startsWith('NEW-')) {
+      // A listing written in HMI mode and published in this browser
+      void readPublishedListings().then((all) => {
+        const l = all[wanted];
+        if (l) showModel(`${l.brandName} ${l.model}`);
+        else if (brandName) showModel(brandName, true);
       });
-    }
+    } else if (brandName) showModel(brandName, true);
     const store = params.get('store');
     const storeSelect = form.elements.namedItem('store') as HTMLSelectElement | null;
     if (store && storeSelect && [...storeSelect.options].some((o) => o.value === store)) storeSelect.value = store;

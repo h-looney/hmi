@@ -2,6 +2,7 @@
  * Website — the product list behind every model page and manufacturer link, the nightly link check, the weekly
  * sitemap watch, outbound clicks, the Monday summary and showroom tags.
  *   /office/website/?tab=products|health|suggestions|clicks|summary|tags  (&model=<SKU> for one tag)
+ *   /office/website/?listing=new|<id>  writes a listing (ListingEditor)
  */
 import { useEffect } from 'preact/hooks';
 import { plural } from '../../lib/format';
@@ -38,7 +39,7 @@ export default function Website() {
   useEffect(() => loadWebsiteData(), []);
   const requested = param('tab') as TabKey | undefined;
   const tab: TabKey = requested && TAB_KEYS.includes(requested) ? requested : 'products';
-  const go = (k: TabKey) => setParams({ tab: k === 'products' ? undefined : k, model: undefined });
+  const go = (k: TabKey) => setParams({ tab: k === 'products' ? undefined : k, model: undefined, listing: undefined, category: undefined });
 
   const pending = pendingCount.value;
   const failing = failingLinks.value.length;
@@ -86,7 +87,12 @@ export default function Website() {
       )}
 
       <div class="stats web-stats">
-        <Stat label="Models on the list" icon="tag" value={list.filter((p) => !p.draft).length} hint={`${list.filter((p) => p.status === 'current').length} current · ${list.filter((p) => p.status === 'discontinued').length} discontinued`} />
+        <Stat
+          label="Models on the list"
+          icon="tag"
+          value={list.filter((p) => !p.removed).length}
+          hint={`${list.filter((p) => p.status === 'current' && !p.isNew).length} current · ${list.filter((p) => p.status === 'discontinued').length} discontinued · ${plural(list.filter((p) => p.isNew && !p.removed).length, 'new listing')}`}
+        />
         <Stat label="Manufacturer links" icon="link" value={rep ? rep.summary.total : '—'} hint={rep ? `${failing ? `${failing} with a fallback in effect` : 'All working'} · checked ${ago(rep.generatedAt)}` : 'No check results in this build'} to="/office/website/?tab=health" />
         <Stat
           label="To review"

@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { categories } from '../../../data/categories';
 import type { SitemapSuggestion } from '../../../data/sitemapFeed';
 import { plural } from '../../lib/format';
+import { setParams } from '../../router';
 import { toast } from '../../toast';
 import { Button, Card, EmptyState, Field } from '../../ui/core';
 import { Dialog } from '../../ui/Dialog';
@@ -20,7 +21,7 @@ function AddDialog({ s, onClose }: { s: SitemapSuggestion; onClose: () => void }
   return (
     <Dialog
       title={`Add a ${brandName(s.brand)} model`}
-      description="It joins the product list as a draft and goes live on the next publish (simulated) — with its own page, /go/ link and nightly check."
+      description="It joins the product list as a draft listing. Fill in what it is, its specs and your photos, switch it on, and it goes live on the next publish (simulated)."
       onClose={onClose}
       footer={
         <>
@@ -29,8 +30,8 @@ function AddDialog({ s, onClose }: { s: SitemapSuggestion; onClose: () => void }
             variant="primary"
             disabled={!model.trim()}
             onClick={() => {
-              addDraft({ brand: s.brand, model: model.trim(), url: s.url, category: category || undefined, suggestionId: s.id });
-              toast(`${brandName(s.brand)} ${model.trim()} added as a draft`, { tone: 'success' });
+              const id = addDraft({ brand: s.brand, model: model.trim(), url: s.url, category: category || undefined, suggestionId: s.id });
+              toast(`${brandName(s.brand)} ${model.trim()} added as a draft listing`, { tone: 'success', action: { label: 'Fill it in', run: () => setParams({ tab: undefined, listing: id }) } });
               onClose();
             }}
           >

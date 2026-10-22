@@ -2,6 +2,7 @@
 import Photo from './Photo.astro';
 import Icon from './Icon.astro';
 import { categoryHref, fuelLabels, type Category } from '../data/categories';
+import { productsIn } from '../data/products';
 
 interface Props {
   category: Category;
@@ -11,6 +12,9 @@ interface Props {
 }
 
 const { category: c, headingLevel: H = 'h3', showTags = false, compact = false } = Astro.props;
+
+// How many models HMI lists here — "Shop 8 models" says there's something to buy, not just read about
+const listed = productsIn(c.slug as Parameters<typeof productsIn>[0]).filter((m) => m.status === 'current').length;
 
 const tags = [
   ...c.fuels.map((f) => fuelLabels[f]),
@@ -49,7 +53,7 @@ const tags = [
     </H>
     {!compact && <p class="cat-card__text">{c.short}</p>}
     <span class="link-arrow cat-card__more" aria-hidden="true">
-      Explore <Icon name="arrow-right" size={16} />
+      {listed > 0 ? `Shop ${listed} ${listed === 1 ? 'model' : 'models'}` : 'Explore'} <Icon name="arrow-right" size={16} />
     </span>
   </div>
 </article>

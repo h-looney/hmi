@@ -3,11 +3,13 @@ import { useMemo, useState } from 'preact/hooks';
 import { compact, compactMoney, decimal, money, percent, plural } from '../../../lib/format';
 import { storeName } from '../../../selectors';
 import { BarChart, ChartFrame, HBarChart } from '../../../ui/charts';
-import { Badge, Button, Card, EmptyState, Link, Segmented, Stat } from '../../../ui/core';
+import { Badge, Button, Card, EmptyState, Segmented, Stat } from '../../../ui/core';
 import { DataTable } from '../../../ui/Table';
 import type { ReportProps } from '../Analytics';
 import { bucketIndex, downloadCSV, sum, timeBuckets, within } from '../facts';
+import { Icon } from '../../../ui/Icon';
 import { bestSellers, type SellerRow } from '../metrics';
+import { STAND_IN_NOTE } from '../standIns';
 
 type Metric = 'units' | 'revenue' | 'margin';
 
@@ -84,6 +86,14 @@ export default function BestSellers({ d, facts, range, store }: ReportProps) {
         <Stat label="Gross margin" icon="trend" value={revenue ? percent((revenue - cost) / revenue) : '—'} hint={`${money(revenue - cost, false)} on equipment`} />
       </div>
 
+      <div class="callout callout--amber">
+        <Icon name="info" size={18} />
+        <div>
+          <p class="callout__title">Sample data</p>
+          <p class="callout__text">{STAND_IN_NOTE}</p>
+        </div>
+      </div>
+
       <div class="grid-2">
         <ChartFrame
           title={`Top ${by === 'model' ? 'models' : by === 'brand' ? 'brands' : 'categories'} by ${metric === 'units' ? 'units sold' : metric === 'revenue' ? 'revenue' : 'gross margin'}`}
@@ -139,12 +149,11 @@ export default function BestSellers({ d, facts, range, store }: ReportProps) {
               key: 'label',
               label: by === 'model' ? 'Model' : by === 'brand' ? 'Brand' : 'Category',
               sortValue: (r) => r.label,
+              // Stand-in names, without a link to the real item (standIns.ts)
               render: (r) =>
                 r.itemId ? (
                   <span>
-                    <Link class="cell-main" to={`/office/inventory/?id=${r.itemId}`}>
-                      {r.label}
-                    </Link>
+                    <span class="cell-main">{r.label}</span>
                     <span class="cell-sub">{r.category}</span>
                   </span>
                 ) : (

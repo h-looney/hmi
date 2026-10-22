@@ -6,7 +6,7 @@
  * the public pages (see bridge.ts) arrive as new inbox requests — live, if a tab is open.
  */
 import { batch, computed, effect, signal } from '@preact/signals';
-import { CHANNEL, OFFICE_DB, OFFICE_STORE, QUEUE_KEY, SITE_PHOTOS_KEY, clearQueue, photoKey, readQueue, type QueuedSubmission, type SitePhoto } from './bridge';
+import { CHANNEL, OFFICE_DB, OFFICE_STORE, QUEUE_KEY, SITE_LISTINGS_KEY, SITE_PHOTOS_KEY, clearQueue, photoKey, readQueue, type QueuedSubmission, type SiteListing, type SitePhoto } from './bridge';
 import { profiles } from './data/people';
 import { createDemo, DB_VERSION, demoClock } from './data/seed';
 import type { DB, History, Lead, Section, StoreId, UIState } from './data/types';
@@ -201,11 +201,15 @@ export async function deletePhotos(ids: string[]) {
 /** The set the public pages preview after a publish (simulated) — see readPublishedPhotos() in bridge.ts */
 export const setSitePhotos = (value: Record<string, SitePhoto[]>) => idbSet(SITE_PHOTOS_KEY, value);
 
-/** Forget every photo, when the demo data starts over */
+/** The listings the public pages preview after a publish (simulated) — see readPublishedListings() in bridge.ts */
+export const setSiteListings = (value: Record<string, SiteListing>) => idbSet(SITE_LISTINGS_KEY, value);
+
+/** Forget every photo and published listing, when the demo data starts over */
 async function clearPhotos() {
   photoCache.clear();
   await idbDelete(IDBKeyRange.bound(photoKey(''), photoKey('\uffff')));
   await idbDelete(SITE_PHOTOS_KEY);
+  await idbDelete(SITE_LISTINGS_KEY);
 }
 
 /* ---------- Load, save, sync ---------- */

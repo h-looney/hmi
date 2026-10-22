@@ -6,7 +6,8 @@ import { legacyGroups } from '../../data/catalog';
 import type { DB, History, JobFact, LeadFact, RangeKey, SaleFact, StoreFilter, StoreId } from '../../data/types';
 import { addDays, diffDays, diffMinutes, monthKey, startOfWeek, startOfYear } from '../../lib/dates';
 import { monthShort, shortDate } from '../../lib/format';
-import { invoiceTotals, itemLabel, matchStore } from '../../selectors';
+import { invoiceTotals, matchStore } from '../../selectors';
+import { reportBrandName, reportItemName } from './standIns';
 
 export interface Facts {
   jobs: JobFact[];
@@ -187,12 +188,13 @@ export const bucketIndex = (buckets: { from: string; to: string }[], day: string
 
 /* ---------- Labels ---------- */
 
+/** A model (or older installed-base group) as the reports name it: catalog models under their stand-in names (standIns.ts) */
 export function groupLabel(d: DB, group: string | undefined): { label: string; brand: string; category: string; legacy: boolean } {
   if (!group) return { label: 'Unknown', brand: '—', category: '—', legacy: false };
   const legacy = legacyGroups[group];
   if (legacy) return { label: legacy.label, brand: 'Other', category: legacy.category, legacy: true };
   const it = d.items.find((i) => i.id === group);
-  return it ? { label: itemLabel(it), brand: it.brand, category: it.category, legacy: false } : { label: group, brand: '—', category: '—', legacy: false };
+  return it ? { label: reportItemName(d, it), brand: reportBrandName(d, it.brand), category: it.category, legacy: false } : { label: group, brand: '—', category: '—', legacy: false };
 }
 
 export const median = (values: number[]) => {

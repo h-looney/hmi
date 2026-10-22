@@ -12,6 +12,7 @@ import { DataTable } from '../../../ui/Table';
 import type { ReportProps } from '../Analytics';
 import { downloadCSV, sum } from '../facts';
 import { reliability, repeatUnits, topCounts } from '../metrics';
+import { reportItemName, STAND_IN_NOTE } from '../standIns';
 
 export default function Reliability({ d, h, facts, range, store, today }: ReportProps) {
   const [by, setBy] = useState<'model' | 'brand' | 'category'>('model');
@@ -24,6 +25,15 @@ export default function Reliability({ d, h, facts, range, store, today }: Report
   const watch = (r: (typeof rows)[number]) => r.per100 > fleet * 1.8 && r.calls >= minCalls * 2;
   const issueCounts = topCounts(calls, 'issue');
   const partCounts = topCounts(calls, 'part');
+  // A model HMI sold goes by its stand-in name here; units installed by others keep their generic labels
+  const applianceName = (u: (typeof repeats)[number]['unit']) => {
+    const item = u.itemId ? itemOf(d, u.itemId) : undefined;
+    return item ? reportItemName(d, item) : unitLabel(u);
+  };
+  const partName = (id: string) => {
+    const item = itemOf(d, id);
+    return item ? reportItemName(d, item) : id;
+  };
   const claimsInRange = d.claims.filter((c) => c.openedOn >= range.from && c.openedOn <= range.to && (store === 'all' || c.store === store));
   const credited = claimsInRange.filter((c) => c.status === 'credited');
 
@@ -66,7 +76,7 @@ export default function Reliability({ d, h, facts, range, store, today }: Report
         <Icon name="info" size={18} />
         <div>
           <p class="callout__title">Sample data</p>
-          <p class="callout__text">These figures are randomly generated for the demo and say nothing about how any real product performs. In the live system they would come from HMI’s own service history.</p>
+          <p class="callout__text">{STAND_IN_NOTE}</p>
         </div>
       </div>
 
@@ -132,10 +142,10 @@ export default function Reliability({ d, h, facts, range, store, today }: Report
             {
               key: 'unit',
               label: 'Appliance',
-              sortValue: (r) => unitLabel(r.unit),
+              sortValue: (r) => applianceName(r.unit),
               render: (r) => (
                 <span>
-                  {unitLabel(r.unit)}
+                  {applianceName(r.unit)}
                   <span class="cell-sub">
                     {r.unit.installedBy === 'HMI' ? `Installed by HMI ${r.unit.installedOn.slice(0, 4)}` : 'Installed by others'} · {r.unit.serial}
                   </span>
@@ -165,8 +175,8 @@ export default function Reliability({ d, h, facts, range, store, today }: Report
       </Card>
 
       <div class="grid-2">
-        <ChartFrame title="Parts replaced most" subtitle="From repair and warranty visits in this range" table={{ columns: ['Part', 'Times replaced'], rows: partCounts.map(([k, n]) => [itemOf(d, k)?.name ?? k, n]) }}>
-          {partCounts.length ? <HBarChart ariaLabel="Parts replaced most" rows={partCounts.slice(0, 8).map(([k, n]) => ({ key: k, label: itemOf(d, k)?.name ?? k, value: n }))} format={(n) => String(n)} color="var(--series-3)" /> : <EmptyState icon="box" title="No parts replaced in this range" />}
+        <ChartFrame title="Parts replaced most" subtitle="From repair and warranty visits in this range" table={{ columns: ['Part', 'Times replaced'], rows: partCounts.map(([k, n]) => [partName(k), n]) }}>
+          {partCounts.length ? <HBarChart ariaLabel="Parts replaced most" rows={partCounts.slice(0, 8).map(([k, n]) => ({ key: k, label: partName(k), value: n }))} format={(n) => String(n)} color="var(--series-3)" /> : <EmptyState icon="box" title="No parts replaced in this range" />}
         </ChartFrame>
         <Card title="All groups" subtitle="Sorted by service rate" flush>
           <DataTable
